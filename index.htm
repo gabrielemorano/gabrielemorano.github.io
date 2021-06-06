@@ -5,6 +5,10 @@
 
 <style type="text/css">
 
+a:link { text-decoration: none; }
+a:visited { text-decoration: none; }
+a:hover { text-decoration: none; }
+a:active { text-decoration: none; }
 
 .flex-container {
   /* We first create a flex layout context */
@@ -27,7 +31,8 @@
   background: #CCC;
 }
 
-.flex-itemL {
+.flex-itemL a {
+  display: block;
   background: #2867B2;
   padding: 0px;
   width: 400px;
@@ -41,7 +46,8 @@
   text-align: center;
 }
 
-.flex-itemT {
+.flex-itemT a {
+  display: block;
   background: #1DA1F2;
   padding: 0px;
   width: 400px;
@@ -55,7 +61,8 @@
   text-align: center;
 }
 
-.flex-itemF {
+.flex-itemF a {
+  display: block;
   background: #4267B2;
   padding: 0px;
   width: 400px;
@@ -68,7 +75,8 @@
   font-size: 6em;
   text-align: center;
 }
-.flex-itemI {
+.flex-itemI a {
+  display: block;
   background: #C13584;
   padding: 0px;
   width: 400px;
@@ -81,7 +89,8 @@
   font-size: 6em;
   text-align: center;
 }
-.flex-itemN {
+.flex-itemN a {
+  display: block;
   background: #2D62B5;
   padding: 0px;
   width: 400px;
@@ -94,7 +103,8 @@
   font-size: 6em;
   text-align: center;
 }
-.flex-itemC {
+.flex-itemC a {
+  display: block;
   background: #FFF;
   padding: 0px;
   width: 400px;
@@ -120,7 +130,8 @@
   font-size: 6em;
   text-align: center;
 }
-.flex-item0 {
+.flex-item0 a {
+  display: block;
   background: #333;
   padding: 0px;
   width: 400px;
@@ -128,7 +139,7 @@
   margin-top: 10px;
   line-height: 400px;
   color: white;
- font-family: system-ui;
+  font-family: system-ui;
   font-weight: lighter;
   font-size: 6em;
   text-align: center;
@@ -141,12 +152,12 @@
 
 <ul class="flex-container">
   <li class="flex-itemGM"><img src="IMG/GM.jpg"></li>
-  <li class="flex-itemL"><a href="https://www.linkedin.com/in/morano" style="color: #fff">Business</a></li>
-  <li class="flex-itemT"><a href="https://twitter.com/gmorano" style="color: #fff">News</a></li>
-  <li class="flex-itemF"><a href="https://www.facebook.com/gabriele.morano" style="color: #fff">Friends</a></li>
-  <li class="flex-itemI"><a href="https://www.instagram.com/gabriele.morano" style="color: #fff">Photos</a></li>
-  <li class="flex-itemN"><a href="https://opensea.io/accounts/gmorano" style="color: #fff">NFT</a></li>
-  <li class="flex-itemC"><a href="https://bitclout.com/u/gmorano" style="color: #333">Crypto</a></li>
+  <li class="flex-itemL"><a href="https://www.linkedin.com/in/morano" target="_blank" style="color: #fff">Business</a></li>
+  <li class="flex-itemT"><a href="https://twitter.com/gmorano" target="_blank" style="color: #fff">News</a></li>
+  <li class="flex-itemF"><a href="https://www.facebook.com/gabriele.morano" target="_blank" style="color: #fff">Friends</a></li>
+  <li class="flex-itemI"><a href="https://www.instagram.com/gabriele.morano" target="_blank" style="color: #fff">Photos</a></li>
+  <li class="flex-itemN"><a href="https://opensea.io/accounts/gmorano" target="_blank" style="color: #fff">NFT</a></li>
+  <li class="flex-itemC"><a href="https://bitclout.com/u/gmorano" target="_blank" style="color: #333">Crypto</a></li>
   
 </ul>
 
