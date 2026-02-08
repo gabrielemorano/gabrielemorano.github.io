@@ -613,10 +613,10 @@
                 <div class="panel">
                     <h3>📝 Word Builder</h3>
                     <div class="word-input" id="wordInput"></div>
+                    <div id="hintPlaceholder" style="display: none; margin: 8px 0; text-align: center; font-family: monospace; font-size: 1.2em; letter-spacing: 4px; color: #555;"></div>
                     <div class="controls">
                         <button class="btn btn-primary" id="submitBtn">Submit Word</button>
                         <button class="btn btn-secondary" id="clearBtn">Clear</button>
-                        <button class="btn btn-secondary" id="cheatBtn">🔨 Cheat</button>
                     </div>
                     <div class="message" id="message"></div>
                     <div id="cheatsDisplay" style="margin-top: 10px; display: none;">
@@ -636,14 +636,16 @@
                 <div class="panel">
                     <h3>📊 Word Radar</h3>
                     <div id="wordRadar" style="font-size: 0.9em; color: #666;">Waiting for letters...</div>
-                    <div style="margin-top: 8px;">
+                    <div class="controls" style="margin-top: 8px;">
                         <button class="btn btn-secondary" id="hintBtn">💡 Hint</button>
+                        <button class="btn btn-secondary" id="clueBtn">🔍 Clue</button>
+                        <button class="btn btn-secondary" id="cheatBtn">🔨 Cheat</button>
                     </div>
                 </div>
 
                 <div class="panel">
                     <h3>🏆 Achievements</h3>
-                    <div id="achievementBoard" style="font-size: 0.9em; color: #666;">No achievements yet</div>
+                    <div id="achievementBoard" style="font-size: 0.9em; color: #666; display: grid; grid-template-columns: 1fr 1fr; gap: 2px 12px;">No achievements yet</div>
                 </div>
 
                 <div class="panel">
@@ -672,7 +674,7 @@
                 </div>
             </div>
         </div>
-        <p style="text-align: center; font-size: 0.7em; color: #999; padding: 8px 0;">Last update: 12:53 - 08/02/2026</p>
+        <p style="text-align: center; font-size: 0.7em; color: #999; padding: 8px 0;">Last update: 13:18 - 08/02/2026</p>
     </div>
 
     <!-- Help Modal -->
@@ -863,6 +865,9 @@
             gameState.hintHighlights = [];  // reservoir indices currently highlighted by hint
             gameState.hintSequence = [];    // pre-computed sequence of reservoir indices to highlight
             gameState.hintStep = 0;         // current position in hintSequence
+            gameState.hintTargetWord = '';   // the target word for hint/clue
+            gameState.hintRevealed = [];    // booleans for which positions are revealed
+            gameState.hintPositionMap = []; // maps step index to position in target word    // array of booleans, which positions in target word are revealed
             gameState.wordsPlacedByLength = {};  // { length: count }
             gameState.fullShelterCount = 0;      // times any row was completely filled
             gameState.stacksMax = 0;             // tallest brick column ever reached
@@ -1126,9 +1131,11 @@
             }
 
             if (lines.length === 0) {
+                el.style.display = 'block';
                 el.textContent = 'No achievements yet';
             } else {
-                el.innerHTML = lines.join('<br>');
+                el.style.display = 'grid';
+                el.innerHTML = lines.map(l => `<span>${l}</span>`).join('');
             }
         }
 
@@ -1180,8 +1187,9 @@
         }
 
         // Build hint sequence: letters needed for longest word, sub-word first, sorted by reservoir frequency
+        // Also stores the target word and a mapping from step → position in target word
         function buildHintSequence() {
-            if (gameState.reservoir.length < 3) return [];
+            if (gameState.reservoir.length < 3) return;
 
             // Count available letters in reservoir
             const available = {};
@@ -1203,12 +1211,16 @@
                 if (valid) formable.push(word);
             }
 
-            if (formable.length === 0) return [];
+            if (formable.length === 0) return;
 
             // Sort by length descending
             formable.sort((a, b) => b.length - a.length);
             const longest = formable[0];
             const longestLen = longest.length;
+
+            // Store target word
+            gameState.hintTargetWord = longest;
+            gameState.hintRevealed = new Array(longestLen).fill(false);
 
             // Get letter counts for the longest word
             const longestNeeded = {};
@@ -1229,10 +1241,10 @@
             // Find longest sub-word contained within the longest word
             let subWord = null;
             for (const w of formable) {
-                if (w.length >= longestLen) continue; // skip same-length words
+                if (w.length >= longestLen) continue;
                 if (isSubsetOf(w, longestNeeded)) {
                     subWord = w;
-                    break; // already sorted descending, first match is longest
+                    break;
                 }
             }
 
@@ -1258,7 +1270,6 @@
                     entries.push({ ch, count, freq: available[ch] || 0 });
                 }
                 entries.sort((a, b) => b.freq - a.freq);
-                // Expand: each entry becomes 'count' individual letters
                 const result = [];
                 for (const e of entries) {
                     for (let i = 0; i < e.count; i++) result.push(e.ch);
@@ -1270,58 +1281,122 @@
             const phase2 = sortByFrequency(remainNeeded);
             const letterOrder = [...phase1, ...phase2];
 
-            // Map letter order to actual reservoir indices (avoid reusing indices)
+            // Map letter order to reservoir indices AND target word positions
             const usedIndices = new Set();
-            const sequence = [];
+            const usedWordPositions = new Set();
+            const sequence = [];      // reservoir index per step
+            const positionMap = [];   // target word position per step
+
             for (const ch of letterOrder) {
                 const upper = ch.toUpperCase();
                 const idx = gameState.reservoir.findIndex((l, i) => l === upper && !usedIndices.has(i));
-                if (idx !== -1) {
+                // Find position of this letter in target word (first unused occurrence)
+                let wordPos = -1;
+                for (let p = 0; p < longest.length; p++) {
+                    if (longest[p] === ch && !usedWordPositions.has(p)) {
+                        wordPos = p;
+                        break;
+                    }
+                }
+                if (idx !== -1 && wordPos !== -1) {
                     sequence.push(idx);
+                    positionMap.push(wordPos);
                     usedIndices.add(idx);
+                    usedWordPositions.add(wordPos);
                 }
             }
 
-            return sequence;
+            gameState.hintSequence = sequence;
+            gameState.hintPositionMap = positionMap;
+            gameState.hintStep = 0;
+            gameState.hintHighlights = [];
         }
 
-        // Handle Hint button press: highlight next letter in sequence
-        function pressHint() {
+        // Render the placeholder (underscores with revealed letters)
+        function renderPlaceholder() {
+            const el = document.getElementById('hintPlaceholder');
+            if (!gameState.hintTargetWord) {
+                el.style.display = 'none';
+                return;
+            }
+            el.style.display = 'block';
+            const chars = gameState.hintTargetWord.split('').map((ch, i) =>
+                gameState.hintRevealed[i] ? ch.toUpperCase() : '_'
+            );
+            el.textContent = chars.join(' ');
+        }
+
+        // Advance hint/clue by one step; revealPosition = true for Clue
+        function advanceHint(revealPosition) {
             if (gameState.reservoir.length < 3) {
                 showMessage('Need at least 3 letters!', 'error');
                 return;
             }
 
-            // Rebuild sequence if empty or exhausted
-            if (gameState.hintSequence.length === 0 || gameState.hintStep >= gameState.hintSequence.length) {
-                gameState.hintSequence = buildHintSequence();
-                gameState.hintStep = gameState.hintHighlights.length; // continue from existing highlights
+            // Build sequence on first press or if reservoir changed
+            if (!gameState.hintTargetWord || gameState.hintSequence.length === 0) {
+                buildHintSequence();
             }
 
-            if (gameState.hintSequence.length === 0) {
+            if (!gameState.hintTargetWord || gameState.hintSequence.length === 0) {
                 showMessage('No words available!', 'error');
                 return;
             }
 
+            // Show placeholder on first press
+            renderPlaceholder();
+
             if (gameState.hintStep >= gameState.hintSequence.length) {
+                // All letters already highlighted in reservoir
+                if (revealPosition) {
+                    // Clue: reveal next unrevealed position from previously hinted letters
+                    const nextUnrevealed = gameState.hintRevealed.indexOf(false);
+                    if (nextUnrevealed !== -1) {
+                        gameState.hintRevealed[nextUnrevealed] = true;
+                        renderPlaceholder();
+                        return;
+                    }
+                }
                 showMessage('All letters revealed!', 'info');
                 return;
             }
 
+            // Highlight reservoir tile
             const nextIdx = gameState.hintSequence[gameState.hintStep];
             if (!gameState.hintHighlights.includes(nextIdx)) {
                 gameState.hintHighlights.push(nextIdx);
             }
-            gameState.hintStep++;
 
+            // Reveal position in placeholder if Clue
+            if (revealPosition) {
+                const wordPos = gameState.hintPositionMap[gameState.hintStep];
+                gameState.hintRevealed[wordPos] = true;
+                renderPlaceholder();
+            }
+
+            gameState.hintStep++;
             renderReservoir();
         }
 
-        // Clear hint highlights (called on word submit)
+        // Handle Hint button press: highlight letter only
+        function pressHint() {
+            advanceHint(false);
+        }
+
+        // Handle Clue button press: highlight letter + reveal position
+        function pressClue() {
+            advanceHint(true);
+        }
+
+        // Clear hint highlights and placeholder (called on word submit)
         function clearHintHighlights() {
             gameState.hintHighlights = [];
             gameState.hintSequence = [];
+            gameState.hintPositionMap = [];
             gameState.hintStep = 0;
+            gameState.hintTargetWord = '';
+            gameState.hintRevealed = [];
+            document.getElementById('hintPlaceholder').style.display = 'none';
         }
 
         // Find top 5 longest words formable from reservoir letters (Cheat)
@@ -1781,6 +1856,7 @@
         document.getElementById('clearBtn').addEventListener('click', clearSelection);
         document.getElementById('cheatBtn').addEventListener('click', showCheats);
         document.getElementById('hintBtn').addEventListener('click', pressHint);
+        document.getElementById('clueBtn').addEventListener('click', pressClue);
         document.getElementById('pauseBtn').addEventListener('click', togglePause);
         document.getElementById('helpBtn').addEventListener('click', () => openModal('helpModal'));
         document.getElementById('restartBtn').addEventListener('click', restartGame);
