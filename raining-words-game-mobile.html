@@ -678,7 +678,7 @@
                 </div>
             </div>
         </div>
-        <p style="text-align: center; font-size: 0.7em; color: #999; padding: 8px 0;">Last update: 16:18 - 08/02/2026</p>
+        <p style="text-align: center; font-size: 0.7em; color: #999; padding: 8px 0;">Last update: 16:30 - 08/02/2026</p>
     </div>
 
     <!-- Help Modal -->
@@ -1004,19 +1004,8 @@
             gameState.fallingLetters.forEach(fl => {
                 fl.y--;
 
-                // Check if hit cat
-                if (fl.x === gameState.catPosition.x && fl.y === gameState.catPosition.y) {
-                    const dmg = (LETTER_TYPES[fl.type] || LETTER_TYPES.rain).damage;
-                    gameState.catHP -= dmg;
-                    gameState.catHitTime = Date.now();
-                    showMessage(`😿 Cat hit by ${fl.type}! (-${dmg})`, 'error');
-                    toRemove.push(fl.id);
-                    return;
-                }
-
                 // Check if landed on ground or in reservoir
                 if (fl.y < 0) {
-                    // Hit ground - add to reservoir or floor
                     if (gameState.reservoir.length < RESERVOIR_CAPACITY) {
                         gameState.reservoir.push(fl.letter);
                         updateWordRadar();
@@ -1025,19 +1014,66 @@
                         addFloorLetter(fl.letter);
                     }
                     toRemove.push(fl.id);
-                } else if (gameState.grid[fl.y][fl.x]) {
-                    // Hit something in grid
-                    const cell = gameState.grid[fl.y][fl.x];
+                    return;
+                }
 
-                    if (cell.type === 'brick') {
-                        const dmg = (LETTER_TYPES[fl.type] || LETTER_TYPES.rain).damage;
-                        cell.hp -= dmg;
-                        // Letter is destroyed on impact — does NOT go to reservoir
-                        if (cell.hp <= 0) {
-                            gameState.grid[fl.y][fl.x] = null;
+                // Check if hit something in grid
+                const cell = gameState.grid[fl.y][fl.x];
+                if (!cell) return; // empty cell, keep falling
+
+                if (cell.type === 'brick') {
+                    // Piercing damage: letter power travels down through bricks
+                    let power = (LETTER_TYPES[fl.type] || LETTER_TYPES.rain).damage;
+                    let totalDmg = 0;
+
+                    for (let row = fl.y; row >= 0 && power > 0; row--) {
+                        const brick = gameState.grid[row][fl.x];
+                        if (!brick || brick.type !== 'brick') {
+                            // Check if cat is at this position
+                            if (fl.x === gameState.catPosition.x && row === gameState.catPosition.y) {
+                                gameState.catHP -= power;
+                                gameState.catHitTime = Date.now();
+                                showMessage(`😿 Cat hit by ${fl.type}! (-${power})`, 'error');
+                                power = 0;
+                            }
+                            break; // gap in bricks — stop piercing
+                        }
+
+                        if (brick.hp <= power) {
+                            // Brick destroyed, remaining power continues
+                            power -= brick.hp;
+                            totalDmg += brick.hp;
+                            gameState.grid[row][fl.x] = null;
+                        } else {
+                            // Brick survives with reduced HP
+                            brick.hp -= power;
+                            totalDmg += power;
+                            power = 0;
                         }
                     }
+
+                    // If power remains after all bricks, check cat below
+                    if (power > 0) {
+                        if (fl.x === gameState.catPosition.x) {
+                            gameState.catHP -= power;
+                            gameState.catHitTime = Date.now();
+                            showMessage(`😿 Cat hit by ${fl.type}! (-${power})`, 'error');
+                        }
+                    }
+
                     toRemove.push(fl.id);
+                } else if (cell.type === 'pole') {
+                    // Hit pole — just stop
+                    toRemove.push(fl.id);
+                } else {
+                    // Hit cat directly (no bricks above)
+                    if (fl.x === gameState.catPosition.x && fl.y === gameState.catPosition.y) {
+                        const dmg = (LETTER_TYPES[fl.type] || LETTER_TYPES.rain).damage;
+                        gameState.catHP -= dmg;
+                        gameState.catHitTime = Date.now();
+                        showMessage(`😿 Cat hit by ${fl.type}! (-${dmg})`, 'error');
+                        toRemove.push(fl.id);
+                    }
                 }
             });
 
@@ -1780,7 +1816,7 @@
                     // Floor letter slams into the cat (always 1 damage)
                     gameState.catHP -= 1;
                     gameState.catHitTime = Date.now();
-                    showMessage('😿 Cat crushed by letters!', 'error');
+                    showMessage('😿 Cat drowning!', 'error');
                     // Letter is destroyed on impact — don't add to new map
                 } else if (shifted < 15) {
                     newFloor.set(shifted, gameState.floorLetters.get(x));
