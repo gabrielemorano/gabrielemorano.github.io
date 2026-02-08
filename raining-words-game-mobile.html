@@ -250,6 +250,11 @@
             transform: translateY(-5px);
         }
 
+        .letter-tile.hinted {
+            box-shadow: 0 0 0 3px #667eea, 0 0 8px rgba(102, 126, 234, 0.5);
+            background: linear-gradient(135deg, #e0e7ff 0%, #c7d2fe 100%);
+        }
+
         .word-input {
             display: flex;
             gap: 5px;
@@ -611,12 +616,12 @@
                     <div class="controls">
                         <button class="btn btn-primary" id="submitBtn">Submit Word</button>
                         <button class="btn btn-secondary" id="clearBtn">Clear</button>
-                        <button class="btn btn-secondary" id="hintBtn">💡 Hint</button>
+                        <button class="btn btn-secondary" id="cheatBtn">🔨 Cheat</button>
                     </div>
                     <div class="message" id="message"></div>
-                    <div id="hintsDisplay" style="margin-top: 10px; display: none;">
+                    <div id="cheatsDisplay" style="margin-top: 10px; display: none;">
                         <div style="font-size: 0.85em; color: #666; margin-bottom: 5px;">Longest words available:</div>
-                        <div id="hintsList" style="display: flex; flex-wrap: wrap; gap: 5px;"></div>
+                        <div id="cheatsList" style="display: flex; flex-wrap: wrap; gap: 5px;"></div>
                     </div>
                 </div>
 
@@ -626,6 +631,14 @@
                     <p style="font-size: 0.85em; color: #666; margin-top: 10px;">
                         💡 Type A-Z to select. Letters damage bricks. Overflow is lost!
                     </p>
+                </div>
+
+                <div class="panel">
+                    <h3>📊 Word Radar</h3>
+                    <div id="wordRadar" style="font-size: 0.9em; color: #666;">Waiting for letters...</div>
+                    <div style="margin-top: 8px;">
+                        <button class="btn btn-secondary" id="hintBtn">💡 Hint</button>
+                    </div>
                 </div>
 
                 <div class="panel">
@@ -654,7 +667,7 @@
                 </div>
             </div>
         </div>
-        <p style="text-align: center; font-size: 0.7em; color: #999; padding: 8px 0;">Last update: 08:33 - 08/02/2026</p>
+        <p style="text-align: center; font-size: 0.7em; color: #999; padding: 8px 0;">Last update: 09:54 - 08/02/2026</p>
     </div>
 
     <!-- Help Modal -->
@@ -842,9 +855,13 @@
             gameState.letterSpawnInterval = SPEED_NORMAL;
             gameState.letterDescentInterval = SPEED_NORMAL;
             gameState.isPaused = false;
+            gameState.hintHighlights = [];  // reservoir indices currently highlighted by hint
+            gameState.hintSequence = [];    // pre-computed sequence of reservoir indices to highlight
+            gameState.hintStep = 0;         // current position in hintSequence
 
             renderGrid();
             renderReservoir();
+            updateWordRadar();
             updateStats();
             updateWeatherForecast();
             startGameLoop();
@@ -915,6 +932,7 @@
                     // Hit ground - add to reservoir or floor
                     if (gameState.reservoir.length < RESERVOIR_CAPACITY) {
                         gameState.reservoir.push(fl.letter);
+                        updateWordRadar();
                     } else {
                         // Reservoir full — add to floor using push mechanic
                         addFloorLetter(fl.letter);
@@ -1025,6 +1043,9 @@
                 if (gameState.selectedLetters.includes(index)) {
                     tile.classList.add('selected');
                 }
+                if (gameState.hintHighlights && gameState.hintHighlights.includes(index)) {
+                    tile.classList.add('hinted');
+                }
 
                 tile.addEventListener('click', () => selectLetter(index));
                 reservoirEl.appendChild(tile);
@@ -1066,8 +1087,201 @@
             renderReservoir();
         }
 
-        // Find top 5 longest words formable from reservoir letters
-        function showHints() {
+        // Word Radar: count formable words by length, show top 3 groups (3+ letters)
+        function updateWordRadar() {
+            const radarEl = document.getElementById('wordRadar');
+            if (!radarEl) return;
+
+            if (gameState.reservoir.length < 3) {
+                radarEl.textContent = 'Waiting for letters...';
+                return;
+            }
+
+            // Count available letters in reservoir
+            const available = {};
+            gameState.reservoir.forEach(l => {
+                const lower = l.toLowerCase();
+                available[lower] = (available[lower] || 0) + 1;
+            });
+
+            // Count valid words by length
+            const countByLength = {};
+            for (const word of DICTIONARY) {
+                if (word.length < 3 || word.length > gameState.reservoir.length) continue;
+                const needed = {};
+                let valid = true;
+                for (const ch of word) {
+                    needed[ch] = (needed[ch] || 0) + 1;
+                    if (needed[ch] > (available[ch] || 0)) { valid = false; break; }
+                }
+                if (valid) {
+                    countByLength[word.length] = (countByLength[word.length] || 0) + 1;
+                }
+            }
+
+            // Sort by descending length, take top 3
+            const groups = Object.entries(countByLength)
+                .map(([len, count]) => ({ len: Number(len), count }))
+                .sort((a, b) => b.len - a.len)
+                .slice(0, 3);
+
+            if (groups.length === 0) {
+                radarEl.textContent = 'No words available';
+                return;
+            }
+
+            radarEl.innerHTML = groups
+                .map(g => `${g.count} × ${g.len}-letter ${g.count === 1 ? 'word' : 'words'}`)
+                .join('<br>');
+        }
+
+        // Build hint sequence: letters needed for longest word, sub-word first, sorted by reservoir frequency
+        function buildHintSequence() {
+            if (gameState.reservoir.length < 3) return [];
+
+            // Count available letters in reservoir
+            const available = {};
+            gameState.reservoir.forEach(l => {
+                const lower = l.toLowerCase();
+                available[lower] = (available[lower] || 0) + 1;
+            });
+
+            // Find all formable words (3+ letters)
+            const formable = [];
+            for (const word of DICTIONARY) {
+                if (word.length < 3 || word.length > gameState.reservoir.length) continue;
+                const needed = {};
+                let valid = true;
+                for (const ch of word) {
+                    needed[ch] = (needed[ch] || 0) + 1;
+                    if (needed[ch] > (available[ch] || 0)) { valid = false; break; }
+                }
+                if (valid) formable.push(word);
+            }
+
+            if (formable.length === 0) return [];
+
+            // Sort by length descending
+            formable.sort((a, b) => b.length - a.length);
+            const longest = formable[0];
+            const longestLen = longest.length;
+
+            // Get letter counts for the longest word
+            const longestNeeded = {};
+            for (const ch of longest) {
+                longestNeeded[ch] = (longestNeeded[ch] || 0) + 1;
+            }
+
+            // Check if letters of a shorter word are a subset of the longest word's letters
+            function isSubsetOf(shorter, longerNeeded) {
+                const sNeeded = {};
+                for (const ch of shorter) {
+                    sNeeded[ch] = (sNeeded[ch] || 0) + 1;
+                    if (sNeeded[ch] > (longerNeeded[ch] || 0)) return false;
+                }
+                return true;
+            }
+
+            // Find longest sub-word contained within the longest word
+            let subWord = null;
+            for (const w of formable) {
+                if (w.length >= longestLen) continue; // skip same-length words
+                if (isSubsetOf(w, longestNeeded)) {
+                    subWord = w;
+                    break; // already sorted descending, first match is longest
+                }
+            }
+
+            // Build letter need counts: sub-word letters first, then remaining for longest
+            const subNeeded = {};
+            if (subWord) {
+                for (const ch of subWord) {
+                    subNeeded[ch] = (subNeeded[ch] || 0) + 1;
+                }
+            }
+
+            // Remaining letters = longest letters minus sub-word letters
+            const remainNeeded = { ...longestNeeded };
+            for (const [ch, count] of Object.entries(subNeeded)) {
+                remainNeeded[ch] = (remainNeeded[ch] || 0) - count;
+                if (remainNeeded[ch] <= 0) delete remainNeeded[ch];
+            }
+
+            // Sort letters by reservoir frequency descending
+            function sortByFrequency(letterCounts) {
+                const entries = [];
+                for (const [ch, count] of Object.entries(letterCounts)) {
+                    entries.push({ ch, count, freq: available[ch] || 0 });
+                }
+                entries.sort((a, b) => b.freq - a.freq);
+                // Expand: each entry becomes 'count' individual letters
+                const result = [];
+                for (const e of entries) {
+                    for (let i = 0; i < e.count; i++) result.push(e.ch);
+                }
+                return result;
+            }
+
+            const phase1 = subWord ? sortByFrequency(subNeeded) : [];
+            const phase2 = sortByFrequency(remainNeeded);
+            const letterOrder = [...phase1, ...phase2];
+
+            // Map letter order to actual reservoir indices (avoid reusing indices)
+            const usedIndices = new Set();
+            const sequence = [];
+            for (const ch of letterOrder) {
+                const upper = ch.toUpperCase();
+                const idx = gameState.reservoir.findIndex((l, i) => l === upper && !usedIndices.has(i));
+                if (idx !== -1) {
+                    sequence.push(idx);
+                    usedIndices.add(idx);
+                }
+            }
+
+            return sequence;
+        }
+
+        // Handle Hint button press: highlight next letter in sequence
+        function pressHint() {
+            if (gameState.reservoir.length < 3) {
+                showMessage('Need at least 3 letters!', 'error');
+                return;
+            }
+
+            // Rebuild sequence if empty or exhausted
+            if (gameState.hintSequence.length === 0 || gameState.hintStep >= gameState.hintSequence.length) {
+                gameState.hintSequence = buildHintSequence();
+                gameState.hintStep = gameState.hintHighlights.length; // continue from existing highlights
+            }
+
+            if (gameState.hintSequence.length === 0) {
+                showMessage('No words available!', 'error');
+                return;
+            }
+
+            if (gameState.hintStep >= gameState.hintSequence.length) {
+                showMessage('All letters revealed!', 'info');
+                return;
+            }
+
+            const nextIdx = gameState.hintSequence[gameState.hintStep];
+            if (!gameState.hintHighlights.includes(nextIdx)) {
+                gameState.hintHighlights.push(nextIdx);
+            }
+            gameState.hintStep++;
+
+            renderReservoir();
+        }
+
+        // Clear hint highlights (called on word submit)
+        function clearHintHighlights() {
+            gameState.hintHighlights = [];
+            gameState.hintSequence = [];
+            gameState.hintStep = 0;
+        }
+
+        // Find top 5 longest words formable from reservoir letters (Cheat)
+        function showCheats() {
             if (gameState.reservoir.length === 0) {
                 showMessage('No letters in reservoir!', 'error');
                 return;
@@ -1098,25 +1312,25 @@
             const top5 = matches.slice(0, 5);
 
             // Display
-            const hintsDisplay = document.getElementById('hintsDisplay');
-            const hintsList = document.getElementById('hintsList');
-            hintsList.innerHTML = '';
+            const cheatsDisplay = document.getElementById('cheatsDisplay');
+            const cheatsList = document.getElementById('cheatsList');
+            cheatsList.innerHTML = '';
 
             if (top5.length === 0) {
-                hintsList.innerHTML = '<span style="color: #999;">No words found</span>';
+                cheatsList.innerHTML = '<span style="color: #999;">No words found</span>';
             } else {
                 top5.forEach(word => {
                     const chip = document.createElement('span');
                     chip.textContent = `${word.toUpperCase()} (${word.length})`;
                     chip.style.cssText = 'background: linear-gradient(135deg, #667eea, #764ba2); color: white; padding: 4px 10px; border-radius: 12px; font-size: 0.85em; font-weight: bold; cursor: pointer;';
                     chip.addEventListener('click', () => autoSelectWord(word));
-                    hintsList.appendChild(chip);
+                    cheatsList.appendChild(chip);
                 });
             }
-            hintsDisplay.style.display = 'block';
+            cheatsDisplay.style.display = 'block';
         }
 
-        // Auto-select letters for a hint word
+        // Auto-select letters for a cheat word
         function autoSelectWord(word) {
             gameState.selectedLetters = [];
             const used = [];
@@ -1165,8 +1379,10 @@
             gameState.selectedLetters = [];
 
             showMessage(`✅ Placed "${word}"!`, 'success');
-            document.getElementById('hintsDisplay').style.display = 'none';
+            document.getElementById('cheatsDisplay').style.display = 'none';
+            clearHintHighlights();
             renderReservoir();
+            updateWordRadar();
             renderGrid();
             updateStats();
         }
@@ -1493,7 +1709,8 @@
         // Event listeners
         document.getElementById('submitBtn').addEventListener('click', submitWord);
         document.getElementById('clearBtn').addEventListener('click', clearSelection);
-        document.getElementById('hintBtn').addEventListener('click', showHints);
+        document.getElementById('cheatBtn').addEventListener('click', showCheats);
+        document.getElementById('hintBtn').addEventListener('click', pressHint);
         document.getElementById('pauseBtn').addEventListener('click', togglePause);
         document.getElementById('helpBtn').addEventListener('click', () => openModal('helpModal'));
         document.getElementById('restartBtn').addEventListener('click', restartGame);
