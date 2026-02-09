@@ -668,9 +668,13 @@
                 </div>
 
                 <div class="panel">
-                    <h3>🌩️ Next Events</h3>
+                    <h3>🌩️</h3>
                     <div class="weather-forecast" id="weatherForecast">
                         <p style="color: #666;">Loading forecast...</p>
+                    </div>
+                    <div id="nextSeasonPrompt" style="display: none; text-align: center; margin-top: 10px;">
+                        <p id="nextSeasonLabel" style="font-weight: bold; font-size: 1.1em; margin-bottom: 8px;"></p>
+                        <button class="btn btn-primary" id="nextSeasonBtn">Next Season ▶</button>
                     </div>
                 </div>
 
@@ -693,7 +697,7 @@
                 </div>
             </div>
         </div>
-        <p style="text-align: center; font-size: 0.7em; color: #999; padding: 8px 0;">Last update: 16:50 - 08/02/2026</p>
+        <p style="text-align: center; font-size: 0.7em; color: #999; padding: 8px 0;">Last update: 10:05 - 09/02/2026</p>
     </div>
 
     <!-- Help Modal -->
@@ -770,7 +774,7 @@
         const GRID_HEIGHT = 20;              // number of rows
 
         // --- Timing ---
-        const TICK_RATE = 125;               // ms per game tick (main loop interval)
+        const TICK_RATE = 25;               // ms per game tick (main loop interval)
 
         // --- Reservoir ---
         const RESERVOIR_CAPACITY = 18;       // max letters the player can hold
@@ -783,7 +787,7 @@
         const LETTER_TYPES = {
             rain:      { damage: 1,  bg: '#4A90D9', color: '#FFFFFF' },
             hail:      { damage: 5,  bg: '#FFFFFF', color: '#4A90D9' },
-            lightning: { damage: 10, bg: '#FFFFFF', color: '#DAA520' }
+            lightning: { damage: 10, bg: '#F0FB3E', color: '#4A90D9' }
         };
 
         // --- Speed presets (ms per descent tick) ---
@@ -793,6 +797,7 @@
 
         // --- Season tuning (1 tick = 1 descent = 1 day) ---
         const SEASON_LENGTH = 90;            // days per season
+        const SEASON_SPAWN_CUTOFF = 20;      // stop spawning this many ticks before season ends (= GRID_HEIGHT)
 
         // --- Floor letter tuning ---
         const FLOOR_LETTER_MAX_HP = 20;      // starting HP of each floor letter
@@ -856,27 +861,27 @@
         // type: 'none', 'rain', 'hail', 'lightning'
         // stormTicks: how many ticks the storm lasts, calmTicks: how many ticks of calm after
         const SEASONS = [
-            { name: 'Spring', emoji: '🌱', stormTicks: 12, calmTicks: 18, events: [
+            { name: 'Spring', emoji: '🌱', stormTicks: 12, calmTicks: 0, events: [
                 [0.05, { count: 0, type: 'none' }],        //  5% nothing
                 [0.75, { count: 1, type: 'rain' }],        // 70% 1 rain
                 [0.80, { count: 2, type: 'rain' }],        //  5% 2 rain
                 [0.90, { count: 1, type: 'hail' }],        // 10% 1 hail
                 [1.00, { count: 1, type: 'lightning' }]     // 10% 1 lightning
             ]},
-            { name: 'Summer', emoji: '☀️', stormTicks: 8, calmTicks: 22, events: [
+            { name: 'Summer', emoji: '☀️', stormTicks: 8, calmTicks: 0, events: [
                 [0.60, { count: 0, type: 'none' }],        // 60% nothing
                 [0.90, { count: 1, type: 'rain' }],        // 30% 1 rain
                 [0.95, { count: 1, type: 'hail' }],        //  5% 1 hail
                 [1.00, { count: 1, type: 'lightning' }]     //  5% 1 lightning
             ]},
-            { name: 'Autumn', emoji: '🍂', stormTicks: 15, calmTicks: 15, events: [
+            { name: 'Autumn', emoji: '🍂', stormTicks: 15, calmTicks: 0, events: [
                 [0.15, { count: 0, type: 'none' }],        // 15% nothing
                 [0.75, { count: 1, type: 'rain' }],        // 60% 1 rain
                 [0.80, { count: 2, type: 'rain' }],        //  5% 2 rain
                 [0.90, { count: 1, type: 'hail' }],        // 10% 1 hail
                 [1.00, { count: 1, type: 'lightning' }]     // 10% 1 lightning
             ]},
-            { name: 'Winter', emoji: '❄️', stormTicks: 20, calmTicks: 10, events: [
+            { name: 'Winter', emoji: '❄️', stormTicks: 20, calmTicks: 0, events: [
                 [0.10, { count: 0, type: 'none' }],        // 10% nothing
                 [0.45, { count: 1, type: 'rain' }],        // 35% 1 rain
                 [0.65, { count: 2, type: 'rain' }],        // 20% 2 rain
@@ -960,6 +965,7 @@
             gameState.hintStep = 0;         // current position in hintSequence
             gameState.hintTargetWord = '';   // the target word for hint/clue
             gameState.hintRevealed = [];    // booleans for which positions are revealed
+            gameState.hintTargetLength = 0;  // 0 = auto (longest), >0 = player-chosen length
             gameState.hintPositionMap = []; // maps step index to position in target word    // array of booleans, which positions in target word are revealed
             gameState.wordsPlacedByLength = {};  // { length: count }
             gameState.fullShelterCount = 0;      // times any row was completely filled
@@ -967,6 +973,7 @@
             gameState.treats = 0;                // reward points
             gameState.weatherCycleTick = 0;      // current tick within storm/calm cycle
             gameState.isStorming = true;          // start in storm phase
+            gameState.seasonTransition = false;   // true = between seasons, waiting for player
 
             renderGrid();
             renderReservoir();
@@ -1030,6 +1037,12 @@
 
             gameState.fallingLetters.forEach(fl => {
                 fl.y--;
+                // Lightning zigzags: randomly shift left or right each tick
+                if (fl.type === 'lightning') {
+                    const shift = Math.random() < 0.5 ? -1 : 1;
+                    const newX = fl.x + shift;
+                    if (newX >= 0 && newX < GRID_WIDTH) fl.x = newX;
+                }
 
                 // Check if landed on ground or in reservoir
                 if (fl.y < 0) {
@@ -1146,8 +1159,7 @@
                             cell.classList.add('falling-letter');
                             cell.textContent = fallingLetter.letter;
                             const lt = LETTER_TYPES[fallingLetter.type] || LETTER_TYPES.rain;
-                            cell.style.background = lt.bg;
-                            cell.style.color = lt.color;
+                            cell.style.cssText += `background: ${lt.bg} !important; background-image: none !important; color: ${lt.color} !important;`;
                         } else {
                             // Check grid content
                             const gridCell = gameState.grid[y][x];
@@ -1328,20 +1340,64 @@
                 }
             }
 
-            // Sort by descending length, take top 3
-            const groups = Object.entries(countByLength)
+            // All lengths sorted descending
+            const allGroups = Object.entries(countByLength)
                 .map(([len, count]) => ({ len: Number(len), count }))
-                .sort((a, b) => b.len - a.len)
-                .slice(0, 3);
+                .sort((a, b) => b.len - a.len);
 
-            if (groups.length === 0) {
+            if (allGroups.length === 0) {
                 radarEl.textContent = 'No words available';
                 return;
             }
 
-            radarEl.innerHTML = groups
-                .map(g => `${g.count} × ${g.len}-letter ${g.count === 1 ? 'word' : 'words'}`)
-                .join('<br>');
+            // Left: top 3 longest, Right: top 3 shortest (no overlap)
+            const longest3 = allGroups.slice(0, 3);
+            const longestLens = new Set(longest3.map(g => g.len));
+            const shortest3 = allGroups
+                .slice()
+                .reverse()
+                .filter(g => !longestLens.has(g.len))
+                .slice(0, 3)
+                .sort((a, b) => a.len - b.len);
+
+            const locked = gameState.hintTargetLength > 0;
+
+            function renderRow(g) {
+                const checked = gameState.hintTargetLength === g.len ? 'checked' : '';
+                const disabled = locked ? 'disabled' : '';
+                return '<label style="display:flex; align-items:center; gap:4px; cursor:' + (locked ? 'default' : 'pointer') + ';">' +
+                    '<input type="checkbox" ' + checked + ' ' + disabled + ' data-radar-len="' + g.len + '" style="margin:0;">' +
+                    '<span>' + g.count + ' × ' + g.len + '-letter</span></label>';
+            }
+
+            // Build 2-column layout
+            let html = '<div style="display:grid; grid-template-columns:1fr 1fr; gap:2px 12px;">';
+            html += '<div style="font-size:0.8em; color:#999; margin-bottom:2px;">Longest</div>';
+            html += '<div style="font-size:0.8em; color:#999; margin-bottom:2px;">Shortest</div>';
+            const maxRows = Math.max(longest3.length, shortest3.length);
+            for (let i = 0; i < maxRows; i++) {
+                html += longest3[i] ? renderRow(longest3[i]) : '<div></div>';
+                html += shortest3[i] ? renderRow(shortest3[i]) : '<div></div>';
+            }
+            html += '</div>';
+
+            radarEl.innerHTML = html;
+
+            // Attach checkbox listeners
+            radarEl.querySelectorAll('input[data-radar-len]').forEach(cb => {
+                cb.addEventListener('change', () => {
+                    if (cb.checked) {
+                        gameState.hintTargetLength = Number(cb.dataset.radarLen);
+                        gameState.hintTargetWord = '';
+                        gameState.hintSequence = [];
+                        gameState.hintStep = 0;
+                        gameState.hintHighlights = [];
+                        gameState.hintRevealed = [];
+                        document.getElementById('hintPlaceholder').style.display = 'none';
+                        updateWordRadar();
+                    }
+                });
+            });
         }
 
         // Build hint sequence: letters needed for longest word, sub-word first, sorted by reservoir frequency
@@ -1371,7 +1427,14 @@
 
             if (formable.length === 0) return;
 
-            // Sort by length descending
+            // Filter by chosen length if player selected one, otherwise pick longest
+            if (gameState.hintTargetLength > 0) {
+                const filtered = formable.filter(w => w.length === gameState.hintTargetLength);
+                if (filtered.length > 0) {
+                    formable.length = 0;
+                    filtered.forEach(w => formable.push(w));
+                }
+            }
             formable.sort((a, b) => b.length - a.length);
             const longest = formable[0];
             const longestLen = longest.length;
@@ -1470,7 +1533,7 @@
             gameState.hintHighlights = [];
         }
 
-        // Render the placeholder (underscores with revealed letters)
+        // Render the placeholder (underscores with revealed letters + hinted letters below)
         function renderPlaceholder() {
             const el = document.getElementById('hintPlaceholder');
             if (!gameState.hintTargetWord) {
@@ -1478,10 +1541,19 @@
                 return;
             }
             el.style.display = 'block';
+            // Line 1: target word with underscores and clue-revealed letters
             const chars = gameState.hintTargetWord.split('').map((ch, i) =>
                 gameState.hintRevealed[i] ? ch.toUpperCase() : '_'
             );
-            el.textContent = chars.join(' ');
+            // Line 2: hinted letters so far (in hint sequence order, scrambled)
+            const hintedLetters = gameState.hintHighlights
+                .map(idx => gameState.reservoir[idx])
+                .filter(l => l !== undefined);
+            let html = `<div>${chars.join(' ')}</div>`;
+            if (hintedLetters.length > 0) {
+                html += `<div style="margin-top: 4px; color: #667eea; font-weight: bold;">${hintedLetters.join(' ')}</div>`;
+            }
+            el.innerHTML = html;
         }
 
         // Advance hint/clue by one step; revealPosition = true for Clue
@@ -1501,9 +1573,6 @@
                 return;
             }
 
-            // Show placeholder on first press
-            renderPlaceholder();
-
             if (gameState.hintStep >= gameState.hintSequence.length) {
                 // All letters already highlighted in reservoir
                 if (revealPosition) {
@@ -1519,11 +1588,47 @@
                 return;
             }
 
-            // Highlight reservoir tile
+            // Highlight reservoir tile and move it to the front
             const nextIdx = gameState.hintSequence[gameState.hintStep];
-            if (!gameState.hintHighlights.includes(nextIdx)) {
-                gameState.hintHighlights.push(nextIdx);
+            const targetSlot = gameState.hintHighlights.length; // next front position
+
+            // Move tile from nextIdx to targetSlot in the reservoir
+            if (nextIdx !== targetSlot) {
+                const [letter] = gameState.reservoir.splice(nextIdx, 1);
+                gameState.reservoir.splice(targetSlot, 0, letter);
+
+                // Update all future indices in hintSequence to reflect the move
+                for (let i = gameState.hintStep + 1; i < gameState.hintSequence.length; i++) {
+                    const si = gameState.hintSequence[i];
+                    if (si === nextIdx) {
+                        // This shouldn't happen (same index twice), but handle it
+                        gameState.hintSequence[i] = targetSlot;
+                    } else if (si >= targetSlot && si < nextIdx) {
+                        // Indices in [targetSlot, nextIdx) shift right by 1
+                        gameState.hintSequence[i] = si + 1;
+                    }
+                }
+
+                // Update existing hintHighlights indices similarly
+                for (let i = 0; i < gameState.hintHighlights.length; i++) {
+                    const hi = gameState.hintHighlights[i];
+                    if (hi >= targetSlot && hi < nextIdx) {
+                        gameState.hintHighlights[i] = hi + 1;
+                    }
+                }
+
+                // Also update selectedLetters if any are affected
+                for (let i = 0; i < gameState.selectedLetters.length; i++) {
+                    const si = gameState.selectedLetters[i];
+                    if (si === nextIdx) {
+                        gameState.selectedLetters[i] = targetSlot;
+                    } else if (si >= targetSlot && si < nextIdx) {
+                        gameState.selectedLetters[i] = si + 1;
+                    }
+                }
             }
+
+            gameState.hintHighlights.push(targetSlot);
 
             // Reveal position in placeholder if Clue
             if (revealPosition) {
@@ -1533,6 +1638,7 @@
             }
 
             gameState.hintStep++;
+            renderPlaceholder();
             renderReservoir();
         }
 
@@ -1558,7 +1664,9 @@
             gameState.hintStep = 0;
             gameState.hintTargetWord = '';
             gameState.hintRevealed = [];
+            gameState.hintTargetLength = 0;
             document.getElementById('hintPlaceholder').style.display = 'none';
+            updateWordRadar(); // refresh radar to unlock checkboxes
         }
 
         // Find top 5 longest words formable from reservoir letters (Cheat)
@@ -1698,6 +1806,7 @@
 
             gameState.selectedLetters = [];
 
+            showConfetti();
             showMessage(`✅ Placed "${word}"!`, 'success');
             document.getElementById('cheatsDisplay').style.display = 'none';
             clearHintHighlights();
@@ -1757,6 +1866,56 @@
         }
 
         // Show message
+        // Confetti burst effect
+        function showConfetti() {
+            const container = document.getElementById('gameGrid');
+            if (!container) return;
+            const rect = container.getBoundingClientRect();
+            const colors = ['#667eea', '#22c55e', '#f59e0b', '#ef4444', '#ec4899', '#8b5cf6', '#06b6d4'];
+            const count = 40;
+
+            for (let i = 0; i < count; i++) {
+                const particle = document.createElement('div');
+                const color = colors[Math.floor(Math.random() * colors.length)];
+                const size = Math.random() * 6 + 4;
+                const startX = rect.left + rect.width * 0.3 + Math.random() * rect.width * 0.4;
+                const startY = rect.top + rect.height * 0.5;
+                const angle = Math.random() * Math.PI * 2;
+                const velocity = 60 + Math.random() * 120;
+                const dx = Math.cos(angle) * velocity;
+                const dy = Math.sin(angle) * velocity - 80; // bias upward
+
+                particle.style.cssText = `
+                    position: fixed; left: ${startX}px; top: ${startY}px;
+                    width: ${size}px; height: ${size}px;
+                    background: ${color};
+                    border-radius: ${Math.random() > 0.5 ? '50%' : '2px'};
+                    pointer-events: none; z-index: 9999;
+                    opacity: 1;
+                `;
+                document.body.appendChild(particle);
+
+                const duration = 800 + Math.random() * 600;
+                const start = performance.now();
+
+                function animate(now) {
+                    const t = Math.min((now - start) / duration, 1);
+                    const ease = 1 - (1 - t) * (1 - t); // ease-out quad
+                    const gravity = 200 * t * t;
+                    particle.style.left = (startX + dx * ease) + 'px';
+                    particle.style.top = (startY + dy * ease + gravity) + 'px';
+                    particle.style.opacity = 1 - t;
+                    particle.style.transform = 'rotate(' + (t * 360 * (Math.random() > 0.5 ? 1 : -1)) + 'deg)';
+                    if (t < 1) {
+                        requestAnimationFrame(animate);
+                    } else {
+                        particle.remove();
+                    }
+                }
+                requestAnimationFrame(animate);
+            }
+        }
+
         function showMessage(text, type) {
             const messageEl = document.getElementById('message');
             messageEl.textContent = text;
@@ -1811,10 +1970,10 @@
             const nextSeason = SEASONS[nextSeasonIndex];
 
             const intensityText = {
-                'Spring': '🌧️ 70% rain · 5% double · 10% hail · 10% ⚡',
-                'Summer': '☀️ 60% calm · 30% rain · 5% hail · 5% ⚡',
-                'Autumn': '🍂 60% rain · 5% double · 10% hail · 10% ⚡',
-                'Winter': '❄️ 35% rain · 20% double · 15% hail · 20% ⚡'
+                'Spring': '70% 🌧️ · 5% 🌦️ · 10% 🧊 · 10% ⚡',
+                'Summer': '60% ☀️ · 30% 🌧️ · 5% 🧊 · 5% ⚡',
+                'Autumn': '60% 🌧️ · 5% 🌦️ · 10% 🧊 · 10% ⚡',
+                'Winter': '35% 🌧️ · 20% 🌦️ · 15% 🧊 · 20% ⚡'
             };
 
             const forecastEl = document.getElementById('weatherForecast');
@@ -1925,6 +2084,32 @@
             }
         }
 
+        // Show the "Next Season" prompt
+        function showNextSeasonPrompt() {
+            const nextIndex = (gameState.seasonIndex + 1) % 4;
+            const nextSeason = SEASONS[nextIndex];
+            document.getElementById('nextSeasonLabel').textContent =
+                `${nextSeason.emoji} ${nextSeason.name}`;
+            document.getElementById('nextSeasonPrompt').style.display = 'block';
+            updateWeatherForecast();
+        }
+
+        // Advance to the next season (called by button click)
+        function advanceToNextSeason() {
+            gameState.seasonDay = 1;
+            gameState.seasonIndex = (gameState.seasonIndex + 1) % 4;
+            // New year when cycling back to Spring (index 0)
+            if (gameState.seasonIndex === 0) {
+                gameState.treats += TREAT_NEW_YEAR;
+            }
+            gameState.weatherCycleTick = 0;
+            gameState.isStorming = true;
+            gameState.seasonTransition = false;
+            document.getElementById('nextSeasonPrompt').style.display = 'none';
+            updateWeatherForecast();
+            updateStats();
+        }
+
         // Toggle pause
         function togglePause() {
             gameState.isPaused = !gameState.isPaused;
@@ -1936,10 +2121,13 @@
             gameState.gameLoopId = setInterval(() => {
                 if (gameState.isPaused) return;
 
+                // During season transition, skip spawning and time progression
+                if (gameState.seasonTransition) return;
+
                 // Spawn letters at configurable interval (only during storm phase)
                 gameState.letterSpawnTimer += TICK_RATE;
                 if (gameState.letterSpawnTimer >= gameState.letterSpawnInterval) {
-                    if (gameState.isStorming) {
+                    if (gameState.isStorming && gameState.seasonDay <= SEASON_LENGTH - SEASON_SPAWN_CUTOFF) {
                         spawnLetter();
                     }
                     gameState.letterSpawnTimer = 0;
@@ -1962,14 +2150,10 @@
                     // Advance day (1 tick = 1 day)
                     gameState.lifeDays++;
                     if (gameState.seasonDay >= SEASON_LENGTH) {
-                        gameState.seasonDay = 1;
-                        gameState.treats += TREAT_SEASON_COMPLETE; // season completed
-                        const prevIndex = gameState.seasonIndex;
-                        gameState.seasonIndex = (gameState.seasonIndex + 1) % 4;
-                        // New year when cycling back to Spring (index 0)
-                        if (gameState.seasonIndex === 0) {
-                            gameState.treats += TREAT_NEW_YEAR;
-                        }
+                        // Season complete — enter transition (no auto-advance)
+                        gameState.treats += TREAT_SEASON_COMPLETE;
+                        gameState.seasonTransition = true;
+                        showNextSeasonPrompt();
                     } else {
                         gameState.seasonDay++;
                     }
@@ -2060,6 +2244,8 @@
         document.getElementById('speedFastBtn').addEventListener('click', () => setSpeed(SPEED_FAST));
 
         // Keyboard shortcuts
+        document.getElementById('nextSeasonBtn').addEventListener('click', advanceToNextSeason);
+
         document.addEventListener('keydown', (e) => {
             if (gameState.isPaused && e.key !== ' ' && e.key !== 'Escape') return;
 
