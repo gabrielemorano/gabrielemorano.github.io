@@ -2117,20 +2117,25 @@
         }
 
         // Floating banner overlay on the grid — appears, holds, then fades out
+        // Uses fixed positioning calculated from grid bounding rect to avoid
+        // Safari CSS Grid issues with position:absolute children
         function showBanner(text) {
-            const container = document.getElementById('gameGrid');
-            if (!container) return;
+            const grid = document.getElementById('gameGrid');
+            if (!grid) return;
 
             const banner = document.createElement('div');
             banner.textContent = text;
-            // Position: 2 rows below the ceiling, horizontally centered
-            const firstCell = container.querySelector('.cell');
-            const cellH = firstCell ? firstCell.getBoundingClientRect().height + 1 : 29; // cell + gap
-            const topOffset = 2 * cellH + (parseFloat(getComputedStyle(container).paddingTop) || 0);
+
+            // Calculate position: 2 rows below grid top, horizontally centered on grid
+            const gridRect = grid.getBoundingClientRect();
+            const firstCell = grid.querySelector('.cell');
+            const cellH = firstCell ? firstCell.getBoundingClientRect().height + 1 : 29;
+            const topPos = gridRect.top + 2 * cellH;
+            const centerX = gridRect.left + gridRect.width / 2;
 
             banner.style.cssText = `
-                position: absolute;
-                top: ${topOffset}px; left: 50%;
+                position: fixed;
+                top: ${topPos}px; left: ${centerX}px;
                 transform: translate(-50%, 0) scale(0.5);
                 background: rgba(15, 23, 42, 0.92);
                 color: #fbbf24;
@@ -2140,16 +2145,13 @@
                 border-radius: 12px;
                 border: 2px solid #fbbf24;
                 pointer-events: none;
-                z-index: 100;
+                z-index: 9999;
                 white-space: nowrap;
                 text-align: center;
                 opacity: 0;
-                transition: none;
             `;
 
-            // Grid itself needs relative positioning for the overlay
-            container.style.position = 'relative';
-            container.appendChild(banner);
+            document.body.appendChild(banner);
 
             const startTime = performance.now();
             const fadeInDur = 200;
