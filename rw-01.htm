@@ -395,19 +395,6 @@
             margin-bottom: 20px;
         }
 
-        .help-section {
-            margin-bottom: 20px;
-        }
-
-        .help-section h3 {
-            color: #667eea;
-            margin-bottom: 10px;
-        }
-
-        .help-section p {
-            line-height: 1.6;
-            margin-bottom: 10px;
-        }
 
         .loading-spinner {
             display: inline-block;
@@ -550,9 +537,6 @@
             .modal-content h2 {
                 font-size: 1.2em;
             }
-            .help-section p {
-                font-size: 0.85em;
-            }
         }
     </style>
 </head>
@@ -645,7 +629,7 @@
                     <h3>⚙️ Game Menu</h3>
                     <div class="controls">
                         <button class="btn btn-secondary" id="pauseBtn">⏸️ Pause</button>
-                        <button class="btn btn-secondary" id="helpBtn">❓ Help</button>
+                        <button class="btn btn-danger" id="nukeBtn">💥 Nuke</button>
 
                     </div>
                     <div class="controls" style="margin-top: 8px;">
@@ -675,59 +659,7 @@
         </div>
     </div>
 
-    <!-- Help Modal -->
-    <div class="modal" id="helpModal">
-        <div class="modal-content">
-            <h2>❓ How to Play</h2>
 
-            <div class="help-section">
-                <h3>🎯 Goal</h3>
-                <p>Protect your cat from falling letters by building a word shelter! Survive as many days as possible.</p>
-            </div>
-
-            <div class="help-section">
-                <h3>🔤 Letters Rain Down</h3>
-                <p>• Letters fall from the sky every 3 seconds<br>
-                • They land in your reservoir (max 18)<br>
-                • Overflow letters are LOST<br>
-                • Letters damage any bricks they hit (-1 HP each)<br>
-                • Letters damage your cat if not sheltered!<br>
-                • Letters hitting bricks go to reservoir if space available</p>
-            </div>
-
-            <div class="help-section">
-                <h3>🏗️ Building Words</h3>
-                <p>• Click letters from reservoir to build words<br>
-                • Type A-Z to select matching letters<br>
-                • Backspace to deselect last letter<br>
-                • Each letter brick has 8 HP<br>
-                • Submit to place words as shelter<br>
-                • Words must rest on ground or other bricks</p>
-            </div>
-
-            <div class="help-section">
-                <h3>🌱 Seasons Change</h3>
-                <p>• Spring: Steady rain (1 letter/tick)<br>
-                • Summer: Light (50% skip, 50% one)<br>
-                • Autumn: Mixed (25% skip, 50% one, 25% two)<br>
-                • Winter: Storm (50% one, 25% two, 25% three)<br>
-                • Each season lasts 90 days (1 tick = 1 day)</p>
-            </div>
-
-            <div class="help-section">
-                <h3>⚡ Strategy</h3>
-                <p>• Build shelter ABOVE your cat<br>
-                • Use letters quickly before overflow<br>
-                • Damaged bricks glow yellow/red<br>
-                • Plan ahead for incoming storms!<br>
-                • Set rain speed: Slow / Normal / Fast</p>
-            </div>
-
-            <div class="controls">
-                <button class="btn btn-primary" onclick="closeModal('helpModal')">Got it!</button>
-            </div>
-        </div>
-    </div>
 
     <div class="modal" id="gameOverModal">
         <div class="modal-content">
@@ -1332,14 +1264,20 @@
                 tile.textContent = letter;
                 tile.dataset.index = index;
 
-                if (gameState.selectedLetters.includes(index)) {
+                const isUsed = gameState.selectedLetters.includes(index);
+                if (isUsed) {
                     tile.classList.add('selected');
+                    tile.style.opacity = '0.35';
+                    tile.style.cursor = 'default';
+                    tile.style.pointerEvents = 'none';
                 }
                 if (gameState.hintHighlights && gameState.hintHighlights.includes(index)) {
                     tile.classList.add('hinted');
                 }
 
-                tile.addEventListener('click', () => selectLetter(index));
+                if (!isUsed) {
+                    tile.addEventListener('click', () => selectLetter(index));
+                }
                 reservoirEl.appendChild(tile);
             });
 
@@ -1361,16 +1299,10 @@
 
         }
 
-        // Select/deselect letter
+        // Select letter (append only — no toggle; use backspace to remove from the end)
         function selectLetter(index) {
-            const selectedIndex = gameState.selectedLetters.indexOf(index);
-
-            if (selectedIndex > -1) {
-                gameState.selectedLetters.splice(selectedIndex, 1);
-            } else {
-                gameState.selectedLetters.push(index);
-            }
-
+            if (gameState.selectedLetters.includes(index)) return; // already used
+            gameState.selectedLetters.push(index);
             renderReservoir();
         }
 
@@ -1651,14 +1583,17 @@
             gameState.hintHighlights = [];
         }
 
-        // Render the placeholder (underscores with revealed letters + hinted letters below)
+        // Render the placeholder (underscores with revealed letters + hinted letters below + delete icon)
         function renderPlaceholder() {
             const el = document.getElementById('hintPlaceholder');
             if (!gameState.hintTargetWord) {
                 el.style.display = 'none';
                 return;
             }
-            el.style.display = 'block';
+            el.style.display = 'flex';
+            el.style.alignItems = 'center';
+            el.style.justifyContent = 'center';
+            el.style.gap = '10px';
             // Line 1: target word with underscores and clue-revealed letters
             const chars = gameState.hintTargetWord.split('').map((ch, i) =>
                 gameState.hintRevealed[i] ? ch.toUpperCase() : '_'
@@ -1667,11 +1602,20 @@
             const hintedLetters = gameState.hintHighlights
                 .map(idx => gameState.reservoir[idx])
                 .filter(l => l !== undefined);
-            let html = `<div>${chars.join(' ')}</div>`;
+            let html = '<div style="flex:1; text-align:center;">';
+            html += `<div>${chars.join(' ')}</div>`;
             if (hintedLetters.length > 0) {
                 html += `<div style="margin-top: 4px; color: #667eea; font-weight: bold;">${hintedLetters.join(' ')}</div>`;
             }
+            html += '</div>';
+            html += '<span id="hintDeleteBtn" style="cursor:pointer; font-size:1.2em; color:#ef4444; flex-shrink:0;" title="Reset hint">🗑️</span>';
             el.innerHTML = html;
+            document.getElementById('hintDeleteBtn').addEventListener('click', () => {
+                if (confirm('Reset current hint? You can then pick a different word length.')) {
+                    clearHintHighlights();
+                    renderReservoir();
+                }
+            });
         }
 
         // Advance hint/clue by one step; revealPosition = true for Clue
@@ -1761,8 +1705,24 @@
         }
 
         // Handle Hint button press: highlight letter only
+        // Auto-select longest word length if none ticked yet
+        function autoSelectLongestIfNeeded() {
+            if (gameState.hintTargetLength > 0) return; // already selected
+            const firstCb = document.querySelector('#wordRadar input[data-radar-len]');
+            if (!firstCb) return;
+            gameState.hintTargetLength = Number(firstCb.dataset.radarLen);
+            gameState.hintTargetWord = '';
+            gameState.hintSequence = [];
+            gameState.hintStep = 0;
+            gameState.hintHighlights = [];
+            gameState.hintRevealed = [];
+            document.getElementById('hintPlaceholder').style.display = 'none';
+            updateWordRadar();
+        }
+
         function pressHint() {
             if (gameState.treats < TREAT_HINT_COST) return;
+            autoSelectLongestIfNeeded();
             advanceHint(false);
             gameState.treats -= TREAT_HINT_COST;
             updateStats();
@@ -1771,6 +1731,7 @@
         // Handle Clue button press: highlight letter + reveal position
         function pressClue() {
             if (gameState.treats < TREAT_CLUE_COST) return;
+            autoSelectLongestIfNeeded();
             advanceHint(true);
             gameState.treats -= TREAT_CLUE_COST;
             updateStats();
@@ -2827,7 +2788,13 @@
         document.getElementById('hintBtn').addEventListener('click', pressHint);
         document.getElementById('clueBtn').addEventListener('click', pressClue);
         document.getElementById('pauseBtn').addEventListener('click', togglePause);
-        document.getElementById('helpBtn').addEventListener('click', () => openModal('helpModal'));
+        document.getElementById('nukeBtn').addEventListener('click', () => {
+            if (confirm('Delete ALL local storage (save + career)? This cannot be undone.')) {
+                localStorage.removeItem(SAVE_KEY);
+                localStorage.removeItem(CAREER_KEY);
+                location.reload();
+            }
+        });
         // Seed play button: start new game with entered seed
         document.getElementById('seedStartBtn').addEventListener('click', () => {
             const input = document.getElementById('seedInput').value.trim();
@@ -2940,17 +2907,11 @@
                 submitWord();
             }
 
-            // Escape to close modal or clear selection
+            // Escape to clear selection
             if (e.key === 'Escape') {
                 e.preventDefault();
-                const helpModal = document.getElementById('helpModal');
-                if (helpModal.classList.contains('active')) {
-                    closeModal('helpModal');
-                } else {
-                    // Clear all selection on Escape
-                    gameState.selectedLetters = [];
-                    renderReservoir();
-                }
+                gameState.selectedLetters = [];
+                renderReservoir();
             }
 
             // Space to pause
