@@ -718,7 +718,7 @@
         const TREAT_STACK_LEVEL = 50;         // earned per new stack level reached
         const TREAT_SEASON_COMPLETE = 100;    // earned when a season ends
         const TREAT_NEW_YEAR = 500;           // earned when a new year starts
-        const TREAT_CAT_HIT = 25;            // lost each time the cat takes damage
+        const TREAT_CAT_HIT = 150;            // lost each time the cat takes damage
         // Word submit formula: len * (len - 1)   (triangular number)
 
         // ================================================================
@@ -761,27 +761,27 @@
         // type: 'none', 'rain', 'hail', 'lightning'
         // stormTicks: how many ticks the storm lasts, calmTicks: how many ticks of calm after
         const SEASONS = [
-            { name: 'Spring', emoji: '🌱', stormTicks: 12, calmTicks: 0, events: [
+            { name: 'Spring', emoji: '🌱', stormTicks: 16, calmTicks: 10, events: [
                 [0.40, { count: 0, type: 'none' }],        //  5% nothing
                 [0.85, { count: 1, type: 'rain' }],        // 70% 1 rain
                 [0.90, { count: 2, type: 'rain' }],        //  5% 2 rain
                 [0.95, { count: 1, type: 'hail' }],        // 10% 1 hail
                 [1.00, { count: 1, type: 'lightning' }]     // 10% 1 lightning
             ]},
-            { name: 'Summer', emoji: '☀️', stormTicks: 8, calmTicks: 0, events: [
+            { name: 'Summer', emoji: '☀️', stormTicks: 12, calmTicks: 16, events: [
                 [0.60, { count: 0, type: 'none' }],        // 60% nothing
                 [0.90, { count: 1, type: 'rain' }],        // 30% 1 rain
                 [0.95, { count: 2, type: 'rain' }],        //  5% 2 rain
                 [1.00, { count: 1, type: 'lightning' }]     //  5% 1 lightning
             ]},
-            { name: 'Autumn', emoji: '🍂', stormTicks: 15, calmTicks: 0, events: [
+            { name: 'Autumn', emoji: '🍂', stormTicks: 20, calmTicks: 10, events: [
                 [0.30, { count: 0, type: 'none' }],        // 15% nothing
                 [0.80, { count: 1, type: 'rain' }],        // 60% 1 rain
                 [0.90, { count: 2, type: 'rain' }],        //  5% 2 rain
                 [0.95, { count: 1, type: 'hail' }],        // 10% 1 hail
                 [1.00, { count: 1, type: 'lightning' }]     // 10% 1 lightning
             ]},
-            { name: 'Winter', emoji: '❄️', stormTicks: 20, calmTicks: 0, events: [
+            { name: 'Winter', emoji: '❄️', stormTicks: 25, calmTicks: 5, events: [
                 [0.20, { count: 0, type: 'none' }],        // 10% nothing
                 [0.55, { count: 1, type: 'rain' }],        // 35% 1 rain
                 [0.80, { count: 2, type: 'rain' }],        // 20% 2 rain
