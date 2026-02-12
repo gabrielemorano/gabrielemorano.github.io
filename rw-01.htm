@@ -564,6 +564,10 @@
                 <div class="stat-label">🎯 Days Alive</div>
                 <div class="stat-value" id="lifeDays">0</div>
             </div>
+            <div class="stat stat-primary">
+                <div class="stat-label">⭐ XP</div>
+                <div class="stat-value" id="xpDisplay">0</div>
+            </div>
             <div class="stat">
                 <div class="stat-label">🍬 Treats</div>
                 <div class="stat-value" id="treats">0</div>
@@ -728,6 +732,9 @@
         const TREAT_NEW_YEAR = 500;           // earned when a new year starts
         const TREAT_CAT_HIT = 150;            // lost each time the cat takes damage
         // Word submit formula: len * (len - 1)   (triangular number)
+
+        // --- XP table (cumulative per word placed) ---
+        const XP_TABLE = [0,0,0,10,21,44,93,199,429,929,2024,4434,9768,21636,48188,107917,243018,550295,1253057,2869295,6607225,15300762,35634248,83462857,196607704,465800504];
 
         // ================================================================
         //  DATA SETS — large embedded word lists (not tunable)
@@ -981,12 +988,14 @@
                 gameState.stacksMax = career.stacksMax || 0;
                 gameState.treats = career.treats || 0;
                 gameState.maxLifeDays = career.maxLifeDays || 0;
+                gameState.xp = career.xp || 0;
             } else {
                 gameState.wordsPlacedByLength = {};
                 gameState.fullShelterCount = 0;
                 gameState.stacksMax = 0;
                 gameState.treats = 0;
                 gameState.maxLifeDays = 0;
+                gameState.xp = 0;
             }
             gameState.radarHasWords = false;     // whether word radar found any formable words
             gameState.weatherCycleTick = 0;      // current tick within storm/calm cycle
@@ -1349,11 +1358,21 @@
             const el = document.getElementById('achievementBoard');
             if (!el) return;
 
+            // Keep maxLifeDays current regardless of game-loop state
+            if (gameState.lifeDays > (gameState.maxLifeDays || 0)) {
+                gameState.maxLifeDays = gameState.lifeDays;
+            }
+
             const lines = [];
 
             // Max life ever — first item, bold
             if (gameState.maxLifeDays > 0) {
                 lines.push(`<b>${gameState.maxLifeDays} days best</b>`);
+            }
+
+            // XP — bold, right after max life
+            if (gameState.xp > 0) {
+                lines.push(`<b>⭐ ${gameState.xp.toLocaleString()} XP</b>`);
             }
 
             // Word placements by length, sorted descending
@@ -1883,6 +1902,10 @@
             const wordTreats = wordLen * (wordLen - 1) * 10;
             gameState.treats += wordTreats;
 
+            // XP: lookup table by word length
+            const wordXP = wordLen < XP_TABLE.length ? XP_TABLE[wordLen] : XP_TABLE[XP_TABLE.length - 1];
+            gameState.xp += wordXP;
+
             // Check if the row we just placed into is now full (all 16 cells with bricks HP > 0)
             let isFullRow = false;
             {
@@ -1934,9 +1957,9 @@
             // Banners (staggered so they don't overlap)
             const banners = [];
             if (isFirstOfLength) {
-                banners.push(wordLen + '-letter word! 🍬 +' + wordTreats);
+                banners.push(wordLen + '-letter word! 🍬 +' + wordTreats + (wordXP > 0 ? ' ⭐ +' + wordXP.toLocaleString() : ''));
             } else {
-                banners.push('🍬 +' + wordTreats);
+                banners.push('🍬 +' + wordTreats + (wordXP > 0 ? ' ⭐ +' + wordXP.toLocaleString() : ''));
             }
             if (isFullRow) {
                 banners.push('Full shelter! 🍬 +' + TREAT_FULL_SHELTER);
@@ -2214,7 +2237,9 @@
             document.getElementById('shelterHP').textContent = gameState.shelterHP.toLocaleString();
 
             document.getElementById('treats').textContent = gameState.treats;
+            document.getElementById('xpDisplay').textContent = (gameState.xp || 0).toLocaleString();
             updateTreatButtons();
+            updateAchievements();
         }
 
         // Update weather forecast
@@ -2458,6 +2483,7 @@
                         gameState.treats += TREAT_SEASON_COMPLETE;
                         showBanner('Season complete! 🍬 +' + TREAT_SEASON_COMPLETE);
                         gameState.seasonTransition = true;
+                        updateAchievements();
                         showNextSeasonPrompt();
                         autoSave();
                     } else {
@@ -2512,6 +2538,7 @@
                 maxLifeDays: Math.max(prev.maxLifeDays || 0, gameState.maxLifeDays || 0, gameState.lifeDays),
                 stacksMax: Math.max(prev.stacksMax || 0, gameState.stacksMax),
                 fullShelterCount: Math.max(prev.fullShelterCount || 0, gameState.fullShelterCount),
+                xp: Math.max(prev.xp || 0, gameState.xp || 0),
                 wordsPlacedByLength: {}
             };
             // Merge word counts: take max per length
@@ -2580,6 +2607,7 @@
                 hintPositionMap: gameState.hintPositionMap,
                 hintTargetLength: gameState.hintTargetLength,
                 maxLifeDays: gameState.maxLifeDays || 0,
+                xp: gameState.xp || 0,
                 career: loadCareer()
             };
         }
@@ -2651,6 +2679,7 @@
             gameState.hintPositionMap = data.hintPositionMap;
             gameState.hintTargetLength = data.hintTargetLength;
             gameState.maxLifeDays = data.maxLifeDays || 0;
+            gameState.xp = data.xp || 0;
 
             // Merge imported career with local career (take best of both)
             if (data.career) {
@@ -2661,6 +2690,7 @@
                     maxLifeDays: Math.max(local.maxLifeDays || 0, imported.maxLifeDays || 0, gameState.maxLifeDays),
                     stacksMax: Math.max(local.stacksMax || 0, imported.stacksMax || 0, gameState.stacksMax),
                     fullShelterCount: Math.max(local.fullShelterCount || 0, imported.fullShelterCount || 0, gameState.fullShelterCount),
+                    xp: Math.max(local.xp || 0, imported.xp || 0, gameState.xp || 0),
                     wordsPlacedByLength: {}
                 };
                 const lw = local.wordsPlacedByLength || {};
@@ -2676,6 +2706,7 @@
                 gameState.fullShelterCount = merged.fullShelterCount;
                 gameState.stacksMax = merged.stacksMax;
                 gameState.maxLifeDays = merged.maxLifeDays;
+                gameState.xp = merged.xp;
             }
 
             // Restore as paused
