@@ -71,6 +71,18 @@
             box-shadow: 0 1px 3px rgba(0,0,0,0.1);
         }
 
+        .stat-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            box-shadow: 0 2px 8px rgba(102, 126, 234, 0.4);
+        }
+        .stat-primary .stat-label {
+            color: rgba(255,255,255,0.85);
+        }
+        .stat-primary .stat-value {
+            color: white;
+            font-size: 1.4em;
+        }
+
         .stat-label {
             font-size: 0.75em;
             color: #666;
@@ -548,9 +560,9 @@
         </div>
 
         <div class="stats-bar">
-            <div class="stat">
-                <div class="stat-label">Age</div>
-                <div class="stat-value" id="lifeDays">0d</div>
+            <div class="stat stat-primary">
+                <div class="stat-label">🎯 Days Alive</div>
+                <div class="stat-value" id="lifeDays">0</div>
             </div>
             <div class="stat">
                 <div class="stat-label">🍬 Treats</div>
@@ -580,7 +592,7 @@
             </div>
 
                 <div class="panel">
-                    <h3>📝 Word Builder</h3>
+                    <h3>📝 Word Builder <span id="clearAllBtn" style="cursor:pointer; float:right; font-size:0.9em;" title="Clear all tiles">🗑️</span></h3>
                     <div class="word-input" id="wordInput"></div>
                     <div id="hintPlaceholder" style="display: none; margin: 8px 0; text-align: center; font-family: monospace; font-size: 1.2em; letter-spacing: 4px; color: #555;"></div>
                     <div class="controls">
@@ -618,10 +630,6 @@
                     <h3>🌩️</h3>
                     <div class="weather-forecast" id="weatherForecast">
                         <p style="color: #666;">Loading forecast...</p>
-                    </div>
-                    <div id="nextSeasonPrompt" style="display: none; text-align: center; margin-top: 10px;">
-                        <p id="nextSeasonLabel" style="font-weight: bold; font-size: 1.1em; margin-bottom: 8px;"></p>
-                        <button class="btn btn-primary" id="nextSeasonBtn">Next Season ▶</button>
                     </div>
                 </div>
 
@@ -1007,7 +1015,8 @@
             // Clear UI leftovers from previous game
             document.getElementById('hintPlaceholder').style.display = 'none';
             document.getElementById('cheatsDisplay').style.display = 'none';
-            document.getElementById('nextSeasonPrompt').style.display = 'none';
+            const existingOverlay = document.getElementById('nextSeasonOverlay');
+            if (existingOverlay) existingOverlay.remove();
             document.getElementById('pauseBtn').textContent = '⏸️ Pause';
 
             // Show seed label
@@ -1021,16 +1030,6 @@
         }
 
         // Format days into years, months, days (30d/month, 360d/year)
-        function formatAge(totalDays) {
-            const years = Math.floor(totalDays / 360);
-            const months = Math.floor((totalDays % 360) / 30);
-            const days = totalDays % 30;
-            const parts = [];
-            if (years > 0) parts.push(`${years}y`);
-            if (months > 0) parts.push(`${months}m`);
-            parts.push(`${days}d`);
-            return parts.join(' ');
-        }
 
         // Get season info
         function getSeasonInfo() {
@@ -1352,6 +1351,11 @@
 
             const lines = [];
 
+            // Max life ever — first item, bold
+            if (gameState.maxLifeDays > 0) {
+                lines.push(`<b>${gameState.maxLifeDays} days best</b>`);
+            }
+
             // Word placements by length, sorted descending
             const lengths = Object.keys(gameState.wordsPlacedByLength)
                 .map(Number)
@@ -1369,11 +1373,6 @@
             // Stacks max
             if (gameState.stacksMax > 0) {
                 lines.push(`${gameState.stacksMax} stacks max`);
-            }
-
-            // Max life ever
-            if (gameState.maxLifeDays > 0) {
-                lines.push(`${formatAge(gameState.maxLifeDays)} max life`);
             }
 
             if (lines.length === 0) {
@@ -2184,7 +2183,7 @@
         }
 
         function updateStats() {
-            document.getElementById('lifeDays').textContent = formatAge(gameState.lifeDays);
+            document.getElementById('lifeDays').textContent = gameState.lifeDays;
 
             const catHPEl = document.getElementById('catHP');
             catHPEl.textContent = Math.max(0, gameState.catHP);
@@ -2343,11 +2342,43 @@
 
         // Show the "Next Season" prompt
         function showNextSeasonPrompt() {
+            // Remove any existing prompt overlay
+            const existing = document.getElementById('nextSeasonOverlay');
+            if (existing) existing.remove();
+
             const nextIndex = (gameState.seasonIndex + 1) % 4;
             const nextSeason = SEASONS[nextIndex];
-            document.getElementById('nextSeasonLabel').textContent =
-                `${nextSeason.emoji} ${nextSeason.name}`;
-            document.getElementById('nextSeasonPrompt').style.display = 'block';
+
+            const grid = document.getElementById('gameGrid');
+            if (!grid) return;
+            const gridRect = grid.getBoundingClientRect();
+            const firstCell = grid.querySelector('.cell');
+            const cellH = firstCell ? firstCell.getBoundingClientRect().height + 1 : 29;
+            const bottomPos = gridRect.bottom - cellH;
+            const centerX = gridRect.left + gridRect.width / 2;
+
+            const overlay = document.createElement('div');
+            overlay.id = 'nextSeasonOverlay';
+            overlay.style.cssText = `
+                position: fixed;
+                top: ${bottomPos}px; left: ${centerX}px;
+                transform: translate(-50%, -100%);
+                background: rgba(15, 23, 42, 0.95);
+                color: white;
+                padding: 12px 24px;
+                border-radius: 12px;
+                border: 2px solid #667eea;
+                z-index: 900;
+                text-align: center;
+                white-space: nowrap;
+                box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+            `;
+            overlay.innerHTML = `
+                <div style="font-weight:bold; font-size:1.1em; margin-bottom:8px;">${nextSeason.emoji} ${nextSeason.name}</div>
+                <button id="nextSeasonBtn" class="btn btn-primary" style="min-width:140px;">Next Season ▶</button>
+            `;
+            document.body.appendChild(overlay);
+            document.getElementById('nextSeasonBtn').addEventListener('click', advanceToNextSeason);
             updateWeatherForecast();
         }
 
@@ -2370,7 +2401,8 @@
             catMoveQueue = preRollCatMoves(SEASON_LENGTH);
             catMoveIndex = 0;
 
-            document.getElementById('nextSeasonPrompt').style.display = 'none';
+            const overlay = document.getElementById('nextSeasonOverlay');
+            if (overlay) overlay.remove();
             updateWeatherForecast();
             updateStats();
             autoSave();
@@ -2675,7 +2707,8 @@
             if (gameState.seasonTransition) {
                 showNextSeasonPrompt();
             } else {
-                document.getElementById('nextSeasonPrompt').style.display = 'none';
+                const o = document.getElementById('nextSeasonOverlay');
+                if (o) o.remove();
             }
 
             // Hint placeholder
@@ -2770,7 +2803,7 @@
             gameState.maxLifeDays = Math.max(gameState.maxLifeDays || 0, gameState.lifeDays);
             saveCareer();
             document.getElementById('gameOverMessage').textContent =
-                `Your cat survived ${formatAge(gameState.lifeDays)} with ${gameState.shelterHP.toLocaleString()} shelter HP.`;
+                `Your cat survived ${gameState.lifeDays} days with ${gameState.shelterHP.toLocaleString()} shelter HP.`;
             clearAutoSave();
             openModal('gameOverModal');
         }
@@ -2815,6 +2848,10 @@
         document.getElementById('submitBtn').addEventListener('click', submitWord);
         document.getElementById('clearBtn').addEventListener('click', backspaceLetter);
         document.getElementById('shuffleBtn').addEventListener('click', shuffleReservoir);
+        document.getElementById('clearAllBtn').addEventListener('click', () => {
+            gameState.selectedLetters = [];
+            renderReservoir();
+        });
         document.getElementById('cheatBtn').addEventListener('click', showCheats);
         document.getElementById('hintBtn').addEventListener('click', pressHint);
         document.getElementById('clueBtn').addEventListener('click', pressClue);
@@ -2910,8 +2947,6 @@
         })();
 
         // Keyboard shortcuts
-        document.getElementById('nextSeasonBtn').addEventListener('click', advanceToNextSeason);
-
         document.addEventListener('keydown', (e) => {
             if (gameState.isPaused && e.key !== ' ' && e.key !== 'Escape') return;
 
