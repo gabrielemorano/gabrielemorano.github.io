@@ -595,7 +595,7 @@
                 </div>
 
                 <div class="panel">
-                    <h3>🔤 Letter Reservoir <span id="reservoirCount">(0/18)</span></h3>
+                    <h3>🔤 Letter Reservoir <span id="reservoirCount">(0/18)</span> <span id="shuffleBtn" style="cursor:pointer; float:right; font-size:0.9em;" title="Shuffle tiles">🔀</span></h3>
                     <div class="reservoir" id="reservoir"></div>
                 </div>
 
@@ -1303,6 +1303,36 @@
         function selectLetter(index) {
             if (gameState.selectedLetters.includes(index)) return; // already used
             gameState.selectedLetters.push(index);
+            renderReservoir();
+        }
+
+        // Shuffle reservoir tiles, remapping selectedLetters and hintHighlights
+        function shuffleReservoir() {
+            const n = gameState.reservoir.length;
+            if (n < 2) return;
+            // Build permutation: Fisher-Yates
+            const perm = Array.from({ length: n }, (_, i) => i);
+            for (let i = n - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [perm[i], perm[j]] = [perm[j], perm[i]];
+            }
+            // Build inverse map: oldIndex → newIndex
+            const newPos = new Array(n);
+            for (let i = 0; i < n; i++) newPos[perm[i]] = i;
+            // Shuffle the reservoir array
+            const newRes = new Array(n);
+            for (let i = 0; i < n; i++) newRes[newPos[i]] = gameState.reservoir[i];
+            gameState.reservoir = newRes;
+            // Remap selectedLetters
+            gameState.selectedLetters = gameState.selectedLetters.map(i => newPos[i]);
+            // Remap hintHighlights
+            if (gameState.hintHighlights) {
+                gameState.hintHighlights = gameState.hintHighlights.map(i => newPos[i]);
+            }
+            // Remap hintSequence (future steps)
+            if (gameState.hintSequence) {
+                gameState.hintSequence = gameState.hintSequence.map(i => newPos[i]);
+            }
             renderReservoir();
         }
 
@@ -2784,6 +2814,7 @@
         // Event listeners
         document.getElementById('submitBtn').addEventListener('click', submitWord);
         document.getElementById('clearBtn').addEventListener('click', backspaceLetter);
+        document.getElementById('shuffleBtn').addEventListener('click', shuffleReservoir);
         document.getElementById('cheatBtn').addEventListener('click', showCheats);
         document.getElementById('hintBtn').addEventListener('click', pressHint);
         document.getElementById('clueBtn').addEventListener('click', pressClue);
