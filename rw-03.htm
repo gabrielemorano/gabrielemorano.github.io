@@ -615,19 +615,26 @@
         }
         .tutorial-btn-skip:hover { background: #d1d5db; }
 
-        /* Floating tooltip */
+        /* Floating tutorial tooltip — centered, non-blocking */
         .tutorial-tooltip {
             position: fixed;
+            left: 50% !important;
+            top: 50% !important;
+            -webkit-transform: translate(-50%, -50%);
+            transform: translate(-50%, -50%);
             background: white;
             border: 3px solid #667eea;
             border-radius: 12px;
-            padding: 14px 18px;
-            max-width: 300px;
+            padding: 16px 20px;
+            max-width: 340px;
+            width: calc(100vw - 40px);
             box-shadow: 0 8px 28px rgba(0,0,0,0.22);
             z-index: 9500;
-            font-size: 0.92em;
+            font-size: 0.95em;
             line-height: 1.5;
             color: #333;
+            text-align: center;
+            pointer-events: auto;
             animation: tutTooltipPop 0.3s ease-out;
         }
         .tutorial-tooltip strong { color: #667eea; }
@@ -638,32 +645,8 @@
             text-transform: uppercase;
             letter-spacing: 0.5px;
         }
-
-        /* CSS arrow */
-        .tutorial-tooltip::after {
-            content: '';
-            position: absolute;
-            width: 14px; height: 14px;
-            background: white;
-            border: 3px solid #667eea;
-            transform: rotate(45deg);
-        }
-        .tutorial-tooltip.arrow-left::after {
-            left: -10px; top: 18px;
-            border-top: none; border-right: none;
-        }
-        .tutorial-tooltip.arrow-right::after {
-            right: -10px; top: 18px;
-            border-bottom: none; border-left: none;
-        }
-        .tutorial-tooltip.arrow-top::after {
-            top: -10px; left: 24px;
-            border-bottom: none; border-right: none;
-        }
-        .tutorial-tooltip.arrow-bottom::after {
-            bottom: -10px; left: 24px;
-            border-top: none; border-left: none;
-        }
+        /* No arrows — tooltip is always centered */
+        .tutorial-tooltip::after { display: none; }
 
         /* Pulsing highlight ring */
         .tutorial-highlight {
@@ -699,12 +682,6 @@
         @keyframes tutTooltipPop { from { opacity: 0; transform: scale(0.85); } to { opacity: 1; transform: scale(1); } }
 
         @media (max-width: 750px) {
-            .tutorial-tooltip {
-                max-width: calc(100vw - 40px);
-                left: 20px !important;
-                right: 20px !important;
-            }
-            .tutorial-tooltip::after { display: none; }
             .tutorial-overlay-content { padding: 24px 18px; }
             .tutorial-overlay-content h2 { font-size: 1.25em; }
         }
@@ -2939,9 +2916,9 @@
             gameState.tutorial._wordPlaced = false;
             _tutLetterIdx = 0;
             gameState.isPaused = true;
-            gameState.letterSpawnInterval = SPEED_SLOW;
-            gameState.letterDescentInterval = SPEED_SLOW;
-            updateSpeedButtons(SPEED_SLOW);
+            gameState.letterSpawnInterval = SPEED_NORMAL;
+            gameState.letterDescentInterval = SPEED_NORMAL;
+            updateSpeedButtons(SPEED_NORMAL);
             showTutorialOverlay('welcome');
         }
 
@@ -3038,34 +3015,8 @@
                 <strong>${step.title}</strong><br>${step.text}`;
             document.body.appendChild(tt);
 
-            // Position tooltip based on arrow direction
-            const ttRect = tt.getBoundingClientRect();
-            const gap = 18;
-            if (step.arrow === 'right') {
-                // Tooltip to the right of target
-                tt.style.left = (rect.right + gap) + 'px';
-                tt.style.top = Math.max(8, rect.top) + 'px';
-            } else if (step.arrow === 'left') {
-                // Tooltip to the left of target
-                tt.style.left = Math.max(8, rect.left - ttRect.width - gap) + 'px';
-                tt.style.top = Math.max(8, rect.top) + 'px';
-            } else if (step.arrow === 'bottom') {
-                tt.style.left = rect.left + 'px';
-                tt.style.top = (rect.bottom + gap) + 'px';
-            } else {
-                tt.style.left = rect.left + 'px';
-                tt.style.top = Math.max(8, rect.top - ttRect.height - gap) + 'px';
-            }
-
-            // Viewport bounds check — clamp
-            const finalRect = tt.getBoundingClientRect();
-            if (finalRect.right > window.innerWidth - 10) {
-                tt.style.left = (window.innerWidth - finalRect.width - 10) + 'px';
-            }
-            if (finalRect.bottom > window.innerHeight - 10) {
-                tt.style.top = (window.innerHeight - finalRect.height - 10) + 'px';
-            }
-            if (finalRect.left < 10) tt.style.left = '10px';
+            // Tooltip is centered via CSS — scroll target into view so highlight ring is visible
+            targetEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
 
             // Ensure skip button exists
             if (!document.getElementById('tutSkipBtnFloat')) {
