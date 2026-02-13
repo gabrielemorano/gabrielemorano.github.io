@@ -858,7 +858,7 @@
                         <input type="file" id="importFile" accept=".json" style="display: none;">
                     </div>
                     <div style="margin-top: 10px;">
-                        <label style="font-size: 0.85em; color: #666;" data-i18n="lblSeed">🌱 Keyword:</label>
+                        <label style="font-size: 0.85em; color: #666;" data-i18n="lblSeed">🔑 Keyword:</label>
                         <div style="display: flex; gap: 4px; margin-top: 4px;">
                             <input type="text" id="seedInput" placeholder="testo o numero qualsiasi" data-i18n-placeholder="phSeed"
                                 style="flex: 1; padding: 4px 8px; border: 1px solid #ddd; border-radius: 6px; font-size: 0.9em;">
@@ -935,7 +935,8 @@
             tipResetHint: "Resetta indizio",
             phSeed: "testo o numero qualsiasi",
             phWordRadar: "In attesa di lettere...",
-            lblSeed: "🌱 Keyword:",
+            lblSeed: "🔑 Keyword:",
+            lblSeedDisplay: "🔑 Keyword: {0}",
             lblLongestWords: "Parole più lunghe disponibili:",
             lblRadarLongest: "Più lunghe",
             lblRadarShortest: "Più corte",
@@ -1511,7 +1512,7 @@
             // Show seed label
             const seedLabel = document.getElementById('seedLabel');
             if (seedLabel && gameState.gameSeed !== undefined) {
-                seedLabel.textContent = '🌱 Seed: ' + gameState.gameSeed;
+                seedLabel.textContent = t('lblSeedDisplay', gameState.gameSeed);
                 seedLabel.style.display = 'block';
             }
 
@@ -1943,7 +1944,7 @@
                 reservoirEl.appendChild(tile);
             });
 
-            countEl.textContent = t('lblReservoirCount', gameState.reservoir.length, RESERVOIR_CAPACITY);
+            countEl.textContent = ' ' + t('lblReservoirCount', gameState.reservoir.length, RESERVOIR_CAPACITY);
 
             updateTutorialBlinks();
             renderWordInput();
@@ -3651,7 +3652,7 @@
             // Seed label
             const seedLabel = document.getElementById('seedLabel');
             if (seedLabel && gameState.gameSeed) {
-                seedLabel.textContent = '🌱 Seed: ' + gameState.gameSeed;
+                seedLabel.textContent = t('lblSeedDisplay', gameState.gameSeed);
                 seedLabel.style.display = 'block';
             }
             document.getElementById('seedInput').value = gameState.gameSeed || '';
