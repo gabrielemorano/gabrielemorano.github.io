@@ -2828,27 +2828,15 @@
             }
         }
 
-        // Floating banner overlay on the grid — appears, holds, then fades out
-        // Uses fixed positioning calculated from grid bounding rect to avoid
-        // Safari CSS Grid issues with position:absolute children
+        // Celebration banner — centered on screen, fades in/out
         function showBanner(text) {
-            const grid = document.getElementById('gameGrid');
-            if (!grid) return;
-
             const banner = document.createElement('div');
             banner.textContent = text;
 
-            // Calculate position: bottom edge of banner sits 1 row above grid bottom, centered
-            const gridRect = grid.getBoundingClientRect();
-            const firstCell = grid.querySelector('.cell');
-            const cellH = firstCell ? firstCell.getBoundingClientRect().height + 1 : 29;
-            const bottomPos = gridRect.bottom - cellH;
-            const centerX = gridRect.left + gridRect.width / 2;
-
             banner.style.cssText = `
                 position: fixed;
-                top: ${bottomPos}px; left: ${centerX}px;
-                transform: translate(-50%, -100%) scale(0.5);
+                top: 50%; left: 50%;
+                transform: translate(-50%, -50%) scale(0.5);
                 background: rgba(15, 23, 42, 0.92);
                 color: #fbbf24;
                 font-size: 1.4em;
@@ -2878,16 +2866,16 @@
                     const t = elapsed / fadeInDur;
                     const ease = 1 - (1 - t) * (1 - t);
                     banner.style.opacity = ease;
-                    banner.style.transform = `translate(-50%, -100%) scale(${0.5 + 0.5 * ease})`;
+                    banner.style.transform = `translate(-50%, -50%) scale(${0.5 + 0.5 * ease})`;
                 } else if (elapsed < fadeInDur + holdDur) {
                     // Hold
                     banner.style.opacity = 1;
-                    banner.style.transform = 'translate(-50%, -100%) scale(1)';
+                    banner.style.transform = 'translate(-50%, -50%) scale(1)';
                 } else if (elapsed < totalDur) {
                     // Fade out
                     const t = (elapsed - fadeInDur - holdDur) / fadeOutDur;
                     banner.style.opacity = 1 - t;
-                    banner.style.transform = `translate(-50%, -100%) scale(${1 + 0.1 * t})`;
+                    banner.style.transform = `translate(-50%, -50%) scale(${1 + 0.1 * t})`;
                 } else {
                     banner.remove();
                     return;
@@ -3106,18 +3094,28 @@
 
             const grid = document.getElementById('gameGrid');
             if (!grid) return;
-            const gridRect = grid.getBoundingClientRect();
-            const firstCell = grid.querySelector('.cell');
-            const cellH = firstCell ? firstCell.getBoundingClientRect().height + 1 : 29;
-            const bottomPos = gridRect.bottom - cellH;
-            const centerX = gridRect.left + gridRect.width / 2;
 
+            // Use the persistent catOverlayWrap (sibling of grid, never cleared by innerHTML)
+            var wrapper = document.getElementById('catOverlayWrap');
+            if (!wrapper) {
+                // Create wrapper if it doesn't exist yet
+                wrapper = document.createElement('div');
+                wrapper.id = 'catOverlayWrap';
+                wrapper.style.cssText = 'position:absolute;top:0;left:0;right:0;bottom:0;pointer-events:none;z-index:2;';
+                grid.parentNode.style.position = 'relative';
+                grid.parentNode.insertBefore(wrapper, grid.nextSibling);
+            }
+
+            // Position: anchored at bottom of grid, 1 row above the bottom edge
             const overlay = document.createElement('div');
             overlay.id = 'nextSeasonOverlay';
+            var gr = grid.getBoundingClientRect();
+            var wr = wrapper.getBoundingClientRect();
+            var rowH = gr.height / GRID_HEIGHT;
+            var bottomFromWrapper = (wr.bottom - gr.bottom) + rowH;
             overlay.style.cssText = `
-                position: fixed;
-                top: ${bottomPos}px; left: ${centerX}px;
-                transform: translate(-50%, -100%);
+                position: absolute;
+                bottom: ${bottomFromWrapper}px; left: ${gr.left - wr.left}px; right: ${wr.right - gr.right}px;
                 background: rgba(15, 23, 42, 0.95);
                 color: white;
                 padding: 12px 24px;
@@ -3127,12 +3125,16 @@
                 text-align: center;
                 white-space: nowrap;
                 box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+                width: fit-content;
+                margin-left: auto;
+                margin-right: auto;
+                pointer-events: auto;
             `;
             overlay.innerHTML = `
                 <div style="font-weight:bold; font-size:1.1em; margin-bottom:8px;">${nextSeason.emoji} ${nextSeason.name}</div>
                 <button id="nextSeasonBtn" class="btn btn-primary" style="min-width:140px;">${t('btnNextSeason')}</button>
             `;
-            document.body.appendChild(overlay);
+            wrapper.appendChild(overlay);
             document.getElementById('nextSeasonBtn').addEventListener('click', advanceToNextSeason);
             updateWeatherForecast();
         }
