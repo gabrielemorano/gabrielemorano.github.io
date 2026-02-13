@@ -159,7 +159,7 @@
         }
 
         .cell.brick {
-            background: linear-gradient(135deg, var(--season-brick-from, #10b981) 0%, var(--season-brick-to, #059669) 100%);
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
             color: white;
             text-shadow: 1px 1px 2px rgba(0,0,0,0.3);
         }
@@ -938,7 +938,7 @@
         const XP_TABLE = [0,0,0,10,21,44,93,199,429,929,2024,4434,9768,21636,48188,107917,243018,550295,1253057,2869295,6607225,15300762,35634248,83462857,196607704,465800504];
 
         // --- Cat Looks progression ---
-        const CAT_THRESHOLDS = [1000,1250,1500,1750,2000,2500,3000,3500,4250,5000,6000,7500,9000,10500,13000,15500,18500,22000,27000,32000,38000,46000,55000,66000,79000,95000,110000,140000,160000,200000,240000,280000,340000,410000,490000,600000,700000,900000,1000000,1200000,1500000,1800000,2000000,2500000,3000000,3750000,4500000,5500000,6500000,7500000];
+        const CAT_THRESHOLDS = [50,250,500,1000,1250,1500,1750,2000,2500,3000,3500,4250,5000,6000,7500,9000,10500,13000,15500,18500,22000,27000,32000,38000,46000,55000,66000,79000,95000,110000,140000,160000,200000,240000,280000,340000,410000,490000,600000,700000,900000,1000000,1200000,1500000,1800000,2000000,2500000,3000000,3750000,4500000];
         const CAT_LOOKS = [
             {"name":"Cool Mono","animated":false,"filter":"sepia(.3) saturate(.3) hue-rotate(180deg) brightness(1.1)"},
             {"name":"Malware","animated":true,"anim":"catLook1","dur":"0.4s","timing":"steps(3)"},
@@ -1076,27 +1076,27 @@
         // type: 'none', 'rain', 'hail', 'lightning'
         // stormTicks: how many ticks the storm lasts, calmTicks: how many ticks of calm after
         const SEASONS = [
-            { name: 'Spring', emoji: '🌱', gridBg: '#0d2818', gridGap: '#091f12', border: '#10b981', brickFrom: '#10b981', brickTo: '#059669', stormTicks: 16, calmTicks: 10, events: [
+            { name: 'Spring', emoji: '🌱', gridBg: '#0d2818', gridGap: '#091f12', border: '#10b981', stormTicks: 16, calmTicks: 10, events: [
                 [0.40, { count: 0, type: 'none' }],        //  5% nothing
                 [0.85, { count: 1, type: 'rain' }],        // 70% 1 rain
                 [0.90, { count: 2, type: 'rain' }],        //  5% 2 rain
                 [0.95, { count: 1, type: 'hail' }],        // 10% 1 hail
                 [1.00, { count: 1, type: 'lightning' }]     // 10% 1 lightning
             ]},
-            { name: 'Summer', emoji: '☀️', gridBg: '#2a1f0e', gridGap: '#1f1709', border: '#f59e0b', brickFrom: '#f59e0b', brickTo: '#d97706', stormTicks: 12, calmTicks: 16, events: [
+            { name: 'Summer', emoji: '☀️', gridBg: '#2a1f0e', gridGap: '#1f1709', border: '#f59e0b', stormTicks: 12, calmTicks: 16, events: [
                 [0.60, { count: 0, type: 'none' }],        // 60% nothing
                 [0.90, { count: 1, type: 'rain' }],        // 30% 1 rain
                 [0.95, { count: 2, type: 'rain' }],        //  5% 2 rain
                 [1.00, { count: 1, type: 'lightning' }]     //  5% 1 lightning
             ]},
-            { name: 'Autumn', emoji: '🍂', gridBg: '#2d1810', gridGap: '#22120b', border: '#ea580c', brickFrom: '#ea580c', brickTo: '#c2410c', stormTicks: 20, calmTicks: 10, events: [
+            { name: 'Autumn', emoji: '🍂', gridBg: '#2d1810', gridGap: '#22120b', border: '#ea580c', stormTicks: 20, calmTicks: 10, events: [
                 [0.30, { count: 0, type: 'none' }],        // 15% nothing
                 [0.80, { count: 1, type: 'rain' }],        // 60% 1 rain
                 [0.90, { count: 2, type: 'rain' }],        //  5% 2 rain
                 [0.95, { count: 1, type: 'hail' }],        // 10% 1 hail
                 [1.00, { count: 1, type: 'lightning' }]     // 10% 1 lightning
             ]},
-            { name: 'Winter', emoji: '❄️', gridBg: '#151c2c', gridGap: '#0f1520', border: '#64748b', brickFrom: '#64748b', brickTo: '#475569', stormTicks: 25, calmTicks: 5, events: [
+            { name: 'Winter', emoji: '❄️', gridBg: '#151c2c', gridGap: '#0f1520', border: '#64748b', stormTicks: 25, calmTicks: 5, events: [
                 [0.20, { count: 0, type: 'none' }],        // 10% nothing
                 [0.55, { count: 1, type: 'rain' }],        // 35% 1 rain
                 [0.80, { count: 2, type: 'rain' }],        // 20% 2 rain
@@ -1238,8 +1238,25 @@
             gameLoopId: null,
             catXP: 0,
             catLevel: 0,          // number of looks unlocked (0 = none unlocked yet)
-            activeCatLook: -1     // -1 = default (no filter), 0..49 = index into CAT_LOOKS
+            activeCatLook: -1,    // -1 = default (no filter), 0..49 = index into CAT_LOOKS
+            catMood: null,        // { emoji, until, priority } or null = default 🐱
+            catIdleTicks: 0       // consecutive calm ticks with no player action
         };
+
+        // Cat mood priority: higher number = higher priority, won't be overwritten by lower
+        const CAT_MOOD_PRIORITY = { sleep: 1, calm: 2, season: 3, fullrow: 4, word: 5, lowHP: 6, hit: 7 };
+
+        function setCatMood(emoji, durationMs, priorityKey) {
+            const p = CAT_MOOD_PRIORITY[priorityKey] || 0;
+            const now = Date.now();
+            // Don't overwrite a higher-priority mood that's still active
+            if (gameState.catMood && gameState.catMood.until > now && gameState.catMood.priority > p) return;
+            gameState.catMood = { emoji: emoji, until: durationMs === Infinity ? Infinity : now + durationMs, priority: p };
+        }
+
+        function clearCatMood() {
+            gameState.catMood = null;
+        }
 
         // Initialize game
         function initGame() {
@@ -1310,6 +1327,8 @@
             gameState.weatherCycleTick = 0;      // current tick within storm/calm cycle
             gameState.isStorming = true;          // start in storm phase
             gameState.seasonTransition = false;   // true = between seasons, waiting for player
+            gameState.catMood = null;
+            gameState.catIdleTicks = 0;
             gameState.tutorial = { enabled: false, step: -1, _wordPlaced: false };
 
             // Initialize seeded RNG
@@ -1469,6 +1488,7 @@
                                 gameState.catHP -= power;
                                 gameState.treats = Math.max(0, gameState.treats - TREAT_CAT_HIT);
                                 gameState.catHitTime = Date.now();
+                                setCatMood('🙀', 2000, 'hit');
                                 showMessage(`😿 Cat hit by ${fl.type}! (-${power})`, 'error');
                                 power = 0;
                             }
@@ -1494,6 +1514,7 @@
                             gameState.catHP -= power;
                             gameState.treats = Math.max(0, gameState.treats - TREAT_CAT_HIT);
                             gameState.catHitTime = Date.now();
+                            setCatMood('🙀', 2000, 'hit');
                             showMessage(`😿 Cat hit by ${fl.type}! (-${power})`, 'error');
                         }
                     }
@@ -1509,6 +1530,7 @@
                         gameState.catHP -= dmg;
                         gameState.treats = Math.max(0, gameState.treats - TREAT_CAT_HIT);
                         gameState.catHitTime = Date.now();
+                        setCatMood('🙀', 2000, 'hit');
                         showMessage(`😿 Cat hit by ${fl.type}! (-${dmg})`, 'error');
                         toRemove.push(fl.id);
                     }
@@ -1550,8 +1572,6 @@
             gridEl.style.setProperty('--season-bg', s.gridBg);
             gridEl.style.setProperty('--season-gap', s.gridGap);
             gridEl.style.setProperty('--season-border', s.border);
-            gridEl.style.setProperty('--season-brick-from', s.brickFrom);
-            gridEl.style.setProperty('--season-brick-to', s.brickTo);
         }
 
         function renderGrid() {
@@ -1569,11 +1589,23 @@
 
                     // Check for cat first (highest priority)
                     if (x === gameState.catPosition.x && y === gameState.catPosition.y) {
-                        const showSkull = Date.now() - gameState.catHitTime < 500;
                         cell.classList.add('cat');
-                        cell.textContent = showSkull ? '☠️' : '🐱';
-                        // Apply active cat look
-                        if (!showSkull && gameState.activeCatLook >= 0) {
+                        // Determine cat emoji: mood > low HP > default
+                        const now = Date.now();
+                        let catEmoji = '🐱';
+                        if (gameState.catMood && (gameState.catMood.until === Infinity || gameState.catMood.until > now)) {
+                            catEmoji = gameState.catMood.emoji;
+                        } else {
+                            // Clear expired mood
+                            if (gameState.catMood) gameState.catMood = null;
+                            // Persistent low HP mood
+                            if (gameState.catHP > 0 && gameState.catHP < 9) {
+                                catEmoji = '😿';
+                            }
+                        }
+                        cell.textContent = catEmoji;
+                        // Apply active cat look to any mood emoji
+                        if (gameState.activeCatLook >= 0) {
                             applyCatLook(cell, gameState.activeCatLook);
                         }
                     }
@@ -1679,6 +1711,8 @@
         // Select letter (append only — no toggle; use backspace to remove from the end)
         function selectLetter(index) {
             if (gameState.selectedLetters.includes(index)) return; // already used
+            gameState.catIdleTicks = 0;
+            if (gameState.catMood && gameState.catMood.emoji === '😴') clearCatMood();
             gameState.selectedLetters.push(index);
             renderReservoir();
             checkTutorialTrigger();
@@ -2381,6 +2415,15 @@
 
             gameState.selectedLetters = [];
 
+            // --- Cat mood reactions ---
+            gameState.catIdleTicks = 0; // player acted
+            if (gameState.catMood && gameState.catMood.emoji === '😴') clearCatMood();
+            if (isFullRow) {
+                setCatMood('😸', 3000, 'fullrow');
+            } else if (wordLen >= 5) {
+                setCatMood('😻', 3000, 'word');
+            }
+
             // --- Celebrations ---
             if (isFullRow) {
                 showConfetti('mega');
@@ -2748,6 +2791,7 @@
                     gameState.catHP -= 1;
                     gameState.treats = Math.max(0, gameState.treats - TREAT_CAT_HIT);
                     gameState.catHitTime = Date.now();
+                    setCatMood('🙀', 2000, 'hit');
                     showMessage('😿 Cat drowning!', 'error');
                     // Letter is destroyed on impact — don't add to new map
                 } else if (shifted < 15) {
@@ -2863,6 +2907,7 @@
             gameState.weatherCycleTick = 0;
             gameState.isStorming = true;
             gameState.seasonTransition = false;
+            clearCatMood();
 
             // Pre-roll next season
             seasonEventQueue = preRollSeason(gameState.seasonIndex);
@@ -3125,6 +3170,7 @@
                         gameState.treats += TREAT_SEASON_COMPLETE;
                         showBanner('Season complete! 🍬 +' + TREAT_SEASON_COMPLETE);
                         gameState.seasonTransition = true;
+                        setCatMood('🥳', Infinity, 'season');
                         updateAchievements();
                         showNextSeasonPrompt();
                         autoSave();
@@ -3138,7 +3184,21 @@
                     if (gameState.weatherCycleTick >= cycleDuration) {
                         gameState.weatherCycleTick = 0;
                     }
+                    const wasStorming = gameState.isStorming;
                     gameState.isStorming = gameState.weatherCycleTick < season.stormTicks;
+
+                    // Cat mood: sleeping during calm if idle
+                    if (!gameState.isStorming) {
+                        gameState.catIdleTicks++;
+                        if (gameState.catIdleTicks >= 3) {
+                            setCatMood('😴', Infinity, 'sleep');
+                        }
+                    } else {
+                        // Storm started or ongoing — clear sleep
+                        if (gameState.catMood && gameState.catMood.emoji === '😴') {
+                            clearCatMood();
+                        }
+                    }
 
                     updateWeatherForecast();
 
