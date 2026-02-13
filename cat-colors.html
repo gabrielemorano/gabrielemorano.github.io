@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cat Color Palette — XP Ranks</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: 'Segoe UI', sans-serif; background: #0f172a; color: #e2e8f0; padding: 30px; }
+h1 { text-align: center; margin-bottom: 8px; font-size: 1.6em; }
+.subtitle { text-align: center; color: #94a3b8; margin-bottom: 30px; font-size: 0.9em; }
+.grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+    gap: 16px;
+    max-width: 1000px;
+    margin: 0 auto;
+}
+.card {
+    background: #1e293b;
+    border-radius: 12px;
+    padding: 18px 14px;
+    text-align: center;
+    border: 2px solid #334155;
+    transition: all 0.2s;
+}
+.card:hover { border-color: #667eea; transform: translateY(-2px); }
+.cat {
+    font-size: 64px;
+    line-height: 1.2;
+    margin-bottom: 8px;
+    display: block;
+}
+.name { font-weight: 700; font-size: 1em; margin-bottom: 4px; }
+.xp { font-size: 0.78em; color: #94a3b8; margin-bottom: 6px; }
+.swatch {
+    display: inline-block;
+    width: 28px; height: 28px;
+    border-radius: 50%;
+    border: 2px solid rgba(255,255,255,0.15);
+    vertical-align: middle;
+    margin-top: 4px;
+}
+/* CSS filter tricks for emoji recoloring */
+.filter-none { filter: none; }
+.filter-orange { filter: sepia(1) saturate(3) hue-rotate(-10deg) brightness(1.1); }
+.filter-black { filter: brightness(0.15) contrast(2); }
+.filter-silver { filter: grayscale(1) brightness(1.4) contrast(0.9); }
+.filter-gold { filter: sepia(1) saturate(5) hue-rotate(15deg) brightness(1.2); }
+.filter-ice { filter: sepia(1) saturate(3) hue-rotate(180deg) brightness(1.3); }
+.filter-purple { filter: sepia(1) saturate(4) hue-rotate(240deg) brightness(0.9); }
+.filter-pink { filter: sepia(1) saturate(4) hue-rotate(290deg) brightness(1.2); }
+.filter-emerald { filter: sepia(1) saturate(5) hue-rotate(100deg) brightness(1.1); }
+.filter-crimson { filter: sepia(1) saturate(6) hue-rotate(330deg) brightness(0.85); }
+.filter-ghost { filter: brightness(2) contrast(0.5) opacity(0.7); }
+.filter-rainbow { animation: rainbowCat 3s linear infinite; }
+.filter-galaxy { filter: sepia(1) saturate(3) hue-rotate(220deg) brightness(0.7) contrast(1.4); }
+.filter-solar { filter: sepia(1) saturate(8) hue-rotate(20deg) brightness(1.4) contrast(1.2); }
+
+@keyframes rainbowCat {
+    0%   { filter: sepia(1) saturate(5) hue-rotate(0deg) brightness(1.1); }
+    16%  { filter: sepia(1) saturate(5) hue-rotate(60deg) brightness(1.1); }
+    33%  { filter: sepia(1) saturate(5) hue-rotate(120deg) brightness(1.1); }
+    50%  { filter: sepia(1) saturate(5) hue-rotate(180deg) brightness(1.1); }
+    66%  { filter: sepia(1) saturate(5) hue-rotate(240deg) brightness(1.1); }
+    83%  { filter: sepia(1) saturate(5) hue-rotate(300deg) brightness(1.1); }
+    100% { filter: sepia(1) saturate(5) hue-rotate(360deg) brightness(1.1); }
+}
+</style>
+</head>
+<body>
+<h1>🐱 Cat XP Color Ranks</h1>
+<p class="subtitle">CSS filter-based emoji recoloring — preview for Raining Words</p>
+<div class="grid">
+
+<div class="card">
+    <span class="cat filter-none">🐱</span>
+    <div class="name">Classic</div>
+    <div class="xp">0 XP (default)</div>
+    <span class="swatch" style="background: #f5c542;"></span>
+</div>
+
+<div class="card">
+    <span class="cat filter-orange">🐱</span>
+    <div class="name">Ginger</div>
+    <div class="xp">100 XP</div>
+    <span class="swatch" style="background: #e87b35;"></span>
+</div>
+
+<div class="card">
+    <span class="cat filter-black">🐱</span>
+    <div class="name">Shadow</div>
+    <div class="xp">500 XP</div>
+    <span class="swatch" style="background: #2d2d2d;"></span>
+</div>
+
+<div class="card">
+    <span class="cat filter-silver">🐱</span>
+    <div class="name">Silver</div>
+    <div class="xp">1,000 XP</div>
+    <span class="swatch" style="background: #b0b8c4;"></span>
+</div>
+
+<div class="card">
+    <span class="cat filter-gold">🐱</span>
+    <div class="name">Golden</div>
+    <div class="xp">5,000 XP</div>
+    <span class="swatch" style="background: #daa520;"></span>
+</div>
+
+<div class="card">
+    <span class="cat filter-ice">🐱</span>
+    <div class="name">Ice</div>
+    <div class="xp">10,000 XP</div>
+    <span class="swatch" style="background: #5bb8e8;"></span>
+</div>
+
+<div class="card">
+    <span class="cat filter-emerald">🐱</span>
+    <div class="name">Emerald</div>
+    <div class="xp">25,000 XP</div>
+    <span class="swatch" style="background: #34d399;"></span>
+</div>
+
+<div class="card">
+    <span class="cat filter-pink">🐱</span>
+    <div class="name">Rose</div>
+    <div class="xp">50,000 XP</div>
+    <span class="swatch" style="background: #ec4899;"></span>
+</div>
+
+<div class="card">
+    <span class="cat filter-purple">🐱</span>
+    <div class="name">Mystic</div>
+    <div class="xp">100,000 XP</div>
+    <span class="swatch" style="background: #7c3aed;"></span>
+</div>
+
+<div class="card">
+    <span class="cat filter-crimson">🐱</span>
+    <div class="name">Crimson</div>
+    <div class="xp">250,000 XP</div>
+    <span class="swatch" style="background: #c0392b;"></span>
+</div>
+
+<div class="card">
+    <span class="cat filter-solar">🐱</span>
+    <div class="name">Solar</div>
+    <div class="xp">500,000 XP</div>
+    <span class="swatch" style="background: #ff8c00;"></span>
+</div>
+
+<div class="card">
+    <span class="cat filter-ghost">🐱</span>
+    <div class="name">Ghost</div>
+    <div class="xp">1,000,000 XP</div>
+    <span class="swatch" style="background: rgba(255,255,255,0.5);"></span>
+</div>
+
+<div class="card">
+    <span class="cat filter-galaxy">🐱</span>
+    <div class="name">Galaxy</div>
+    <div class="xp">5,000,000 XP</div>
+    <span class="swatch" style="background: #1a1a4e;"></span>
+</div>
+
+<div class="card">
+    <span class="cat filter-rainbow">🐱</span>
+    <div class="name">Rainbow</div>
+    <div class="xp">10,000,000 XP</div>
+    <span class="swatch" style="background: conic-gradient(red, orange, yellow, green, blue, violet, red); border: none;"></span>
+</div>
+
+</div>
+</body>
+</html>
