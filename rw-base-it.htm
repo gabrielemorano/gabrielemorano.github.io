@@ -769,7 +769,7 @@
 
         <div class="stats-bar">
             <div class="stat stat-primary">
-                <div class="stat-label" data-i18n="statDaysAlive">🎯 Giorni</div>
+                <div class="stat-label" data-i18n="statDaysAlive">📅 Età</div>
                 <div class="stat-value" id="lifeDays">0</div>
             </div>
             <div class="stat stat-primary">
@@ -777,15 +777,15 @@
                 <div class="stat-value" id="xpDisplay">0</div>
             </div>
             <div class="stat">
-                <div class="stat-label" data-i18n="statTreats">🍬 Biscotti</div>
+                <div class="stat-label" data-i18n="statTreats">🍬 Croccantini</div>
                 <div class="stat-value" id="treats">0</div>
             </div>
             <div class="stat">
-                <div class="stat-label" data-i18n="statCatHP">Vita Gatto</div>
+                <div class="stat-label" data-i18n="statCatHP">Vite</div>
                 <div class="stat-value" id="catHP">100</div>
             </div>
             <div class="stat">
-                <div class="stat-label" data-i18n="statShelterHP">Vita Riparo</div>
+                <div class="stat-label" data-i18n="statShelterHP">Riparo</div>
                 <div class="stat-value" id="shelterHP">0</div>
             </div>
             <div class="stat">
@@ -834,8 +834,8 @@
                 </div>
 
                 <div class="panel">
-                    <h3 data-i18n="panelAchievements">🏆 Traguardi</h3>
-                    <div id="achievementBoard" style="font-size: 0.9em; color: #666; display: grid; grid-template-columns: 1fr 1fr; gap: 2px 12px;" data-i18n="lblNoAchievements">Nessun traguardo ancora</div>
+                    <h3 data-i18n="panelAchievements">🏆 Trofei</h3>
+                    <div id="achievementBoard" style="font-size: 0.9em; color: #666; display: grid; grid-template-columns: 1fr 1fr; gap: 2px 12px;" data-i18n="lblNoAchievements">Ancora nessun trofei</div>
                 </div>
 
                 <div class="panel">
@@ -858,7 +858,7 @@
                         <input type="file" id="importFile" accept=".json" style="display: none;">
                     </div>
                     <div style="margin-top: 10px;">
-                        <label style="font-size: 0.85em; color: #666;" data-i18n="lblSeed">🌱 Seme:</label>
+                        <label style="font-size: 0.85em; color: #666;" data-i18n="lblSeed">🌱 Keyword:</label>
                         <div style="display: flex; gap: 4px; margin-top: 4px;">
                             <input type="text" id="seedInput" placeholder="testo o numero qualsiasi" data-i18n-placeholder="phSeed"
                                 style="flex: 1; padding: 4px 8px; border: 1px solid #ddd; border-radius: 6px; font-size: 0.9em;">
@@ -869,7 +869,7 @@
                 </div>
 
                 <div class="panel">
-                    <h3 data-i18n="panelRainSpeed">⏱️ Velocità Pioggia</h3>
+                    <h3 data-i18n="panelRainSpeed">⏱️ Velocità</h3>
                     <div class="controls">
                         <button class="btn btn-secondary" id="speedSlowBtn" data-i18n="btnSlow">🐌 Lenta</button>
                         <button class="btn btn-primary" id="speedNormalBtn" data-i18n="btnNormal">🌧️ Normale</button>
@@ -900,20 +900,20 @@
             pageTitle: "Raining Words - Proteggi il Gatto!",
             gameTitle: "🌧️ Raining Words 🐱",
             gameSubtitle: "Costruisci un riparo di parole per proteggere il tuo gatto dalle lettere che cadono!",
-            statDaysAlive: "🎯 Giorni",
+            statDaysAlive: "📅 Età",
             statXP: "⭐ XP",
-            statTreats: "🍬 Biscotti",
-            statCatHP: "Vita Gatto",
-            statShelterHP: "Vita Riparo",
+            statTreats: "🍬 Croccantini",
+            statCatHP: "Vite",
+            statShelterHP: "Riparo",
             statFloodLevel: "Livello Acqua",
             statSeason: "Stagione",
             panelWordBuilder: "📝 Componi Parola",
             panelReservoir: "🔤 Lettere Raccolte",
             panelWordRadar: "📊 Radar Parole",
-            panelAchievements: "🏆 Traguardi",
+            panelAchievements: "🏆 Trofei",
             panelWeather: "🌩️",
             panelGameMenu: "⚙️ Menu",
-            panelRainSpeed: "⏱️ Velocità Pioggia",
+            panelRainSpeed: "⏱️ Velocità",
             btnSubmitWord: "Invia Parola",
             btnClear: "⌫",
             btnHint: "💡 Indizio",
@@ -935,13 +935,13 @@
             tipResetHint: "Resetta indizio",
             phSeed: "testo o numero qualsiasi",
             phWordRadar: "In attesa di lettere...",
-            lblSeed: "🌱 Seme:",
+            lblSeed: "🌱 Keyword:",
             lblLongestWords: "Parole più lunghe disponibili:",
             lblRadarLongest: "Più lunghe",
             lblRadarShortest: "Più corte",
             lblRadarLetterCount: "{0} × {1} lettere",
             lblReservoirCount: "({0}/{1})",
-            lblNoAchievements: "Nessun traguardo ancora",
+            lblNoAchievements: "Ancora nessun trofei",
             lblLoadingForecast: "Caricamento previsioni...",
             msgWordPlaced: "✅ Posizionata \"{0}\"!",
             msgCatHit: "😿 Gatto colpito da {0}! (-{1})",
@@ -977,6 +977,7 @@
             achWordCount: "{0} × parola di {1} lettere",
             achWordSingular: "parola",
             achWordPlural: "parole",
+            achBestDays: "📅 {0} giorni record",
             achFullShelter: "{0} × riparo completo",
             achStacksMax: "{0} livelli max",
             catNextLook: "tra {0} XP",
@@ -994,7 +995,7 @@
             weatherDaysRemaining: "{0} giorni rimanenti",
             weatherNext: "Prossima: {0} {1}",
             tutWelcomeTitle: "🌧️ Benvenuto in Raining Words!",
-            tutWelcomeText: "Le lettere pioveranno dal cielo. Raccoglile, componi parole e costruisci un riparo di mattoni per proteggere il tuo gatto!",
+            tutWelcomeText: "Le lettere pioveranno dal cielo. Raccoglile, componi parole e costruisci un riparo per proteggere il tuo gatto!",
             tutCatchTitle: "Prendi una lettera!",
             tutCatchText: "Le lettere stanno cadendo. <strong>Tocca una lettera</strong> sulla griglia per raccoglierla nel serbatoio.",
             tutCatchMoreTitle: "Prendile tutte e 5!",
@@ -2062,7 +2063,7 @@
 
             // Max life ever
             if (gameState.maxLifeDays > 0) {
-                lines.push(`<b>${gameState.maxLifeDays} days best</b>`);
+                lines.push(`<b>${t('achBestDays', gameState.maxLifeDays)}</b>`);
             }
 
             // XP — bold
@@ -2896,9 +2897,9 @@
             const treats = gameState.treats;
             const hasWords = gameState.radarHasWords;
             const buttons = [
-                { id: 'hintBtn',  cost: TREAT_HINT_COST,  icon: '💡', label: 'Hint' },
-                { id: 'clueBtn',  cost: TREAT_CLUE_COST,  icon: '🔍', label: 'Clue' },
-                { id: 'cheatBtn', cost: TREAT_CHEAT_COST, icon: '🔨', label: 'Cheat' }
+                { id: 'hintBtn',  cost: TREAT_HINT_COST,  label: t('btnHint') },
+                { id: 'clueBtn',  cost: TREAT_CLUE_COST,  label: t('btnClue') },
+                { id: 'cheatBtn', cost: TREAT_CHEAT_COST, label: t('btnCheat') }
             ];
             for (const b of buttons) {
                 const times = Math.floor(treats / b.cost);
@@ -2911,11 +2912,11 @@
                 if (canUse) {
                     el.className = 'btn btn-primary';
                     el.disabled = false;
-                    el.textContent = `${b.icon} ${b.label} ${times}\u00d7`;
+                    el.textContent = `${b.label} ${times}\u00d7`;
                 } else {
                     el.className = 'btn btn-secondary';
                     el.disabled = true;
-                    el.textContent = `${b.icon} ${b.label}`;
+                    el.textContent = b.label;
                 }
             }
         }

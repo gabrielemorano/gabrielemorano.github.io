@@ -769,7 +769,7 @@
 
         <div class="stats-bar">
             <div class="stat stat-primary">
-                <div class="stat-label" data-i18n="statDaysAlive">🎯 Days Alive</div>
+                <div class="stat-label" data-i18n="statDaysAlive">📅 Age</div>
                 <div class="stat-value" id="lifeDays">0</div>
             </div>
             <div class="stat stat-primary">
@@ -781,11 +781,11 @@
                 <div class="stat-value" id="treats">0</div>
             </div>
             <div class="stat">
-                <div class="stat-label" data-i18n="statCatHP">Cat HP</div>
+                <div class="stat-label" data-i18n="statCatHP">Lives</div>
                 <div class="stat-value" id="catHP">100</div>
             </div>
             <div class="stat">
-                <div class="stat-label" data-i18n="statShelterHP">Shelter HP</div>
+                <div class="stat-label" data-i18n="statShelterHP">Shelter</div>
                 <div class="stat-value" id="shelterHP">0</div>
             </div>
             <div class="stat">
@@ -858,7 +858,7 @@
                         <input type="file" id="importFile" accept=".json" style="display: none;">
                     </div>
                     <div style="margin-top: 10px;">
-                        <label style="font-size: 0.85em; color: #666;" data-i18n="lblSeed">🌱 Seed:</label>
+                        <label style="font-size: 0.85em; color: #666;" data-i18n="lblSeed">🌱 keyword:</label>
                         <div style="display: flex; gap: 4px; margin-top: 4px;">
                             <input type="text" id="seedInput" placeholder="any text or number" data-i18n-placeholder="phSeed"
                                 style="flex: 1; padding: 4px 8px; border: 1px solid #ddd; border-radius: 6px; font-size: 0.9em;">
@@ -869,7 +869,7 @@
                 </div>
 
                 <div class="panel">
-                    <h3 data-i18n="panelRainSpeed">⏱️ Rain Speed</h3>
+                    <h3 data-i18n="panelRainSpeed">⏱️ Speed</h3>
                     <div class="controls">
                         <button class="btn btn-secondary" id="speedSlowBtn" data-i18n="btnSlow">🐌 Slow</button>
                         <button class="btn btn-primary" id="speedNormalBtn" data-i18n="btnNormal">🌧️ Normal</button>
@@ -900,11 +900,11 @@
             pageTitle: "Raining Words - Protect the Cat!",
             gameTitle: "🌧️ Raining Words 🐱",
             gameSubtitle: "Build a shelter from words to protect your precious cat from falling letters!",
-            statDaysAlive: "🎯 Days Alive",
+            statDaysAlive: "📅 Age",
             statXP: "⭐ XP",
             statTreats: "🍬 Treats",
-            statCatHP: "Cat HP",
-            statShelterHP: "Shelter HP",
+            statCatHP: "Lives",
+            statShelterHP: "Shelter",
             statFloodLevel: "Flood Level",
             statSeason: "Season",
             panelWordBuilder: "📝 Word Builder",
@@ -913,7 +913,7 @@
             panelAchievements: "🏆 Achievements",
             panelWeather: "🌩️",
             panelGameMenu: "⚙️ Game Menu",
-            panelRainSpeed: "⏱️ Rain Speed",
+            panelRainSpeed: "⏱️ Speed",
             btnSubmitWord: "Submit Word",
             btnClear: "⌫",
             btnHint: "💡 Hint",
@@ -935,7 +935,7 @@
             tipResetHint: "Reset hint",
             phSeed: "any text or number",
             phWordRadar: "Waiting for letters...",
-            lblSeed: "🌱 Seed:",
+            lblSeed: "🌱 keyword:",
             lblLongestWords: "Longest words available:",
             lblRadarLongest: "Longest",
             lblRadarShortest: "Shortest",
@@ -977,6 +977,7 @@
             achWordCount: "{0} × {1}-letter {2}",
             achWordSingular: "word",
             achWordPlural: "words",
+            achBestDays: "📅 {0} days best",
             achFullShelter: "{0} × full shelter",
             achStacksMax: "{0} stacks max",
             catNextLook: "in {0} XP",
@@ -994,7 +995,7 @@
             weatherDaysRemaining: "{0} days remaining",
             weatherNext: "Next: {0} {1}",
             tutWelcomeTitle: "🌧️ Welcome to Raining Words!",
-            tutWelcomeText: "Letters will rain from the sky. Catch them, spell words, and build a shelter of bricks to protect your cat!",
+            tutWelcomeText: "Letters will rain from the sky. Catch them, spell words, and build a shelter to protect your cat!",
             tutCatchTitle: "Catch a letter!",
             tutCatchText: "Letters are raining down. <strong>Tap a falling letter</strong> on the grid to catch it into your reservoir.",
             tutCatchMoreTitle: "Catch all 5!",
@@ -2062,7 +2063,7 @@
 
             // Max life ever
             if (gameState.maxLifeDays > 0) {
-                lines.push(`<b>${gameState.maxLifeDays} days best</b>`);
+                lines.push(`<b>${t('achBestDays', gameState.maxLifeDays)}</b>`);
             }
 
             // XP — bold
@@ -2896,9 +2897,9 @@
             const treats = gameState.treats;
             const hasWords = gameState.radarHasWords;
             const buttons = [
-                { id: 'hintBtn',  cost: TREAT_HINT_COST,  icon: '💡', label: 'Hint' },
-                { id: 'clueBtn',  cost: TREAT_CLUE_COST,  icon: '🔍', label: 'Clue' },
-                { id: 'cheatBtn', cost: TREAT_CHEAT_COST, icon: '🔨', label: 'Cheat' }
+                { id: 'hintBtn',  cost: TREAT_HINT_COST,  label: t('btnHint') },
+                { id: 'clueBtn',  cost: TREAT_CLUE_COST,  label: t('btnClue') },
+                { id: 'cheatBtn', cost: TREAT_CHEAT_COST, label: t('btnCheat') }
             ];
             for (const b of buttons) {
                 const times = Math.floor(treats / b.cost);
@@ -2911,11 +2912,11 @@
                 if (canUse) {
                     el.className = 'btn btn-primary';
                     el.disabled = false;
-                    el.textContent = `${b.icon} ${b.label} ${times}\u00d7`;
+                    el.textContent = `${b.label} ${times}\u00d7`;
                 } else {
                     el.className = 'btn btn-secondary';
                     el.disabled = true;
-                    el.textContent = `${b.icon} ${b.label}`;
+                    el.textContent = b.label;
                 }
             }
         }
