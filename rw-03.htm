@@ -140,6 +140,16 @@
             transition: background 1.2s ease, border-color 1.2s ease;
         }
 
+        .grid.grid-alert {
+            animation: gridBlink 0.6s step-end infinite;
+            -webkit-transition: none;
+            transition: none;
+        }
+        @keyframes gridBlink {
+            0%, 100% { border-color: #facc15; box-shadow: inset 0 4px 10px rgba(0,0,0,0.4), 0 0 10px 2px rgba(250,204,21,0.35); }
+            50%      { border-color: #1a1a1a; box-shadow: inset 0 4px 10px rgba(0,0,0,0.4), 0 0 10px 2px rgba(0,0,0,0.2); }
+        }
+
         .cell {
             width: 28px;
             height: 28px;
@@ -246,6 +256,22 @@
             background: white;
             border-radius: 5px;
             border: 2px dashed #ccc;
+            -webkit-transition: border-color 0.2s;
+            transition: border-color 0.2s;
+        }
+        .reservoir.tut-alert {
+            animation: reservoirBlink 0.6s step-end infinite;
+        }
+        @keyframes reservoirBlink {
+            0%, 100% { border-color: #facc15; box-shadow: 0 0 10px 2px rgba(250,204,21,0.4); }
+            50%      { border-color: #1a1a1a; box-shadow: 0 0 10px 2px rgba(0,0,0,0.2); }
+        }
+        .btn.tut-alert {
+            animation: btnBlink 0.6s step-end infinite;
+        }
+        @keyframes btnBlink {
+            0%, 100% { box-shadow: 0 0 12px 3px rgba(250,204,21,0.5); outline: 3px solid #facc15; }
+            50%      { box-shadow: 0 0 12px 3px rgba(0,0,0,0.3); outline: 3px solid #1a1a1a; }
             width: fit-content;
         }
 
@@ -615,68 +641,72 @@
         }
         .tutorial-btn-skip:hover { background: #d1d5db; }
 
-        /* Floating tutorial tooltip — centered, non-blocking */
-        .tutorial-tooltip {
+        /* Tutorial coach bar — fixed bottom strip */
+        .tutorial-bar {
             position: fixed;
-            left: 50% !important;
-            top: 50% !important;
-            -webkit-transform: translate(-50%, -50%);
-            transform: translate(-50%, -50%);
-            background: white;
-            border: 3px solid #667eea;
-            border-radius: 12px;
-            padding: 16px 20px;
-            max-width: 340px;
-            width: calc(100vw - 40px);
-            box-shadow: 0 8px 28px rgba(0,0,0,0.22);
+            bottom: 0;
+            left: 0;
+            right: 0;
             z-index: 9500;
-            font-size: 0.95em;
-            line-height: 1.5;
-            color: #333;
-            text-align: center;
-            pointer-events: auto;
-            animation: tutTooltipPop 0.3s ease-out;
+            background: rgba(30, 41, 59, 0.95);
+            -webkit-backdrop-filter: blur(8px);
+            backdrop-filter: blur(8px);
+            border-top: 2px solid #667eea;
+            padding: 10px 16px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            animation: tutBarSlideUp 0.3s ease-out;
+            box-shadow: 0 -4px 20px rgba(0,0,0,0.3);
         }
-        .tutorial-tooltip strong { color: #667eea; }
-        .tutorial-tooltip .tut-step-label {
+        .tutorial-bar .tut-step-num {
+            background: #667eea;
+            color: white;
+            font-weight: 700;
             font-size: 0.75em;
-            color: #999;
-            margin-bottom: 4px;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
+            min-width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
         }
-        /* No arrows — tooltip is always centered */
-        .tutorial-tooltip::after { display: none; }
+        .tutorial-bar .tut-bar-text {
+            flex: 1;
+            color: #e2e8f0;
+            font-size: 0.88em;
+            line-height: 1.4;
+        }
+        .tutorial-bar .tut-bar-text strong { color: #a5b4fc; }
+        .tutorial-bar .tut-bar-skip {
+            background: none;
+            border: 1px solid #475569;
+            color: #94a3b8;
+            padding: 5px 12px;
+            border-radius: 6px;
+            font-size: 0.75em;
+            cursor: pointer;
+            flex-shrink: 0;
+            -webkit-transition: all 0.2s;
+            transition: all 0.2s;
+        }
+        .tutorial-bar .tut-bar-skip:hover { border-color: #94a3b8; color: #e2e8f0; }
+        @keyframes tutBarSlideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
 
-        /* Pulsing highlight ring */
+        /* Blinking highlight ring — yellow/black */
         .tutorial-highlight {
-            position: fixed;
-            border: 3px solid #667eea;
+            position: absolute;
+            border: 4px solid #facc15;
             border-radius: 10px;
             z-index: 9499;
             pointer-events: none;
-            animation: tutPulseRing 1.5s ease-in-out infinite;
+            animation: tutBlink 0.6s step-end infinite;
         }
-        @keyframes tutPulseRing {
-            0%, 100% { box-shadow: 0 0 0 4px rgba(102,126,234,0.25), 0 0 0 12px rgba(102,126,234,0); }
-            50%      { box-shadow: 0 0 0 6px rgba(102,126,234,0.35), 0 0 0 20px rgba(102,126,234,0); }
+        @keyframes tutBlink {
+            0%, 100% { border-color: #facc15; box-shadow: 0 0 8px 2px rgba(250,204,21,0.5), inset 0 0 8px 2px rgba(250,204,21,0.15); }
+            50%      { border-color: #000; box-shadow: 0 0 8px 2px rgba(0,0,0,0.4), inset 0 0 8px 2px rgba(0,0,0,0.1); }
         }
-
-        /* Skip button (persistent during tutorial) */
-        .tutorial-skip-btn {
-            position: fixed;
-            top: 8px; right: 12px;
-            z-index: 9501;
-            background: rgba(255,255,255,0.92);
-            border: 1px solid #ccc;
-            padding: 5px 14px;
-            border-radius: 6px;
-            font-size: 0.8em;
-            cursor: pointer;
-            color: #777;
-            transition: all 0.2s;
-        }
-        .tutorial-skip-btn:hover { background: white; color: #333; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
 
         @keyframes tutFadeIn { from { opacity: 0; } to { opacity: 1; } }
         @keyframes tutTooltipPop { from { opacity: 0; transform: scale(0.85); } to { opacity: 1; transform: scale(1); } }
@@ -1540,6 +1570,35 @@
             checkTutorialTrigger();
         }
 
+        // Tutorial blink controller — pure state-based, ignores step numbers
+        function updateTutorialBlinks() {
+            const gridEl = document.getElementById('gameGrid');
+            const resEl = document.getElementById('reservoir');
+            const subEl = document.getElementById('submitBtn');
+            if (!gridEl) return;
+
+            if (!gameState.tutorial.enabled) {
+                gridEl.classList.remove('grid-alert');
+                if (resEl) resEl.classList.remove('tut-alert');
+                if (subEl) subEl.classList.remove('tut-alert');
+                return;
+            }
+
+            const hasLettersOnGrid = gameState.fallingLetters.length > 0 || gameState.floorLetters.size > 0;
+            const allInReservoir = gameState.reservoir.length >= 5 && !hasLettersOnGrid;
+            const spelled = gameState.selectedLetters.length >= 4;
+            const placed = gameState.tutorial._wordPlaced;
+
+            // Phase 1: grid blinks while ANY letters are still on the grid
+            gridEl.classList.toggle('grid-alert', hasLettersOnGrid && !placed);
+
+            // Phase 2: reservoir blinks only when all 5 are in reservoir AND none on grid, until 4+ selected
+            if (resEl) resEl.classList.toggle('tut-alert', allInReservoir && !spelled && !placed);
+
+            // Phase 3: submit blinks once 4+ selected, until word placed
+            if (subEl) subEl.classList.toggle('tut-alert', spelled && !placed);
+        }
+
         // Render grid
         // Apply seasonal CSS variables to the grid container
         function applySeasonTheme() {
@@ -1636,6 +1695,8 @@
                     gridEl.appendChild(cell);
                 }
             }
+
+            updateTutorialBlinks();
         }
 
         // Render reservoir
@@ -1668,6 +1729,8 @@
             });
 
             countEl.textContent = `(${gameState.reservoir.length}/${RESERVOIR_CAPACITY})`;
+
+            updateTutorialBlinks();
             renderWordInput();
         }
 
@@ -2968,6 +3031,7 @@
             }
 
             renderTutorialTooltip();
+            updateTutorialBlinks();
 
             // Timed auto-advance (step 5: shelter built)
             if (step.delay) {
@@ -2992,41 +3056,18 @@
             const step = TUTORIAL_STEPS[gameState.tutorial.step];
             if (!step || step.type !== 'tooltip') return;
 
-            const targetEl = document.querySelector(step.target);
-            if (!targetEl) return;
-            const rect = targetEl.getBoundingClientRect();
+            // No separate highlight ring — the blink system (grid-alert / tut-alert)
+            // handles visual cues for grid, reservoir, and submit button directly
 
-            // Highlight ring
-            const hl = document.createElement('div');
-            hl.className = 'tutorial-highlight';
-            hl.id = 'tutHighlightEl';
-            const pad = 6;
-            hl.style.left = (rect.left - pad) + 'px';
-            hl.style.top = (rect.top - pad) + 'px';
-            hl.style.width = (rect.width + pad * 2) + 'px';
-            hl.style.height = (rect.height + pad * 2) + 'px';
-            document.body.appendChild(hl);
-
-            // Tooltip
-            const tt = document.createElement('div');
-            tt.id = 'tutTooltipEl';
-            tt.className = 'tutorial-tooltip arrow-' + step.arrow;
-            tt.innerHTML = `<div class="tut-step-label">Step ${step.id} of ${TUTORIAL_STEPS.length - 2}</div>
-                <strong>${step.title}</strong><br>${step.text}`;
-            document.body.appendChild(tt);
-
-            // Tooltip is centered via CSS — scroll target into view so highlight ring is visible
-            targetEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
-
-            // Ensure skip button exists
-            if (!document.getElementById('tutSkipBtnFloat')) {
-                const skip = document.createElement('button');
-                skip.className = 'tutorial-skip-btn';
-                skip.id = 'tutSkipBtnFloat';
-                skip.textContent = '✕ Skip tutorial';
-                skip.addEventListener('click', skipTutorial);
-                document.body.appendChild(skip);
-            }
+            // Coach bar at bottom
+            const bar = document.createElement('div');
+            bar.id = 'tutTooltipEl';
+            bar.className = 'tutorial-bar';
+            bar.innerHTML = `<span class="tut-step-num">${step.id}</span>` +
+                `<span class="tut-bar-text"><strong>${step.title}</strong> ${step.text}</span>` +
+                `<button class="tut-bar-skip" id="tutSkipBtnFloat">Skip</button>`;
+            document.body.appendChild(bar);
+            bar.querySelector('#tutSkipBtnFloat').addEventListener('click', skipTutorial);
         }
 
         function checkTutorialTrigger() {
@@ -3039,7 +3080,7 @@
         }
 
         function clearTutorialDOM() {
-            ['tutTooltipEl', 'tutHighlightEl', 'tutSkipBtnFloat', 'tutorialOverlayEl'].forEach(id => {
+            ['tutTooltipEl', 'tutHighlightEl', 'tutorialOverlayEl'].forEach(id => {
                 const el = document.getElementById(id);
                 if (el) el.remove();
             });
@@ -3049,6 +3090,7 @@
             clearTutorialDOM();
             gameState.tutorial.enabled = false;
             gameState.tutorial.step = -1;
+            updateTutorialBlinks();
             gameState.isPaused = false;
             gameState.letterSpawnInterval = SPEED_NORMAL;
             gameState.letterDescentInterval = SPEED_NORMAL;
@@ -3061,6 +3103,7 @@
             clearTutorialDOM();
             gameState.tutorial.enabled = false;
             gameState.tutorial.step = -1;
+            updateTutorialBlinks();
             gameState.letterSpawnInterval = SPEED_NORMAL;
             gameState.letterDescentInterval = SPEED_NORMAL;
             updateSpeedButtons(SPEED_NORMAL);
