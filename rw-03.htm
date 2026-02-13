@@ -1571,6 +1571,9 @@
         }
 
         // Tutorial blink controller — pure state-based, ignores step numbers
+        let _tutScrolledToReservoir = false;
+        let _tutScrolledToSubmit = false;
+
         function updateTutorialBlinks() {
             const gridEl = document.getElementById('gameGrid');
             const resEl = document.getElementById('reservoir');
@@ -1581,6 +1584,8 @@
                 gridEl.classList.remove('grid-alert');
                 if (resEl) resEl.classList.remove('tut-alert');
                 if (subEl) subEl.classList.remove('tut-alert');
+                _tutScrolledToReservoir = false;
+                _tutScrolledToSubmit = false;
                 return;
             }
 
@@ -1593,10 +1598,24 @@
             gridEl.classList.toggle('grid-alert', hasLettersOnGrid && !placed);
 
             // Phase 2: reservoir blinks only when all 5 are in reservoir AND none on grid, until 4+ selected
-            if (resEl) resEl.classList.toggle('tut-alert', allInReservoir && !spelled && !placed);
+            const resBlink = allInReservoir && !spelled && !placed;
+            if (resEl) resEl.classList.toggle('tut-alert', resBlink);
 
             // Phase 3: submit blinks once 4+ selected, until word placed
-            if (subEl) subEl.classList.toggle('tut-alert', spelled && !placed);
+            const subBlink = spelled && !placed;
+            if (subEl) subEl.classList.toggle('tut-alert', subBlink);
+
+            // Mobile auto-scroll: only on narrow viewports, once per phase
+            if (window.innerWidth <= 750) {
+                if (resBlink && !_tutScrolledToReservoir) {
+                    _tutScrolledToReservoir = true;
+                    resEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }
+                if (subBlink && !_tutScrolledToSubmit) {
+                    _tutScrolledToSubmit = true;
+                    subEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }
+            }
         }
 
         // Render grid
@@ -3097,6 +3116,13 @@
             updateSpeedButtons(SPEED_NORMAL);
             localStorage.setItem(TUTORIAL_KEY, '1');
             showMessage('Tutorial skipped. Good luck! 🐱', 'info');
+            if (window.innerWidth <= 750) {
+                setTimeout(function() {
+                    window.scrollTo(0, 0);
+                    document.body.scrollTop = 0;
+                    document.documentElement.scrollTop = 0;
+                }, 100);
+            }
         }
 
         function completeTutorial() {
@@ -3110,6 +3136,13 @@
             localStorage.setItem(TUTORIAL_KEY, '1');
             showConfetti('mega');
             showMessage('You\'re ready! Protect your cat! 🐱', 'success');
+            if (window.innerWidth <= 750) {
+                setTimeout(function() {
+                    window.scrollTo(0, 0);
+                    document.body.scrollTop = 0;
+                    document.documentElement.scrollTop = 0;
+                }, 100);
+            }
         }
 
         // Debounced resize handler for tooltip repositioning
