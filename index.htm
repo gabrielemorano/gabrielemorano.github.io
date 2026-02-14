@@ -44,6 +44,13 @@
       </div>
     </section>
 
+    <!-- Scroll hint -->
+    <div class="scroll-hint" id="scrollHint" aria-hidden="true">
+      <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <polyline points="6 9 12 15 18 9"></polyline>
+      </svg>
+    </div>
+
     <!-- Projects -->
     <section class="projects" id="projects">
       <div class="container">
@@ -99,17 +106,25 @@
   </footer>
 
   <script>
-    // Scroll-triggered reveal for sections
-    const sections = document.querySelectorAll('.projects');
+    const scrollHint = document.getElementById('scrollHint');
+    const projectsSection = document.querySelector('.projects');
+
+    // Scroll-triggered reveal for projects + hide arrow
     const observer = new IntersectionObserver((entries) => {
       entries.forEach(entry => {
         if (entry.isIntersecting) {
           entry.target.classList.add('visible');
+          scrollHint.classList.add('hidden');
           observer.unobserve(entry.target);
         }
       });
     }, { threshold: 0.15 });
-    sections.forEach(s => observer.observe(s));
+    observer.observe(projectsSection);
+
+    // Click arrow to scroll to projects
+    scrollHint.addEventListener('click', () => {
+      projectsSection.scrollIntoView({ behavior: 'smooth' });
+    });
   </script>
 
 </body>
