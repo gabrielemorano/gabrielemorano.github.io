@@ -1,0 +1,1636 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ethernal Journal</title>
+  <style>
+    :root {
+      --bg: #faf8f5;
+      --surface: #ffffff;
+      --surface-hover: #f5f0eb;
+      --border: #e8e0d8;
+      --text: #2c2520;
+      --text-muted: #8a7e74;
+      --accent: #c8922a;
+      --accent-hover: #b07d1e;
+      --accent-light: #f5e6c8;
+      --success: #5a8a3c;
+      --error: #c44b3f;
+      --warning: #d4912a;
+      --font-serif: Georgia, 'Times New Roman', 'Palatino Linotype', serif;
+      --font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      --font-mono: 'SF Mono', 'Fira Code', 'Courier New', monospace;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: var(--font-sans);
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.6;
+      min-height: 100vh;
+    }
+
+    header {
+      text-align: center;
+      padding: 2.5rem 1.5rem 1.5rem;
+      border-bottom: 2px solid var(--border);
+      background: var(--surface);
+    }
+
+    header h1 {
+      font-family: var(--font-serif);
+      font-size: 2rem;
+      font-weight: 400;
+      letter-spacing: 0.05em;
+      color: var(--text);
+      margin-bottom: 0.25rem;
+    }
+
+    .subtitle {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      font-style: italic;
+    }
+
+    .testnet-badge {
+      display: inline-block;
+      font-size: 0.7rem;
+      font-family: var(--font-sans);
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--warning);
+      background: #fef3cd;
+      border: 1px solid var(--warning);
+      border-radius: 4px;
+      padding: 0.15rem 0.5rem;
+      margin-top: 0.5rem;
+    }
+
+    button {
+      font-family: var(--font-sans);
+      font-size: 0.875rem;
+      padding: 0.5rem 1rem;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      background: var(--surface);
+      color: var(--text);
+      cursor: pointer;
+      transition: background 0.15s, border-color 0.15s;
+    }
+
+    button:hover:not(:disabled) {
+      background: var(--surface-hover);
+      border-color: var(--accent);
+    }
+
+    button:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    button.primary {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: #fff;
+      font-weight: 500;
+    }
+
+    button.primary:hover:not(:disabled) {
+      background: var(--accent-hover);
+      border-color: var(--accent-hover);
+    }
+
+    main {
+      max-width: 760px;
+      margin: 0 auto;
+      padding: 2rem 1.5rem;
+      display: flex;
+      flex-direction: column;
+      gap: 1.5rem;
+    }
+
+    /* ── Date filter bar ─────────────────────────────── */
+
+    .date-filter-bar {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.75rem 1rem;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      font-size: 0.85rem;
+    }
+
+    .filter-group {
+      display: flex;
+      align-items: center;
+      gap: 0.35rem;
+    }
+
+    .filter-group label {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      white-space: nowrap;
+    }
+
+    input[type="date"],
+    input[type="time"] {
+      padding: 0.35rem 0.5rem;
+      font-family: var(--font-sans);
+      font-size: 0.8rem;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      color: var(--text);
+      outline: none;
+      transition: border-color 0.15s;
+    }
+
+    input[type="date"]:focus,
+    input[type="time"]:focus {
+      border-color: var(--accent);
+    }
+
+    .filter-actions {
+      display: flex;
+      gap: 0.35rem;
+      margin-left: auto;
+    }
+
+    .filter-actions button {
+      font-size: 0.8rem;
+      padding: 0.35rem 0.75rem;
+    }
+
+    /* ── Custom API key section ──────────────────────── */
+
+    .field {
+      margin-bottom: 0.75rem;
+    }
+
+    .field label {
+      display: block;
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      margin-bottom: 0.3rem;
+    }
+
+    input[type="text"],
+    textarea {
+      width: 100%;
+      padding: 0.6rem 0.75rem;
+      font-family: var(--font-sans);
+      font-size: 0.85rem;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      color: var(--text);
+      outline: none;
+      transition: border-color 0.15s;
+    }
+
+    input[type="text"]:focus,
+    textarea:focus {
+      border-color: var(--accent);
+    }
+
+    textarea {
+      resize: vertical;
+      min-height: 100px;
+    }
+
+    /* ── Journal entries ─────────────────────────────── */
+
+    #messages-container {
+      margin-top: 0.5rem;
+    }
+
+    .message-count {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      margin-bottom: 0.5rem;
+      font-style: italic;
+    }
+
+    .journal-entry {
+      padding: 1.5rem 0;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .journal-entry:first-of-type {
+      padding-top: 0.75rem;
+    }
+
+    .journal-entry:last-of-type {
+      border-bottom: none;
+    }
+
+    .journal-date {
+      font-family: var(--font-sans);
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: var(--accent);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 0.5rem;
+    }
+
+    .journal-text {
+      font-family: var(--font-serif);
+      font-size: 1.05rem;
+      line-height: 1.75;
+      color: var(--text);
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+
+    .journal-meta {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 0.7rem;
+      color: var(--text-muted);
+      margin-top: 0.75rem;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+    }
+
+    .journal-meta a {
+      color: var(--text-muted);
+      text-decoration: none;
+      font-family: var(--font-mono);
+      font-size: 0.7rem;
+    }
+
+    .journal-meta a:hover {
+      color: var(--accent);
+      text-decoration: underline;
+    }
+
+    .empty-state {
+      text-align: center;
+      color: var(--text-muted);
+      padding: 3rem 0;
+      font-size: 0.95rem;
+      font-style: italic;
+    }
+
+    /* ── Collapsible write section ───────────────────── */
+
+    .write-collapse {
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      background: var(--surface);
+    }
+
+    .write-collapse summary {
+      padding: 0.85rem 1rem;
+      cursor: pointer;
+      font-size: 0.9rem;
+      font-weight: 500;
+      color: var(--text);
+      list-style: none;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      -webkit-user-select: none;
+      user-select: none;
+    }
+
+    .write-collapse summary::-webkit-details-marker {
+      display: none;
+    }
+
+    .write-collapse summary::before {
+      content: '+';
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 22px;
+      height: 22px;
+      font-size: 1.1rem;
+      font-weight: 300;
+      color: var(--accent);
+      border: 1px solid var(--border);
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+
+    .write-collapse[open] summary::before {
+      content: '\2212';
+    }
+
+    .write-content {
+      padding: 0 1rem 1rem;
+    }
+
+    .write-step {
+      margin-bottom: 1rem;
+      padding: 1rem;
+      border-radius: 8px;
+      background: var(--bg);
+    }
+
+    .write-step-label {
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: var(--accent);
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      margin-bottom: 0.5rem;
+    }
+
+    #wallet-status {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 0.875rem;
+      margin-bottom: 0.5rem;
+    }
+
+    #status-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--error);
+      flex-shrink: 0;
+    }
+
+    #status-dot.connected {
+      background: var(--success);
+    }
+
+    #status-text {
+      color: var(--text-muted);
+      font-family: var(--font-mono);
+      font-size: 0.8rem;
+    }
+
+    #write-info {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      margin-bottom: 0.75rem;
+    }
+
+    #tx-result {
+      margin-top: 0.75rem;
+      font-size: 0.85rem;
+    }
+
+    #tx-result a {
+      color: var(--accent);
+      text-decoration: none;
+      font-family: var(--font-mono);
+      font-size: 0.8rem;
+    }
+
+    #tx-result a:hover {
+      text-decoration: underline;
+    }
+
+    .status-pending { color: var(--warning); }
+    .status-confirmed { color: var(--success); }
+    .status-failed { color: var(--error); }
+
+    .error-msg {
+      color: var(--error);
+      font-size: 0.85rem;
+      margin-top: 0.5rem;
+    }
+
+    /* ── Protocol info ───────────────────────────────── */
+
+    .protocol-info {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+    }
+
+    .protocol-info summary {
+      padding: 0.75rem 1rem;
+      cursor: pointer;
+      font-size: 0.8rem;
+      font-weight: 500;
+      color: var(--text-muted);
+    }
+
+    .protocol-info summary:hover {
+      color: var(--text);
+    }
+
+    .protocol-info .protocol-content {
+      padding: 0 1rem 1rem;
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      line-height: 1.7;
+    }
+
+    .protocol-info h4 {
+      color: var(--text);
+      font-size: 0.8rem;
+      margin: 0.75rem 0 0.25rem;
+    }
+
+    .protocol-info h4:first-child {
+      margin-top: 0;
+    }
+
+    .protocol-info code {
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      background: var(--bg);
+      padding: 0.1rem 0.35rem;
+      border-radius: 3px;
+      word-break: break-all;
+    }
+
+    .protocol-info pre {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 0.6rem 0.75rem;
+      font-family: var(--font-mono);
+      font-size: 0.7rem;
+      overflow-x: auto;
+      white-space: pre-wrap;
+      word-break: break-all;
+      margin: 0.4rem 0;
+    }
+
+    /* ── Misc ────────────────────────────────────────── */
+
+    .spinner {
+      display: inline-block;
+      width: 14px;
+      height: 14px;
+      border: 2px solid var(--border);
+      border-top-color: var(--accent);
+      border-radius: 50%;
+      animation: spin 0.6s linear infinite;
+      vertical-align: middle;
+      margin-right: 0.4rem;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    .share-btn {
+      font-size: 0.75rem;
+      padding: 0.2rem 0.5rem;
+      border-radius: 4px;
+      margin-left: auto;
+    }
+
+    footer {
+      text-align: center;
+      padding: 2rem 1rem;
+      font-size: 0.75rem;
+      color: var(--text-muted);
+    }
+
+    footer a {
+      color: var(--text-muted);
+      text-decoration: none;
+    }
+
+    footer a:hover {
+      color: var(--accent);
+    }
+
+    /* ── Wallet selector modal ───────────────────────── */
+
+    .wallet-modal-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(44, 37, 32, 0.35);
+      z-index: 1000;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .wallet-modal {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 1.5rem;
+      max-width: 360px;
+      width: 90%;
+      box-shadow: 0 8px 30px rgba(44, 37, 32, 0.12);
+    }
+
+    /* ── Responsive ──────────────────────────────────── */
+
+    @media (max-width: 600px) {
+      main {
+        padding: 1rem;
+      }
+      header {
+        padding: 1.5rem 1rem 1rem;
+      }
+      header h1 {
+        font-size: 1.6rem;
+      }
+      .date-filter-bar {
+        flex-direction: column;
+        align-items: stretch;
+      }
+      .filter-group {
+        justify-content: space-between;
+      }
+      .filter-actions {
+        margin-left: 0;
+        justify-content: flex-end;
+      }
+      .journal-entry {
+        padding: 1.25rem 0;
+      }
+      .journal-text {
+        font-size: 1rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Ethernal Journal</h1>
+    <p class="subtitle">Thoughts preserved on Ethereum, forever</p>
+    <div id="testnet-badge" class="testnet-badge" style="display:none;">Testnet Mode</div>
+  </header>
+
+  <main>
+    <!-- Date filter -->
+    <div class="date-filter-bar">
+      <div class="filter-group">
+        <label for="date-from">From</label>
+        <input type="date" id="date-from">
+        <input type="time" id="time-from" value="00:00">
+      </div>
+      <div class="filter-group">
+        <label for="date-to">To</label>
+        <input type="date" id="date-to">
+        <input type="time" id="time-to" value="23:59">
+      </div>
+      <div class="filter-actions">
+        <button id="apply-filter-btn" class="primary">Filter</button>
+        <button id="clear-filter-btn" style="display:none;">Clear</button>
+      </div>
+    </div>
+
+    <!-- Custom API key (hidden by default) -->
+    <div id="custom-key-section" class="field" style="display:none;">
+      <label for="etherscan-key">Your Etherscan API Key</label>
+      <input type="text" id="etherscan-key" placeholder="Paste your free Etherscan API key" />
+      <div style="font-size:0.75rem; color:var(--text-muted); margin-top:0.25rem;">The built-in API key hit its limit. Get a free key from <a href="https://etherscan.io/myapikey" target="_blank" rel="noopener noreferrer" style="color:var(--accent);">etherscan.io/myapikey</a></div>
+    </div>
+
+    <!-- Journal reading area (primary) -->
+    <div id="journal-area">
+      <div id="messages-container"></div>
+    </div>
+
+    <!-- Write section (collapsible) -->
+    <details class="write-collapse" id="write-section">
+      <summary>Write a new entry</summary>
+      <div class="write-content">
+
+        <!-- Step 1: Connect wallet -->
+        <div class="write-step" id="write-step-1">
+          <div class="write-step-label">Step 1 &mdash; Connect your wallet</div>
+          <p style="font-size:0.85rem; color:var(--text-muted); margin-bottom:0.5rem;">You need an Ethereum wallet (like MetaMask) to write entries. Reading is free and open to everyone.</p>
+          <div id="wallet-status">
+            <span id="status-dot"></span>
+            <span id="status-text">Not connected</span>
+          </div>
+          <button id="connect-btn">Connect Wallet</button>
+        </div>
+
+        <!-- Step 2: Compose and send -->
+        <div class="write-step" id="write-step-2" style="opacity:0.5; pointer-events:none;">
+          <div class="write-step-label">Step 2 &mdash; Write your entry</div>
+          <div class="field">
+            <textarea id="message-input" rows="4" placeholder="What would you like to preserve on the blockchain?"></textarea>
+          </div>
+          <div id="write-info">
+            <span id="byte-count">0 bytes</span>
+            <span id="gas-estimate">Est. gas: 21,000</span>
+          </div>
+          <button id="send-btn" class="primary" disabled>Send to Chain</button>
+          <div id="tx-result"></div>
+        </div>
+
+        <!-- Contract info (small, de-emphasized) -->
+        <div style="font-size:0.7rem; color:var(--text-muted); margin-top:0.5rem; word-break:break-all;">
+          Contract: <span id="contract-display" style="font-family:var(--font-mono); user-select:all;"></span>
+          <span id="network-warning" style="color:var(--warning); display:block; margin-top:0.25rem;"></span>
+        </div>
+
+      </div>
+    </details>
+
+    <!-- Share + Protocol info -->
+    <div style="display:flex; justify-content:flex-end;">
+      <button id="share-btn" class="share-btn" title="Copy a shareable link to this journal">Share Link</button>
+    </div>
+
+    <details class="protocol-info">
+      <summary>How this works</summary>
+      <div class="protocol-content">
+        <h4>What this does</h4>
+        <p>Stores UTF-8 text permanently on Ethereum by encoding it in the <code>data</code> field of zero-value transactions sent to a receiver contract. The text lives in transaction calldata forever &mdash; immutable and publicly readable.</p>
+
+        <h4>This page's contract</h4>
+        <p>This page reads and writes to a specific receiver contract. The contract is minimal &mdash; it accepts any call and does nothing (single <code>STOP</code> opcode). Deployment bytecode:</p>
+        <pre>0x6001600a60003960016000f300</pre>
+        <p>To use a different contract, change the <code>CONTRACT_ADDRESS</code> constant at the top of this page's JavaScript.</p>
+
+        <h4>Encoding (write)</h4>
+        <p>Convert your text to UTF-8 bytes, then hex-encode it into the transaction <code>data</code> field:</p>
+        <pre>data = ethers.hexlify(ethers.toUtf8Bytes("your text here"))</pre>
+        <p>Send a 0-value transaction to the receiver contract address with this <code>data</code>. Gas: <code>21000 + 16/byte (non-zero) + 4/byte (zero) + 200</code>.</p>
+
+        <h4>Decoding (read)</h4>
+        <p>Fetch transactions via Etherscan API V2:</p>
+        <pre>GET https://api.etherscan.io/v2/api?chainid={CHAIN_ID}&amp;module=account&amp;action=txlist&amp;address={CONTRACT}&amp;sort=desc&amp;apikey={KEY}</pre>
+        <p>Filter: <code>value == "0"</code>, <code>input != "0x"</code>, <code>isError == "0"</code>. Decode the <code>input</code> field:</p>
+        <pre>text = ethers.toUtf8String(tx.input)</pre>
+
+        <h4>Chain IDs</h4>
+        <p>Sepolia testnet: <code>11155111</code> &nbsp;|&nbsp; Ethereum mainnet: <code>1</code></p>
+
+        <h4>No dependencies</h4>
+        <p>You only need an Ethereum wallet and an RPC endpoint (or Etherscan API) to read and write. This page is one possible interface &mdash; the protocol is open and anyone can build another.</p>
+      </div>
+    </details>
+  </main>
+
+  <footer>
+    <p>Entries stored permanently on Ethereum. This page is one interface &mdash; the data lives on-chain forever.</p>
+  </footer>
+
+  <!-- Wallet selector modal -->
+  <div id="wallet-selector-overlay" class="wallet-modal-overlay">
+    <div class="wallet-modal">
+      <h3 style="margin-bottom:1rem; font-size:1rem;">Select Wallet</h3>
+      <div id="wallet-selector-list" style="display:flex; flex-direction:column; gap:0.5rem;"></div>
+      <button id="wallet-selector-cancel" style="margin-top:1rem; width:100%;">Cancel</button>
+    </div>
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.13.4/ethers.umd.min.js"></script>
+  <script>
+    // ethers.js v6 UMD exposes window.ethers
+
+    // ═══════════════════════════════════════════════════════════════
+    // CHANGE THIS ADDRESS TO USE A DIFFERENT CONTRACT
+    // ═══════════════════════════════════════════════════════════════
+    const CONTRACT_ADDRESS = '0x1dac188affc1120c832816a49ca4d4b527a3ed44';
+
+    // ═══════════════════════════════════════════════════════════════
+    // DEFAULT ETHERSCAN API KEY (used automatically for reading)
+    // ═══════════════════════════════════════════════════════════════
+    const DEFAULT_API_KEY = 'WJC8164YATJNMMZD6EUTA46AW6AD4MJE51';
+
+    // ── Configuration ──────────────────────────────────────────────
+
+    const CONFIG = {
+      networks: {
+        sepolia: {
+          chainId: '0xaa36a7',
+          chainIdDecimal: 11155111,
+          name: 'Sepolia',
+          etherscanApi: 'https://api.etherscan.io/v2/api',
+          etherscanUrl: 'https://sepolia.etherscan.io',
+        },
+        mainnet: {
+          chainId: '0x1',
+          chainIdDecimal: 1,
+          name: 'Ethereum Mainnet',
+          etherscanApi: 'https://api.etherscan.io/v2/api',
+          etherscanUrl: 'https://etherscan.io',
+        },
+      },
+      maxMessageBytes: 32768,
+    };
+
+    // ── State ──────────────────────────────────────────────────────
+
+    // EIP-6963 discovered wallets: Map<rdns, { info, provider }>
+    const discoveredWallets = new Map();
+
+    const state = {
+      rawProvider: null,  // the EIP-1193 provider (from EIP-6963 or window.ethereum)
+      provider: null,     // ethers.BrowserProvider wrapping rawProvider
+      signer: null,
+      userAddress: null,
+      currentNetwork: 'mainnet',
+      isConnected: false,
+    };
+
+    // ── DOM References ─────────────────────────────────────────────
+
+    const $ = (id) => document.getElementById(id);
+    const statusDot = $('status-dot');
+    const statusText = $('status-text');
+    const connectBtn = $('connect-btn');
+    const networkWarning = $('network-warning');
+    const contractDisplay = $('contract-display');
+    const messageInput = $('message-input');
+    const byteCount = $('byte-count');
+    const gasEstimate = $('gas-estimate');
+    const sendBtn = $('send-btn');
+    const txResult = $('tx-result');
+    const customKeySection = $('custom-key-section');
+    const etherscanKey = $('etherscan-key');
+    const messagesContainer = $('messages-container');
+    const shareBtn = $('share-btn');
+    const writeStep2 = $('write-step-2');
+    const testnetBadge = $('testnet-badge');
+    const dateFrom = $('date-from');
+    const timeFrom = $('time-from');
+    const dateTo = $('date-to');
+    const timeTo = $('time-to');
+    const applyFilterBtn = $('apply-filter-btn');
+    const clearFilterBtn = $('clear-filter-btn');
+
+    // ── Utility Functions ──────────────────────────────────────────
+
+    function escapeHtml(str) {
+      const div = document.createElement('div');
+      div.appendChild(document.createTextNode(str));
+      return div.innerHTML;
+    }
+
+    function truncateAddress(addr) {
+      return addr.substring(0, 6) + '...' + addr.substring(addr.length - 4);
+    }
+
+    function truncateHash(hash) {
+      return hash.substring(0, 10) + '...' + hash.substring(hash.length - 6);
+    }
+
+    function sleep(ms) {
+      return new Promise(resolve => setTimeout(resolve, ms));
+    }
+
+    function debounce(fn, delay) {
+      let timer;
+      return (...args) => {
+        clearTimeout(timer);
+        timer = setTimeout(() => fn(...args), delay);
+      };
+    }
+
+    function showError(container, message) {
+      const el = document.createElement('div');
+      el.className = 'error-msg';
+      el.textContent = message;
+      setTimeout(() => el.remove(), 5000);
+      container.appendChild(el);
+    }
+
+    function setButtonLoading(btn, loading, label) {
+      if (loading) {
+        btn.disabled = true;
+        btn.innerHTML = '<span class="spinner"></span>' + escapeHtml(label || 'Processing...');
+      } else {
+        btn.disabled = false;
+        btn.textContent = label || btn.dataset.originalLabel || 'Submit';
+      }
+    }
+
+    function getNetworkConfig() {
+      return CONFIG.networks[state.currentNetwork];
+    }
+
+    async function copyShareLink() {
+      const url = new URL(window.location.href.split('?')[0]);
+      if (state.currentNetwork === 'sepolia') {
+        url.searchParams.set('test', '1');
+      }
+      try {
+        await navigator.clipboard.writeText(url.toString());
+        shareBtn.textContent = 'Copied!';
+        setTimeout(() => { shareBtn.textContent = 'Share Link'; }, 2000);
+      } catch (e) {
+        prompt('Share this link:', url.toString());
+      }
+    }
+
+    // ── localStorage Persistence ───────────────────────────────────
+
+    function loadSettings() {
+      const saved = localStorage.getItem('cryptoMemoryPublicSettings');
+      if (saved) {
+        try {
+          const s = JSON.parse(saved);
+          if (s.etherscanKey) {
+            etherscanKey.value = s.etherscanKey;
+            customKeySection.style.display = '';
+          }
+        } catch (e) { /* ignore corrupt data */ }
+      }
+    }
+
+    function saveSettings() {
+      const settings = {
+        etherscanKey: etherscanKey.value.trim(),
+      };
+      localStorage.setItem('cryptoMemoryPublicSettings', JSON.stringify(settings));
+    }
+
+    // ── EIP-6963 Wallet Discovery ─────────────────────────────────
+
+    function setupWalletDiscovery() {
+      window.addEventListener('eip6963:announceProvider', (event) => {
+        const { info, provider } = event.detail;
+        if (!info || !info.rdns || !provider) return;
+        discoveredWallets.set(info.rdns, { info, provider });
+      });
+      window.dispatchEvent(new Event('eip6963:requestProvider'));
+    }
+
+    /**
+     * Resolve the best available EIP-1193 provider.
+     * Priority: MetaMask (rdns io.metamask*) > single wallet > multiple (returns list) > window.ethereum > null
+     */
+    function resolveProvider() {
+      const metamask = discoveredWallets.get('io.metamask');
+      if (metamask) return { provider: metamask.provider, info: metamask.info };
+
+      for (const [rdns, wallet] of discoveredWallets) {
+        if (rdns.startsWith('io.metamask')) {
+          return { provider: wallet.provider, info: wallet.info };
+        }
+      }
+
+      if (discoveredWallets.size === 1) {
+        const only = discoveredWallets.values().next().value;
+        return { provider: only.provider, info: only.info };
+      }
+
+      if (discoveredWallets.size > 1) {
+        const wallets = [];
+        for (const [rdns, wallet] of discoveredWallets) {
+          wallets.push({ rdns, ...wallet });
+        }
+        return { wallets };
+      }
+
+      if (window.ethereum) {
+        return { provider: window.ethereum, info: null };
+      }
+
+      return null;
+    }
+
+    let currentListenerProvider = null;
+
+    function setupProviderEvents(rawProvider) {
+      if (currentListenerProvider && currentListenerProvider !== rawProvider) {
+        try {
+          currentListenerProvider.removeListener('accountsChanged', handleAccountsChanged);
+          currentListenerProvider.removeListener('chainChanged', handleChainChanged);
+        } catch (e) { /* some providers don't support removeListener */ }
+      }
+      currentListenerProvider = rawProvider;
+      try {
+        rawProvider.on('accountsChanged', handleAccountsChanged);
+        rawProvider.on('chainChanged', handleChainChanged);
+      } catch (e) { /* ignore if .on() not supported */ }
+    }
+
+    function showWalletSelector(wallets) {
+      const overlay = $('wallet-selector-overlay');
+      const list = $('wallet-selector-list');
+      list.innerHTML = '';
+
+      for (const wallet of wallets) {
+        const btn = document.createElement('button');
+        btn.style.cssText = 'display:flex; align-items:center; gap:0.75rem; width:100%; text-align:left; padding:0.75rem;';
+
+        if (wallet.info.icon) {
+          const img = document.createElement('img');
+          img.src = wallet.info.icon;
+          img.alt = '';
+          img.width = 28;
+          img.height = 28;
+          img.style.borderRadius = '6px';
+          btn.appendChild(img);
+        }
+
+        const nameSpan = document.createElement('span');
+        nameSpan.textContent = wallet.info.name || wallet.rdns;
+        btn.appendChild(nameSpan);
+
+        btn.addEventListener('click', () => {
+          overlay.style.display = 'none';
+          connectWallet(wallet.provider);
+        });
+
+        list.appendChild(btn);
+      }
+
+      overlay.style.display = 'flex';
+
+      $('wallet-selector-cancel').addEventListener('click', () => {
+        overlay.style.display = 'none';
+      }, { once: true });
+    }
+
+    // ── Wallet Connection ──────────────────────────────────────────
+
+    async function connectWallet(explicitProvider) {
+      let rawProvider = explicitProvider || null;
+
+      if (!rawProvider) {
+        const resolved = resolveProvider();
+
+        if (!resolved) {
+          showError(txResult, 'No wallet detected. Please install MetaMask or another Ethereum wallet.');
+          return;
+        }
+
+        if (resolved.wallets) {
+          showWalletSelector(resolved.wallets);
+          return;
+        }
+
+        rawProvider = resolved.provider;
+      }
+
+      try {
+        const provider = new ethers.BrowserProvider(rawProvider);
+        const signer = await provider.getSigner();
+        const address = await signer.getAddress();
+        const network = await provider.getNetwork();
+
+        state.rawProvider = rawProvider;
+        state.provider = provider;
+        state.signer = signer;
+        state.userAddress = address;
+        state.isConnected = true;
+
+        setupProviderEvents(rawProvider);
+        updateWalletUI(address);
+        checkNetworkMatch(Number(network.chainId));
+        updateSendButton();
+      } catch (err) {
+        if (err.code === 4001 || err.code === 'ACTION_REJECTED') {
+          showError(txResult, 'Connection rejected by user.');
+        } else {
+          showError(txResult, 'Connection failed: ' + err.message);
+        }
+      }
+    }
+
+    function disconnectWallet() {
+      state.rawProvider = null;
+      state.provider = null;
+      state.signer = null;
+      state.userAddress = null;
+      state.isConnected = false;
+
+      statusDot.classList.remove('connected');
+      statusText.textContent = 'Not connected';
+      connectBtn.textContent = 'Connect Wallet';
+      updateSendButton();
+
+      // Disable Step 2
+      if (writeStep2) {
+        writeStep2.style.opacity = '0.5';
+        writeStep2.style.pointerEvents = 'none';
+      }
+    }
+
+    function updateWalletUI(address) {
+      statusDot.classList.add('connected');
+      statusText.textContent = truncateAddress(address);
+      connectBtn.textContent = 'Connected';
+
+      // Enable Step 2
+      if (writeStep2) {
+        writeStep2.style.opacity = '1';
+        writeStep2.style.pointerEvents = 'auto';
+      }
+    }
+
+    function checkNetworkMatch(walletChainId) {
+      const expected = CONFIG.networks[state.currentNetwork].chainIdDecimal;
+      if (walletChainId !== expected) {
+        const net = getNetworkConfig();
+        networkWarning.textContent = 'Your wallet is on a different network. Please switch to ' + net.name + '.';
+        // Try to auto-switch
+        switchNetwork(state.currentNetwork);
+      } else {
+        networkWarning.textContent = '';
+      }
+    }
+
+    function handleChainChanged(_chainIdHex) {
+      if (state.isConnected && state.rawProvider) {
+        connectWallet(state.rawProvider);
+      }
+    }
+
+    function handleAccountsChanged(accounts) {
+      if (accounts.length === 0) {
+        disconnectWallet();
+      } else if (state.rawProvider) {
+        connectWallet(state.rawProvider);
+      }
+    }
+
+    // ── Network Switching ──────────────────────────────────────────
+
+    async function switchNetwork(networkKey) {
+      state.currentNetwork = networkKey;
+      updateNetworkUI();
+
+      if (!state.rawProvider || !state.isConnected) return;
+
+      const net = CONFIG.networks[networkKey];
+      try {
+        await state.rawProvider.request({
+          method: 'wallet_switchEthereumChain',
+          params: [{ chainId: net.chainId }],
+        });
+      } catch (switchError) {
+        if (switchError.code === 4902) {
+          networkWarning.textContent = 'Please add ' + net.name + ' to your wallet manually.';
+        } else if (switchError.code === 4001) {
+          networkWarning.textContent = 'Network switch rejected. Your wallet may be on a different network.';
+        }
+      }
+    }
+
+    function updateNetworkUI() {
+      if (state.currentNetwork === 'sepolia') {
+        document.title = 'Ethernal Journal (Testnet)';
+        testnetBadge.style.display = '';
+      } else {
+        document.title = 'Ethernal Journal';
+        testnetBadge.style.display = 'none';
+      }
+    }
+
+    // ── Write Functionality ────────────────────────────────────────
+
+    function estimateGas(text) {
+      if (!text) return 21000;
+      const bytes = ethers.toUtf8Bytes(text);
+      // EIP-7623 (Pectra): gas = max(old intrinsic, floor)
+      // tokens = zero_bytes * 1 + nonzero_bytes * 4
+      let tokens = 0;
+      for (const b of bytes) {
+        tokens += b === 0 ? 1 : 4;
+      }
+      const oldIntrinsic = 21000 + tokens * 4 + 200;  // pre-Pectra calc
+      const floor = 21000 + tokens * 10;               // EIP-7623 floor
+      return Math.max(oldIntrinsic, floor);
+    }
+
+    function updateByteCount() {
+      const text = messageInput.value;
+      const bytes = text ? ethers.toUtf8Bytes(text) : new Uint8Array(0);
+      const len = bytes.length;
+      byteCount.textContent = len + ' byte' + (len !== 1 ? 's' : '');
+      if (len > CONFIG.maxMessageBytes) {
+        byteCount.style.color = 'var(--warning)';
+      } else {
+        byteCount.style.color = '';
+      }
+      const gas = estimateGas(text);
+      gasEstimate.textContent = 'Est. gas: ' + gas.toLocaleString();
+      updateSendButton();
+    }
+
+    function updateSendButton() {
+      const hasText = messageInput.value.trim().length > 0;
+      sendBtn.disabled = !(state.isConnected && hasText);
+    }
+
+    async function sendMessage() {
+      if (!state.isConnected || !state.signer) {
+        showError(txResult, 'Please connect your wallet first.');
+        return;
+      }
+
+      const text = messageInput.value.trim();
+      if (!text) {
+        showError(txResult, 'Message cannot be empty.');
+        return;
+      }
+
+      try {
+        const textBytes = ethers.toUtf8Bytes(text);
+        const hexData = ethers.hexlify(textBytes);
+        const gasLimit = estimateGas(text);
+
+        const tx = {
+          to: CONTRACT_ADDRESS,
+          value: 0n,
+          data: hexData,
+          gasLimit: gasLimit,
+        };
+
+        setButtonLoading(sendBtn, true, 'Waiting for signature...');
+        txResult.innerHTML = '';
+
+        const txResponse = await state.signer.sendTransaction(tx);
+
+        const net = getNetworkConfig();
+        txResult.innerHTML =
+          '<span class="status-pending">Pending...</span> Tx: ' +
+          '<a href="' + escapeHtml(net.etherscanUrl) + '/tx/' + escapeHtml(txResponse.hash) +
+          '" target="_blank" rel="noopener noreferrer">' + escapeHtml(truncateHash(txResponse.hash)) + '</a>';
+
+        setButtonLoading(sendBtn, true, 'Confirming...');
+
+        const receipt = await txResponse.wait(1);
+
+        if (receipt.status === 1) {
+          txResult.innerHTML =
+            '<span class="status-confirmed">Confirmed!</span> Tx: ' +
+            '<a href="' + escapeHtml(net.etherscanUrl) + '/tx/' + escapeHtml(txResponse.hash) +
+            '" target="_blank" rel="noopener noreferrer">' + escapeHtml(truncateHash(txResponse.hash)) + '</a>';
+        } else {
+          txResult.innerHTML = '<span class="status-failed">Transaction failed.</span>';
+        }
+
+        saveSettings();
+      } catch (err) {
+        if (err.code === 'ACTION_REJECTED' || err.code === 4001) {
+          txResult.innerHTML = '<span class="status-failed">Transaction rejected.</span>';
+        } else {
+          showError(txResult, 'Error: ' + err.message);
+        }
+      } finally {
+        setButtonLoading(sendBtn, false, 'Send to Chain');
+      }
+    }
+
+    // ── Read Functionality ─────────────────────────────────────────
+
+    async function fetchTransactionsPage(address, net, apiKey, page, startBlock, endBlock) {
+      const url = new URL(net.etherscanApi);
+      url.searchParams.set('chainid', String(net.chainIdDecimal));
+      url.searchParams.set('module', 'account');
+      url.searchParams.set('action', 'txlist');
+      url.searchParams.set('address', address);
+      url.searchParams.set('startblock', startBlock || '0');
+      url.searchParams.set('endblock', endBlock || '99999999');
+      url.searchParams.set('page', String(page));
+      url.searchParams.set('offset', String(FETCH_SIZE));
+      url.searchParams.set('sort', 'desc');
+      if (apiKey) {
+        url.searchParams.set('apikey', apiKey);
+      }
+
+      const resp = await fetch(url.toString());
+      const json = await resp.json();
+
+      if (json.status !== '1' || !Array.isArray(json.result)) {
+        const resultStr = (typeof json.result === 'string') ? json.result : '';
+        if (resultStr.includes('No transactions found') ||
+            json.message === 'No transactions found') {
+          return { txs: [], hasMore: false };
+        }
+        throw new Error(resultStr || json.message || 'Etherscan API error');
+      }
+
+      return {
+        txs: json.result,
+        hasMore: json.result.length >= FETCH_SIZE,
+      };
+    }
+
+    async function getBlockForTimestamp(unixSeconds, closest, net, apiKey) {
+      const url = new URL(net.etherscanApi);
+      url.searchParams.set('chainid', String(net.chainIdDecimal));
+      url.searchParams.set('module', 'block');
+      url.searchParams.set('action', 'getblocknobytime');
+      url.searchParams.set('timestamp', String(Math.floor(unixSeconds)));
+      url.searchParams.set('closest', closest);
+      if (apiKey) {
+        url.searchParams.set('apikey', apiKey);
+      }
+
+      const resp = await fetch(url.toString());
+      const json = await resp.json();
+
+      if (json.status !== '1' || !json.result) {
+        throw new Error('Failed to resolve block for timestamp: ' + (json.result || json.message));
+      }
+
+      return json.result; // block number as string
+    }
+
+    async function fetchAndAccumulate() {
+      const net = getNetworkConfig();
+      const apiKey = etherscanKey.value.trim() || DEFAULT_API_KEY;
+      let newEntries = 0;
+
+      while (newEntries < PAGE_SIZE && hasMoreOnServer) {
+        const { txs, hasMore } = await fetchTransactionsPage(
+          CONTRACT_ADDRESS, net, apiKey, etherscanPage, currentStartBlock, currentEndBlock
+        );
+        hasMoreOnServer = hasMore;
+        etherscanPage++;
+
+        const decoded = decodeMessages(txs, CONTRACT_ADDRESS);
+        allLoadedMessages = allLoadedMessages.concat(decoded);
+        newEntries += decoded.length;
+
+        if (hasMore && newEntries < PAGE_SIZE) {
+          await sleep(apiKey !== DEFAULT_API_KEY ? 200 : 250);
+        }
+      }
+
+      return newEntries;
+    }
+
+    function decodeMessages(txs, targetAddress) {
+      const normalized = targetAddress.toLowerCase();
+
+      const filtered = txs.filter(tx =>
+        tx.to &&
+        tx.to.toLowerCase() === normalized &&
+        tx.value === '0' &&
+        tx.input &&
+        tx.input !== '0x' &&
+        tx.input.length > 2 &&
+        tx.isError === '0' &&
+        tx.txreceipt_status === '1'
+      );
+
+      return filtered.map(tx => {
+        let decodedText;
+        try {
+          decodedText = ethers.toUtf8String(tx.input);
+        } catch (e) {
+          decodedText = null;
+        }
+
+        return {
+          text: decodedText,
+          rawHex: tx.input,
+          from: tx.from,
+          hash: tx.hash,
+          timestamp: new Date(parseInt(tx.timeStamp) * 1000),
+          blockNumber: tx.blockNumber,
+        };
+      });
+    }
+
+    // ── Pagination & Date Filtering ────────────────────────────────
+
+    const PAGE_SIZE = 10;
+    const FETCH_SIZE = 50;
+    let allLoadedMessages = [];
+    let displayedCount = 0;
+    let activeFilter = null;
+    let etherscanPage = 1;
+    let hasMoreOnServer = true;
+    let currentStartBlock = '0';
+    let currentEndBlock = '99999999';
+
+    function renderJournalEntry(msg, net) {
+      const entry = document.createElement('article');
+      entry.className = 'journal-entry';
+
+      // Date header
+      const dateEl = document.createElement('div');
+      dateEl.className = 'journal-date';
+      const dateOpts = { day: 'numeric', month: 'long', year: 'numeric' };
+      const timeOpts = { hour: 'numeric', minute: '2-digit' };
+      dateEl.textContent = msg.timestamp.toLocaleDateString(undefined, dateOpts)
+        + ', ' + msg.timestamp.toLocaleTimeString(undefined, timeOpts);
+      entry.appendChild(dateEl);
+
+      // Text body
+      const textEl = document.createElement('div');
+      textEl.className = 'journal-text';
+      if (msg.text !== null) {
+        textEl.textContent = msg.text;
+      } else {
+        textEl.style.color = 'var(--text-muted)';
+        textEl.style.fontStyle = 'italic';
+        textEl.textContent = '[binary data]';
+      }
+      entry.appendChild(textEl);
+
+      // Meta footer
+      const meta = document.createElement('div');
+      meta.className = 'journal-meta';
+
+      const fromSpan = document.createElement('span');
+      fromSpan.title = msg.from;
+      fromSpan.textContent = truncateAddress(msg.from);
+      meta.appendChild(fromSpan);
+
+      const txLink = document.createElement('a');
+      txLink.href = net.etherscanUrl + '/tx/' + msg.hash;
+      txLink.target = '_blank';
+      txLink.rel = 'noopener noreferrer';
+      txLink.textContent = truncateHash(msg.hash);
+      meta.appendChild(txLink);
+
+      const blockSpan = document.createElement('span');
+      blockSpan.textContent = 'Block #' + msg.blockNumber;
+      meta.appendChild(blockSpan);
+
+      entry.appendChild(meta);
+      return entry;
+    }
+
+    function renderInitial() {
+      messagesContainer.innerHTML = '';
+      displayedCount = 0;
+
+      if (allLoadedMessages.length === 0 && !hasMoreOnServer) {
+        const emptyText = activeFilter
+          ? 'No entries found in this date range.'
+          : 'No entries yet. Be the first to write one.';
+        messagesContainer.innerHTML = '<p class="empty-state">' + escapeHtml(emptyText) + '</p>';
+        return;
+      }
+
+      updateEntryCount();
+      showMoreMessages();
+    }
+
+    function updateEntryCount() {
+      let countEl = messagesContainer.querySelector('.message-count');
+      if (!countEl) {
+        countEl = document.createElement('p');
+        countEl.className = 'message-count';
+        messagesContainer.prepend(countEl);
+      }
+      const n = allLoadedMessages.length;
+      const countText = n + ' entr' + (n !== 1 ? 'ies' : 'y') + ' loaded'
+        + (activeFilter ? ' (filtered)' : '') + ' \u2014 newest first';
+      countEl.textContent = countText;
+    }
+
+    function showMoreMessages() {
+      const net = getNetworkConfig();
+      const nextBatch = allLoadedMessages.slice(displayedCount, displayedCount + PAGE_SIZE);
+
+      for (const msg of nextBatch) {
+        messagesContainer.appendChild(renderJournalEntry(msg, net));
+      }
+
+      displayedCount += nextBatch.length;
+
+      const oldBtn = messagesContainer.querySelector('.load-more-btn');
+      if (oldBtn) oldBtn.remove();
+
+      if (displayedCount < allLoadedMessages.length || hasMoreOnServer) {
+        const moreBtn = document.createElement('button');
+        moreBtn.className = 'primary load-more-btn';
+        moreBtn.style.cssText = 'width:100%; margin-top:1rem;';
+        moreBtn.textContent = 'Load More';
+        moreBtn.addEventListener('click', onLoadMore);
+        messagesContainer.appendChild(moreBtn);
+      }
+    }
+
+    async function onLoadMore() {
+      const moreBtn = messagesContainer.querySelector('.load-more-btn');
+
+      // If we have enough in buffer, just render more
+      if (displayedCount + PAGE_SIZE <= allLoadedMessages.length) {
+        showMoreMessages();
+        return;
+      }
+
+      // Need to fetch more from server
+      if (hasMoreOnServer) {
+        if (moreBtn) {
+          moreBtn.disabled = true;
+          moreBtn.innerHTML = '<span class="spinner"></span>Loading...';
+        }
+        try {
+          await fetchAndAccumulate();
+        } catch (err) {
+          showError(messagesContainer, 'Failed to load more: ' + err.message);
+          if (moreBtn) {
+            moreBtn.disabled = false;
+            moreBtn.textContent = 'Load More';
+          }
+          return;
+        }
+        updateEntryCount();
+      }
+
+      showMoreMessages();
+    }
+
+    // ── Date Filter Handlers ───────────────────────────────────────
+
+    function getFilterDates() {
+      const fromDate = dateFrom.value;
+      const fromTime = timeFrom.value;
+      const toDate = dateTo.value;
+      const toTime = timeTo.value;
+
+      let from = null;
+      let to = null;
+
+      if (fromDate) {
+        from = new Date(fromDate + 'T' + (fromTime || '00:00') + ':00');
+      }
+      if (toDate) {
+        to = new Date(toDate + 'T' + (toTime || '23:59') + ':59');
+      }
+
+      return { from, to };
+    }
+
+    async function onApplyFilter() {
+      const { from, to } = getFilterDates();
+      if (!from && !to) return;
+
+      const net = getNetworkConfig();
+      const apiKey = etherscanKey.value.trim() || DEFAULT_API_KEY;
+
+      // Show loading state on Filter button
+      setButtonLoading(applyFilterBtn, true, 'Filtering...');
+
+      try {
+        // Convert dates to block numbers
+        let startBlock = '0';
+        let endBlock = '99999999';
+
+        if (from) {
+          startBlock = await getBlockForTimestamp(from.getTime() / 1000, 'after', net, apiKey);
+          await sleep(250);
+        }
+        if (to) {
+          endBlock = await getBlockForTimestamp(to.getTime() / 1000, 'before', net, apiKey);
+        }
+
+        // Reset fetch state with new block range
+        activeFilter = { from, to };
+        currentStartBlock = startBlock;
+        currentEndBlock = endBlock;
+        etherscanPage = 1;
+        hasMoreOnServer = true;
+        allLoadedMessages = [];
+        displayedCount = 0;
+
+        clearFilterBtn.style.display = '';
+
+        // Fetch first page within the block range
+        messagesContainer.innerHTML = '';
+        await fetchAndAccumulate();
+        renderInitial();
+        saveSettings();
+      } catch (err) {
+        showError(messagesContainer, 'Filter failed: ' + err.message);
+      } finally {
+        setButtonLoading(applyFilterBtn, false, 'Filter');
+      }
+    }
+
+    async function onClearFilter() {
+      activeFilter = null;
+      dateFrom.value = '';
+      timeFrom.value = '00:00';
+      dateTo.value = '';
+      timeTo.value = '23:59';
+      clearFilterBtn.style.display = 'none';
+
+      // Reset to full range
+      currentStartBlock = '0';
+      currentEndBlock = '99999999';
+      etherscanPage = 1;
+      hasMoreOnServer = true;
+      allLoadedMessages = [];
+      displayedCount = 0;
+
+      messagesContainer.innerHTML = '<p class="empty-state"><span class="spinner"></span> Loading...</p>';
+
+      try {
+        await fetchAndAccumulate();
+        renderInitial();
+      } catch (err) {
+        messagesContainer.innerHTML = '';
+        showError(messagesContainer, 'Failed to load: ' + err.message);
+      }
+    }
+
+    // ── Load Messages ──────────────────────────────────────────────
+
+    async function loadMessages() {
+      const customKey = etherscanKey.value.trim();
+      const apiKey = customKey || DEFAULT_API_KEY;
+
+      // Reset all fetch state
+      etherscanPage = 1;
+      hasMoreOnServer = true;
+      allLoadedMessages = [];
+      displayedCount = 0;
+      activeFilter = null;
+      currentStartBlock = '0';
+      currentEndBlock = '99999999';
+      clearFilterBtn.style.display = 'none';
+      dateFrom.value = '';
+      timeFrom.value = '00:00';
+      dateTo.value = '';
+      timeTo.value = '23:59';
+
+      messagesContainer.innerHTML = '<p class="empty-state"><span class="spinner"></span> Loading...</p>';
+
+      try {
+        await fetchAndAccumulate();
+        renderInitial();
+        saveSettings();
+      } catch (err) {
+        messagesContainer.innerHTML = '';
+        if (!customKey && apiKey === DEFAULT_API_KEY) {
+          customKeySection.style.display = '';
+          showError(messagesContainer, 'Built-in API key failed: ' + err.message + '. Please enter your own Etherscan API key above.');
+        } else {
+          showError(messagesContainer, 'Failed to load: ' + err.message);
+        }
+      }
+    }
+
+    // ── Initialization ─────────────────────────────────────────────
+
+    function init() {
+      // Display contract address
+      contractDisplay.textContent = CONTRACT_ADDRESS;
+
+      // Load persisted settings (API key only)
+      loadSettings();
+
+      // Determine network from URL parameter: ?test=1 = Sepolia, otherwise mainnet
+      const urlParams = new URLSearchParams(window.location.search);
+      if (urlParams.get('test') === '1') {
+        state.currentNetwork = 'sepolia';
+      } else {
+        state.currentNetwork = 'mainnet';
+      }
+
+      updateNetworkUI();
+
+      // Set up EIP-6963 wallet discovery
+      setupWalletDiscovery();
+
+      // Store original button labels
+      sendBtn.dataset.originalLabel = 'Send to Chain';
+      applyFilterBtn.dataset.originalLabel = 'Filter';
+
+      // Event listeners
+      connectBtn.addEventListener('click', () => connectWallet());
+      sendBtn.addEventListener('click', sendMessage);
+      shareBtn.addEventListener('click', copyShareLink);
+
+      // Date filter listeners
+      applyFilterBtn.addEventListener('click', onApplyFilter);
+      clearFilterBtn.addEventListener('click', onClearFilter);
+      [dateFrom, timeFrom, dateTo, timeTo].forEach(input => {
+        input.addEventListener('keydown', (e) => {
+          if (e.key === 'Enter') onApplyFilter();
+        });
+      });
+
+      messageInput.addEventListener('input', debounce(updateByteCount, 100));
+      etherscanKey.addEventListener('input', debounce(saveSettings, 300));
+
+      // Auto-connect: check if wallet has pre-authorized accounts
+      const resolved = resolveProvider();
+      if (resolved && resolved.provider) {
+        resolved.provider.request({ method: 'eth_accounts' }).then(accounts => {
+          if (accounts.length > 0) {
+            connectWallet(resolved.provider);
+          }
+        }).catch(() => {});
+      }
+
+      updateSendButton();
+
+      // Auto-load entries on page open
+      loadMessages();
+    }
+
+    init();
+  </script>
+</body>
+</html>
