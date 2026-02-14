@@ -616,8 +616,9 @@
             <span id="status-text">Not connected</span>
           </div>
           <button id="connect-btn">Connect Wallet</button>
-          <div id="mobile-wallet-hint" style="display:none; font-size:0.8rem; color:var(--text-muted); margin-top:0.5rem;">
-            On mobile? <a href="#" id="open-metamask-link" style="color:var(--accent);">Open in MetaMask</a>
+          <div id="mobile-wallet-hint" style="display:none; margin-top:0.75rem; text-align:center;">
+            <a href="#" id="open-metamask-link" style="display:inline-block; padding:0.5rem 1.2rem; background:var(--accent); color:#fff; border-radius:8px; text-decoration:none; font-size:0.9rem; font-weight:600;">Open in MetaMask App</a>
+            <div style="font-size:0.75rem; color:var(--text-muted); margin-top:0.4rem;">Tap to open this page inside MetaMask's browser</div>
           </div>
         </div>
 
@@ -795,7 +796,7 @@
 
     function getMetaMaskDeepLink() {
       const url = window.location.href.replace(/^https?:\/\//, '');
-      return 'https://metamask.app.link/dapp/' + url;
+      return 'https://link.metamask.io/dapp/' + url;
     }
 
     function debounce(fn, delay) {
@@ -973,7 +974,13 @@
 
         if (!resolved) {
           if (isMobileBrowser()) {
-            window.location.href = getMetaMaskDeepLink();
+            const hint = $('mobile-wallet-hint');
+            const link = $('open-metamask-link');
+            if (hint && link) {
+              hint.style.display = '';
+              link.href = getMetaMaskDeepLink();
+            }
+            showError(txResult, 'No wallet detected on mobile. Tap "Open in MetaMask" below the Connect button.');
             return;
           }
           showError(txResult, 'No wallet detected. Please install MetaMask or another Ethereum wallet.');
