@@ -616,6 +616,9 @@
             <span id="status-text">Not connected</span>
           </div>
           <button id="connect-btn">Connect Wallet</button>
+          <div id="mobile-wallet-hint" style="display:none; font-size:0.8rem; color:var(--text-muted); margin-top:0.5rem;">
+            On mobile? <a href="#" id="open-metamask-link" style="color:var(--accent);">Open in MetaMask</a>
+          </div>
         </div>
 
         <!-- Step 2: Compose and send -->
@@ -784,6 +787,15 @@
 
     function sleep(ms) {
       return new Promise(resolve => setTimeout(resolve, ms));
+    }
+
+    function isMobileBrowser() {
+      return /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+    }
+
+    function getMetaMaskDeepLink() {
+      const url = window.location.href.replace(/^https?:\/\//, '');
+      return 'https://metamask.app.link/dapp/' + url;
     }
 
     function debounce(fn, delay) {
@@ -960,6 +972,10 @@
         const resolved = resolveProvider();
 
         if (!resolved) {
+          if (isMobileBrowser()) {
+            window.location.href = getMetaMaskDeepLink();
+            return;
+          }
           showError(txResult, 'No wallet detected. Please install MetaMask or another Ethereum wallet.');
           return;
         }
@@ -1592,6 +1608,16 @@
 
       // Set up EIP-6963 wallet discovery
       setupWalletDiscovery();
+
+      // Show mobile MetaMask hint if no provider detected
+      if (isMobileBrowser() && !window.ethereum) {
+        const hint = $('mobile-wallet-hint');
+        const link = $('open-metamask-link');
+        if (hint && link) {
+          hint.style.display = '';
+          link.href = getMetaMaskDeepLink();
+        }
+      }
 
       // Store original button labels
       sendBtn.dataset.originalLabel = 'Send to Chain';
