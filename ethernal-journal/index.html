@@ -697,7 +697,7 @@
     // ═══════════════════════════════════════════════════════════════
     // CHANGE THIS ADDRESS TO USE A DIFFERENT CONTRACT
     // ═══════════════════════════════════════════════════════════════
-    const CONTRACT_ADDRESS = '0x1dac188affc1120c832816a49ca4d4b527a3ed44';
+    const CONTRACT_ADDRESS = '0x26C0A3cfC2BE65DD550AEb39Ff80736f65671164';
 
     // ═══════════════════════════════════════════════════════════════
     // DEFAULT ETHERSCAN API KEY (used automatically for reading)
@@ -1019,7 +1019,7 @@
     function updateWalletUI(address) {
       statusDot.classList.add('connected');
       statusText.textContent = truncateAddress(address);
-      connectBtn.textContent = 'Connected';
+      connectBtn.textContent = 'Disconnect';
 
       // Enable Step 2
       if (writeStep2) {
@@ -1598,7 +1598,13 @@
       applyFilterBtn.dataset.originalLabel = 'Filter';
 
       // Event listeners
-      connectBtn.addEventListener('click', () => connectWallet());
+      connectBtn.addEventListener('click', () => {
+        if (state.isConnected) {
+          disconnectWallet();
+        } else {
+          connectWallet();
+        }
+      });
       sendBtn.addEventListener('click', sendMessage);
       shareBtn.addEventListener('click', copyShareLink);
 
