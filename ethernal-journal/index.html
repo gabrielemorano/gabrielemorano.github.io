@@ -657,8 +657,8 @@
         <p>Stores UTF-8 text permanently on Ethereum by encoding it in the <code>data</code> field of zero-value transactions sent to a receiver contract. The text lives in transaction calldata forever &mdash; immutable and publicly readable.</p>
 
         <h4>This page's contract</h4>
-        <p>This page reads and writes to a specific receiver contract. The contract is minimal &mdash; it accepts any call and does nothing (single <code>STOP</code> opcode). Deployment bytecode:</p>
-        <pre>0x6001600a60003960016000f300</pre>
+        <p>This page reads and writes to a verified Solidity contract (<code>EthernalReceiver.sol</code>, solc 0.8.28, optimizer 200 runs). It accepts any call via <code>fallback()</code> and <code>receive()</code>, and lets the deployer withdraw any accidentally sent ETH.</p>
+        <p><a href="https://etherscan.io/address/0x8a871DC8cD155Fd6009D6E6F2f9597E81aeA4C13#code" target="_blank" style="color:var(--accent);">View verified source on Etherscan</a></p>
         <p>To use a different contract, change the <code>CONTRACT_ADDRESS</code> constant at the top of this page's JavaScript.</p>
 
         <h4>Encoding (write)</h4>
@@ -699,9 +699,9 @@
     // ethers.js v6 UMD exposes window.ethers
 
     // ═══════════════════════════════════════════════════════════════
-    // CHANGE THIS ADDRESS TO USE A DIFFERENT CONTRACT
+    // VERIFIED CONTRACT — EthernalReceiver.sol (solc 0.8.28, optimizer 200 runs)
     // ═══════════════════════════════════════════════════════════════
-    const CONTRACT_ADDRESS = '0x26C0A3cfC2BE65DD550AEb39Ff80736f65671164';
+    const CONTRACT_ADDRESS = '0x8a871DC8cD155Fd6009D6E6F2f9597E81aeA4C13';
 
     // ═══════════════════════════════════════════════════════════════
     // DEFAULT ETHERSCAN API KEY (used automatically for reading)
