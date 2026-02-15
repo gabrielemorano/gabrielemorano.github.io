@@ -2900,6 +2900,7 @@
                                 }
                                 // Track vertical word for achievements
                                 var vKey = x + ':' + run[start].y + ':' + word.toLowerCase();
+                                if (!gameState._verticalWordsFound) gameState._verticalWordsFound = new Set();
                                 if (!gameState._verticalWordsFound.has(vKey)) {
                                     gameState._verticalWordsFound.add(vKey);
                                     var wLen = end - start;
