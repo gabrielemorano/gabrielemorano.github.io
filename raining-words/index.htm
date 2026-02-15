@@ -194,6 +194,23 @@
             background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
         }
 
+        .cell.brick.row-bonus {
+            background: linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%);
+            color: white;
+        }
+
+        .cell.brick.col-bonus {
+            background: linear-gradient(135deg, #f0f0f0 0%, #e0e0e0 100%);
+            color: #6d28d9;
+            text-shadow: none;
+        }
+
+        .cell.brick.both-bonus {
+            background: linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%);
+            color: #fbbf24;
+            text-shadow: none;
+        }
+
         .cell.pole {
             background: linear-gradient(135deg, #64748b 0%, #475569 100%);
             color: white;
@@ -1478,6 +1495,8 @@
             const career = loadCareer();
             if (career) {
                 gameState.wordsPlacedByLength = career.wordsPlacedByLength || {};
+                gameState.verticalWordsByLength = career.verticalWordsByLength || {};
+                gameState._verticalWordsFound = new Set();
                 gameState.fullShelterCount = career.fullShelterCount || 0;
                 gameState.stacksMax = career.stacksMax || 0;
                 gameState.treats = career.treats || 0;
@@ -1488,6 +1507,8 @@
                 gameState.activeCatLook = career.activeCatLook != null ? career.activeCatLook : -1;
             } else {
                 gameState.wordsPlacedByLength = {};
+                gameState.verticalWordsByLength = {};
+                gameState._verticalWordsFound = new Set();
                 gameState.fullShelterCount = 0;
                 gameState.stacksMax = 0;
                 gameState.treats = 0;
@@ -1925,9 +1946,26 @@
                                     cell.classList.add('brick');
                                     cell.textContent = gridCell.letter;
 
-                                    const hpPercent = gridCell.hp / gridCell.maxHP;
-                                    if (hpPercent < 0.33) cell.classList.add('red');
-                                    else if (hpPercent < 0.66) cell.classList.add('yellow');
+                                    // Bonus color revert: if HP dropped to normal max, clear bonus
+                                    if (gridCell.bonus && gridCell.hp <= HP_PER_LETTER) {
+                                        gridCell.bonus = null;
+                                        gridCell.maxHP = HP_PER_LETTER;
+                                    }
+
+                                    // HP percent for bar and color thresholds
+                                    const hpPercent = gridCell.hp / (gridCell.maxHP || HP_PER_LETTER);
+
+                                    // Apply bonus visual or standard HP colors
+                                    if (gridCell.bonus === 'both') {
+                                        cell.classList.add('both-bonus');
+                                    } else if (gridCell.bonus === 'row') {
+                                        cell.classList.add('row-bonus');
+                                    } else if (gridCell.bonus === 'col') {
+                                        cell.classList.add('col-bonus');
+                                    } else {
+                                        if (hpPercent < 0.33) cell.classList.add('red');
+                                        else if (hpPercent < 0.66) cell.classList.add('yellow');
+                                    }
 
                                     const hpBar = document.createElement('div');
                                     hpBar.className = 'hp-bar';
@@ -2117,6 +2155,17 @@
             for (const len of lengths) {
                 const count = gameState.wordsPlacedByLength[len];
                 lines.push(t('achWordCount', count, len, count === 1 ? t('achWordSingular') : t('achWordPlural')));
+            }
+
+            // Vertical word placements by length, sorted descending
+            const vLengths = Object.keys(gameState.verticalWordsByLength || {})
+                .map(Number)
+                .sort((a, b) => b - a);
+            for (const vLen of vLengths) {
+                const vCount = gameState.verticalWordsByLength[vLen];
+                if (vCount > 0) {
+                    lines.push(vCount + ' x ' + vLen + '-' + (vCount === 1 ? t('achWordSingular') : t('achWordPlural')) + ' V');
+                }
             }
 
             // Full shelter
@@ -2627,6 +2676,9 @@
 
             placeWord(word, placement.x, placement.y);
 
+            // Check for row/column bonuses after placing
+            checkBonuses();
+
             // Track achievements
             const wordLen = word.length;
             const prevCount = gameState.wordsPlacedByLength[wordLen] || 0;
@@ -2795,6 +2847,104 @@
                     maxHP: HP_PER_LETTER
                 };
             });
+        }
+
+        // --- Bonus system: full-row and vertical-word detection ---
+        function checkBonuses() {
+            const grid = gameState.grid;
+
+            // Track which cells earn which bonus
+            var rowBonus = {};   // key "y,x" → true
+            var colBonus = {};   // key "y,x" → true
+
+            // Feature 1: Full Row Bonus
+            for (var y = 0; y < GRID_HEIGHT; y++) {
+                var full = true;
+                for (var x = 0; x < GRID_WIDTH; x++) {
+                    var cell = grid[y][x];
+                    if (!cell || cell.type !== 'brick' || cell.hp <= 0) { full = false; break; }
+                }
+                if (full) {
+                    for (var x2 = 0; x2 < GRID_WIDTH; x2++) {
+                        rowBonus[y + ',' + x2] = true;
+                    }
+                }
+            }
+
+            // Feature 2: Vertical Word Bonus — scan each column top-to-bottom
+            for (var x = 0; x < GRID_WIDTH; x++) {
+                // Collect consecutive brick runs in this column from top to bottom
+                var runs = [];
+                var currentRun = [];
+                for (var y = GRID_HEIGHT - 1; y >= 2; y--) {
+                    var cell = grid[y][x];
+                    if (cell && cell.type === 'brick' && cell.hp > 0) {
+                        currentRun.push({ y: y, letter: cell.letter });
+                    } else {
+                        if (currentRun.length >= 4) runs.push(currentRun);
+                        currentRun = [];
+                    }
+                }
+                if (currentRun.length >= 4) runs.push(currentRun);
+
+                // For each run, find all valid words (4+ letters) reading top-to-bottom
+                for (var r = 0; r < runs.length; r++) {
+                    var run = runs[r];
+                    for (var start = 0; start < run.length - 3; start++) {
+                        for (var end = start + 4; end <= run.length; end++) {
+                            var word = '';
+                            for (var k = start; k < end; k++) word += run[k].letter;
+                            if (DICTIONARY.has(word.toLowerCase())) {
+                                for (var k = start; k < end; k++) {
+                                    colBonus[run[k].y + ',' + x] = true;
+                                }
+                                // Track vertical word for achievements
+                                var vKey = x + ':' + run[start].y + ':' + word.toLowerCase();
+                                if (!gameState._verticalWordsFound.has(vKey)) {
+                                    gameState._verticalWordsFound.add(vKey);
+                                    var wLen = end - start;
+                                    gameState.verticalWordsByLength[wLen] = (gameState.verticalWordsByLength[wLen] || 0) + 1;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            // Apply bonuses to bricks
+            for (var y = 0; y < GRID_HEIGHT; y++) {
+                for (var x = 0; x < GRID_WIDTH; x++) {
+                    var cell = grid[y][x];
+                    if (!cell || cell.type !== 'brick' || cell.hp <= 0) continue;
+
+                    var key = y + ',' + x;
+                    var hasRow = rowBonus[key] === true;
+                    var hasCol = colBonus[key] === true;
+
+                    if (hasRow && hasCol) {
+                        // Stacked bonus: 4× HP — always refresh
+                        cell.bonus = 'both';
+                        cell.maxHP = HP_PER_LETTER * 4;
+                        cell.hp = HP_PER_LETTER * 4;
+                    } else if (hasRow) {
+                        // Row bonus: 2× HP — always refresh
+                        cell.bonus = 'row';
+                        cell.maxHP = HP_PER_LETTER * 2;
+                        cell.hp = HP_PER_LETTER * 2;
+                    } else if (hasCol) {
+                        // Column bonus: 2× HP — always refresh
+                        cell.bonus = 'col';
+                        cell.maxHP = HP_PER_LETTER * 2;
+                        cell.hp = HP_PER_LETTER * 2;
+                    }
+
+                    // Revert bonus visual when HP drops to normal max or below
+                    if (cell.bonus && cell.hp <= HP_PER_LETTER) {
+                        cell.bonus = null;
+                        cell.maxHP = HP_PER_LETTER;
+                    }
+                }
+            }
         }
 
         // Show message
@@ -3556,7 +3706,8 @@
                 catXP: gameState.catXP || 0,
                 catLevel: Math.max(prev.catLevel || 0, gameState.catLevel || 0),
                 activeCatLook: gameState.activeCatLook != null ? gameState.activeCatLook : (prev.activeCatLook != null ? prev.activeCatLook : -1),
-                wordsPlacedByLength: {}
+                wordsPlacedByLength: {},
+                verticalWordsByLength: {}
             };
             // Merge word counts: take max per length
             const prevWords = prev.wordsPlacedByLength || {};
@@ -3564,6 +3715,13 @@
             const allLens = new Set([...Object.keys(prevWords), ...Object.keys(curWords)]);
             for (const len of allLens) {
                 career.wordsPlacedByLength[len] = Math.max(prevWords[len] || 0, curWords[len] || 0);
+            }
+            // Merge vertical word counts: take max per length
+            const prevVWords = prev.verticalWordsByLength || {};
+            const curVWords = gameState.verticalWordsByLength || {};
+            const allVLens = new Set([...Object.keys(prevVWords), ...Object.keys(curVWords)]);
+            for (const vl of allVLens) {
+                career.verticalWordsByLength[vl] = Math.max(prevVWords[vl] || 0, curVWords[vl] || 0);
             }
             try {
                 localStorage.setItem(CAREER_KEY, JSON.stringify(career));
@@ -3577,7 +3735,7 @@
                 for (let x = 0; x < GRID_WIDTH; x++) {
                     const cell = gameState.grid[y][x];
                     if (cell && cell.type !== 'pole') {
-                        gridData.push({ y, x, type: cell.type, letter: cell.letter, hp: cell.hp });
+                        gridData.push({ y, x, type: cell.type, letter: cell.letter, hp: cell.hp, maxHP: cell.maxHP || HP_PER_LETTER, bonus: cell.bonus || null });
                     }
                 }
             }
@@ -3614,6 +3772,7 @@
                 isStorming: gameState.isStorming,
                 seasonTransition: gameState.seasonTransition,
                 wordsPlacedByLength: gameState.wordsPlacedByLength,
+                verticalWordsByLength: gameState.verticalWordsByLength,
                 fullShelterCount: gameState.fullShelterCount,
                 stacksMax: gameState.stacksMax,
                 hintTargetWord: gameState.hintTargetWord,
@@ -3653,7 +3812,7 @@
 
             // Restore saved cells
             for (const cell of data.gridData) {
-                gameState.grid[cell.y][cell.x] = { type: cell.type, letter: cell.letter, hp: cell.hp };
+                gameState.grid[cell.y][cell.x] = { type: cell.type, letter: cell.letter, hp: cell.hp, maxHP: cell.maxHP || HP_PER_LETTER, bonus: cell.bonus || null };
             }
 
             // Restore floorLetters Map
@@ -3689,6 +3848,8 @@
             gameState.isStorming = data.isStorming;
             gameState.seasonTransition = data.seasonTransition;
             gameState.wordsPlacedByLength = data.wordsPlacedByLength;
+            gameState.verticalWordsByLength = data.verticalWordsByLength || {};
+            gameState._verticalWordsFound = new Set();
             gameState.fullShelterCount = data.fullShelterCount;
             gameState.stacksMax = data.stacksMax;
             gameState.hintTargetWord = data.hintTargetWord;
@@ -3717,7 +3878,8 @@
                     catXP: gameState.catXP || 0,
                     catLevel: Math.max(local.catLevel || 0, imported.catLevel || 0, gameState.catLevel || 0),
                     activeCatLook: gameState.activeCatLook != null ? gameState.activeCatLook : -1,
-                    wordsPlacedByLength: {}
+                    wordsPlacedByLength: {},
+                    verticalWordsByLength: {}
                 };
                 const lw = local.wordsPlacedByLength || {};
                 const iw = imported.wordsPlacedByLength || {};
@@ -3726,9 +3888,18 @@
                 for (const l of allL) {
                     merged.wordsPlacedByLength[l] = Math.max(lw[l] || 0, iw[l] || 0, cw[l] || 0);
                 }
+                const lvw = local.verticalWordsByLength || {};
+                const ivw = imported.verticalWordsByLength || {};
+                const cvw = gameState.verticalWordsByLength || {};
+                const allVL = new Set([...Object.keys(lvw), ...Object.keys(ivw), ...Object.keys(cvw)]);
+                for (const vl of allVL) {
+                    merged.verticalWordsByLength[vl] = Math.max(lvw[vl] || 0, ivw[vl] || 0, cvw[vl] || 0);
+                }
                 try { localStorage.setItem(CAREER_KEY, JSON.stringify(merged)); } catch(e) {}
                 // Apply merged career to current state
                 gameState.wordsPlacedByLength = merged.wordsPlacedByLength;
+                gameState.verticalWordsByLength = merged.verticalWordsByLength;
+                gameState._verticalWordsFound = new Set();
                 gameState.fullShelterCount = merged.fullShelterCount;
                 gameState.stacksMax = merged.stacksMax;
                 gameState.maxLifeDays = merged.maxLifeDays;
