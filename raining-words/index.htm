@@ -1769,7 +1769,7 @@
             const subEl = document.getElementById('submitBtn');
             if (!gridEl) return;
 
-            if (!gameState.tutorial.enabled) {
+            if (!gameState.tutorial || !gameState.tutorial.enabled) {
                 gridEl.classList.remove('grid-alert');
                 if (resEl) resEl.classList.remove('tut-alert');
                 if (subEl) subEl.classList.remove('tut-alert');
