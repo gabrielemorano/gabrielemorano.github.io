@@ -588,6 +588,15 @@
         @media (max-width: 500px) {
             .game-header {
                 padding: 4px 8px;
+                max-height: 50px;
+                -webkit-transition: max-height 0.3s ease, padding 0.3s ease, opacity 0.3s ease;
+                transition: max-height 0.3s ease, padding 0.3s ease, opacity 0.3s ease;
+                overflow: hidden;
+            }
+            .game-header.collapsed {
+                max-height: 0;
+                padding: 0 8px;
+                opacity: 0;
             }
             .game-header h1 {
                 font-size: 1.1em;
@@ -914,36 +923,36 @@
                 <div class="stat-value" id="delayStat">0×</div>
             </div>
             <div class="stat">
-                <div class="stat-label" data-i18n="statDaysAlive">📅 Age</div>
-                <div class="stat-value" id="lifeDays">0</div>
+                <div class="stat-label" data-i18n="statReservoir">Reservoir</div>
+                <div class="stat-value" id="reservoirStat">0/18</div>
             </div>
             <div class="stat">
                 <div class="stat-label" data-i18n="statCatHP">Lives</div>
                 <div class="stat-value" id="catHP">100</div>
             </div>
             <div class="stat">
-                <div class="stat-label" data-i18n="statReservoir">Reservoir</div>
-                <div class="stat-value" id="reservoirStat">0/18</div>
-            </div>
-            <div class="stat">
-                <div class="stat-label" data-i18n="statSeason">Season</div>
-                <div class="stat-value" id="seasonInfo">🌸 1/30</div>
-            </div>
-            <div class="stat">
-                <div class="stat-label" data-i18n="statShelterHP">Shelter</div>
-                <div class="stat-value" id="shelterHP">0</div>
+                <div class="stat-label" data-i18n="statTreats">🍬 Treats</div>
+                <div class="stat-value" id="treats">0</div>
             </div>
             <div class="stat">
                 <div class="stat-label" data-i18n="statFloodLevel">Flood Level</div>
                 <div class="stat-value" id="floodLevel">0</div>
             </div>
             <div class="stat">
-                <div class="stat-label" data-i18n="statTreats">🍬 Treats</div>
-                <div class="stat-value" id="treats">0</div>
+                <div class="stat-label" data-i18n="statShelterHP">Shelter</div>
+                <div class="stat-value" id="shelterHP">0</div>
+            </div>
+            <div class="stat">
+                <div class="stat-label" data-i18n="statDaysAlive">📅 Age</div>
+                <div class="stat-value" id="lifeDays">0</div>
             </div>
             <div class="stat">
                 <div class="stat-label" data-i18n="statXP">⭐ XP</div>
                 <div class="stat-value" id="xpDisplay">0</div>
+            </div>
+            <div class="stat">
+                <div class="stat-label" data-i18n="statSeason">Season</div>
+                <div class="stat-value" id="seasonInfo">🌸 1/30</div>
             </div>
         </div>
 
@@ -4584,6 +4593,29 @@
                 togglePause();
             }
         });
+
+        // Mobile: collapse game header on scroll down, reveal on scroll up
+        (function() {
+            var gameArea = document.querySelector('.game-area');
+            var header = document.querySelector('.game-header');
+            if (!gameArea || !header) return;
+            var lastScrollTop = 0;
+            var isMobile = function() { return window.innerWidth <= 500; };
+
+            gameArea.addEventListener('scroll', function() {
+                if (!isMobile()) {
+                    header.classList.remove('collapsed');
+                    return;
+                }
+                var st = gameArea.scrollTop;
+                if (st > 10) {
+                    header.classList.add('collapsed');
+                } else {
+                    header.classList.remove('collapsed');
+                }
+                lastScrollTop = st;
+            }, { passive: true });
+        })();
 
         // Start game (dictionary is embedded inline)
         window.addEventListener('load', () => {
