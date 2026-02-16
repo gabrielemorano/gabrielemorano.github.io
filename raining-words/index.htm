@@ -95,6 +95,32 @@
             font-size: 1.4em;
         }
 
+        .stat-delay {
+            cursor: pointer;
+            -webkit-transition: background 0.2s, opacity 0.2s;
+            transition: background 0.2s, opacity 0.2s;
+        }
+        .stat-delay.delay-available {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            box-shadow: 0 2px 8px rgba(16, 185, 129, 0.4);
+        }
+        .stat-delay.delay-available .stat-label,
+        .stat-delay.delay-available .stat-value {
+            color: white;
+        }
+        .stat-delay.delay-disabled {
+            opacity: 0.5;
+            cursor: default;
+        }
+        .stat-delay.delay-active {
+            background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+            box-shadow: 0 2px 8px rgba(245, 158, 11, 0.4);
+        }
+        .stat-delay.delay-active .stat-label,
+        .stat-delay.delay-active .stat-value {
+            color: white;
+        }
+
         .stat-label {
             font-size: 0.75em;
             color: #666;
@@ -135,6 +161,53 @@
             grid-row: 1 / span 5;
             grid-column: 1;
             min-width: 0;
+        }
+
+        .grid-wrap-inner {
+            position: relative;
+            display: inline-block;
+        }
+
+        /* Coverage overlay on grid */
+        .coverage-grid-overlay {
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            display: -webkit-flex;
+            display: flex;
+            -webkit-align-items: center;
+            align-items: center;
+            -webkit-justify-content: center;
+            justify-content: center;
+            z-index: 10;
+            pointer-events: none;
+            opacity: 0;
+            -webkit-transition: opacity 1s ease-in-out;
+            transition: opacity 1s ease-in-out;
+        }
+        .coverage-grid-overlay.visible {
+            opacity: 1;
+        }
+        .coverage-grid-text {
+            font-family: 'Arial Narrow', 'Segoe UI Condensed', 'Impact', sans-serif;
+            font-weight: 900;
+            color: rgba(255, 255, 255, 0.35);
+            letter-spacing: -12px;
+            -webkit-transform: scaleY(1.4);
+            transform: scaleY(1.4);
+            line-height: 1;
+            -webkit-user-select: none;
+            user-select: none;
+            mix-blend-mode: difference;
+            -webkit-transition: font-size 0.3s ease;
+            transition: font-size 0.3s ease;
+        }
+        .coverage-grid-text.cov-digits-1 { font-size: 520px; }
+        .coverage-grid-text.cov-digits-2 { font-size: 420px; }
+        .coverage-grid-text.cov-digits-3 { font-size: 300px; }
+        .coverage-grid-text .cov-pct {
+            font-size: 0.45em;
+            letter-spacing: 0;
+            vertical-align: super;
         }
 
         .grid {
@@ -552,6 +625,9 @@
                 font-size: 10px;
                 border-radius: 2px;
             }
+            .coverage-grid-text.cov-digits-1 { font-size: 70vw; }
+            .coverage-grid-text.cov-digits-2 { font-size: 55vw; }
+            .coverage-grid-text.cov-digits-3 { font-size: 40vw; }
             .cell.cat {
                 font-size: clamp(0.7em, 4vw, 1.4em);
             }
@@ -829,20 +905,29 @@
 
         <div class="stats-bar">
             <div class="stat stat-primary">
-                <div class="stat-label" data-i18n="statDaysAlive">📅 Age</div>
-                <div class="stat-value" id="lifeDays">0</div>
+                <div class="stat-label" data-i18n="statCoverage">Coverage</div>
+                <div class="stat-value" id="coverageStat">0%</div>
+                <div style="font-size:0.65em; color:rgba(255,255,255,0.7); text-align:center;" id="coverageDetail">0/256</div>
             </div>
-            <div class="stat stat-primary">
-                <div class="stat-label" data-i18n="statXP">⭐ XP</div>
-                <div class="stat-value" id="xpDisplay">0</div>
+            <div class="stat stat-delay" id="delayBtn" title="Pause falling letters for 15s">
+                <div class="stat-label" data-i18n="statDelay">⏳ Delay</div>
+                <div class="stat-value" id="delayStat">0×</div>
             </div>
             <div class="stat">
-                <div class="stat-label" data-i18n="statTreats">🍬 Treats</div>
-                <div class="stat-value" id="treats">0</div>
+                <div class="stat-label" data-i18n="statDaysAlive">📅 Age</div>
+                <div class="stat-value" id="lifeDays">0</div>
             </div>
             <div class="stat">
                 <div class="stat-label" data-i18n="statCatHP">Lives</div>
                 <div class="stat-value" id="catHP">100</div>
+            </div>
+            <div class="stat">
+                <div class="stat-label" data-i18n="statReservoir">Reservoir</div>
+                <div class="stat-value" id="reservoirStat">0/18</div>
+            </div>
+            <div class="stat">
+                <div class="stat-label" data-i18n="statSeason">Season</div>
+                <div class="stat-value" id="seasonInfo">🌸 1/30</div>
             </div>
             <div class="stat">
                 <div class="stat-label" data-i18n="statShelterHP">Shelter</div>
@@ -853,14 +938,23 @@
                 <div class="stat-value" id="floodLevel">0</div>
             </div>
             <div class="stat">
-                <div class="stat-label" data-i18n="statSeason">Season</div>
-                <div class="stat-value" id="seasonInfo" data-i18n="statSeasonDefault">Spring - Day 1/30</div>
+                <div class="stat-label" data-i18n="statTreats">🍬 Treats</div>
+                <div class="stat-value" id="treats">0</div>
+            </div>
+            <div class="stat">
+                <div class="stat-label" data-i18n="statXP">⭐ XP</div>
+                <div class="stat-value" id="xpDisplay">0</div>
             </div>
         </div>
 
         <div class="game-area">
             <div class="grid-container">
-                <div class="grid" id="gameGrid"></div>
+                <div class="grid-wrap-inner">
+                    <div class="grid" id="gameGrid"></div>
+                    <div class="coverage-grid-overlay" id="coverageOverlay">
+                        <div class="coverage-grid-text cov-digits-1" id="coverageOverlayText">0<span class="cov-pct">%</span></div>
+                    </div>
+                </div>
             </div>
 
                 <div class="panel">
@@ -926,6 +1020,10 @@
                             <div class="ach-stat-box">
                                 <div class="ach-val" id="achHighestStack">0</div>
                                 <div class="ach-lbl" data-i18n="achLblHighestStack">📐 Highest Stack</div>
+                            </div>
+                            <div class="ach-stat-box">
+                                <div class="ach-val" id="achPeakCoverage">0%</div>
+                                <div class="ach-lbl" data-i18n="achLblPeakCoverage">🏗️ Peak Coverage</div>
                             </div>
                         </div>
                         <div class="ach-cat-section">
@@ -1004,6 +1102,9 @@
             statShelterHP: "Shelter",
             statFloodLevel: "Flood Level",
             statSeason: "Season",
+            statReservoir: "Reservoir",
+            statCoverage: "Coverage",
+            statDelay: "⏳ Delay",
             panelWordBuilder: "📝 Word Builder",
             panelReservoir: "🔤 Letter Reservoir",
             panelWordRadar: "📊 Word Radar",
@@ -1083,6 +1184,7 @@
             achLblLongestLife: "📅 Longest Life",
             achLblXP: "⭐ XP",
             achLblHighestStack: "📐 Highest Stack",
+            achLblPeakCoverage: "🏗️ Peak Coverage",
             achLblCatLooks: "Cat Looks",
             achCatCounter: "{0} / {1} unlocked",
             catNextLook: "in {0} XP",
@@ -1176,6 +1278,8 @@
         const TREAT_HINT_COST = 30;           // cost per Hint press
         const TREAT_CLUE_COST = 100;          // cost per Clue press
         const TREAT_CHEAT_COST = 1000;        // cost per Cheat press
+        const TREAT_DELAY_COST = 50;          // cost per Delay press
+        const DELAY_DURATION = 15000;         // delay duration in ms (15 seconds)
         const TREAT_FULL_SHELTER = 100;       // earned when a shelter row is fully filled
         const TREAT_STACK_LEVEL = 50;         // earned per new stack level reached
         const TREAT_SEASON_COMPLETE = 100;    // earned when a season ends
@@ -1569,6 +1673,7 @@
                 gameState._verticalWordsFound = new Set();
                 gameState.fullShelterCount = career.fullShelterCount || 0;
                 gameState.stacksMax = career.stacksMax || 0;
+                gameState.peakCoverage = career.peakCoverage || 0;
                 gameState.treats = career.treats || 0;
                 gameState.maxLifeDays = career.maxLifeDays || 0;
                 gameState.xp = career.xp || 0;
@@ -1581,6 +1686,7 @@
                 gameState._verticalWordsFound = new Set();
                 gameState.fullShelterCount = 0;
                 gameState.stacksMax = 0;
+                gameState.peakCoverage = 0;
                 gameState.treats = 0;
                 gameState.maxLifeDays = 0;
                 gameState.xp = 0;
@@ -1589,6 +1695,7 @@
                 gameState.activeCatLook = -1;
             }
             gameState.radarHasWords = false;     // whether word radar found any formable words
+            gameState.isDelayed = false;         // true = delay active, letters frozen
             gameState.weatherCycleTick = 0;      // current tick within storm/calm cycle
             gameState.isStorming = true;          // start in storm phase
             gameState.seasonTransition = false;   // true = between seasons, waiting for player
@@ -2091,6 +2198,11 @@
             });
 
             countEl.textContent = ' ' + t('lblReservoirCount', gameState.reservoir.length, RESERVOIR_CAPACITY);
+            var rStatEl = document.getElementById('reservoirStat');
+            if (rStatEl) {
+                rStatEl.textContent = gameState.reservoir.length + '/' + RESERVOIR_CAPACITY;
+                rStatEl.style.color = (gameState.reservoir.length >= RESERVOIR_CAPACITY) ? '#ff4444' : '';
+            }
 
             updateTutorialBlinks();
             renderWordInput();
@@ -2247,6 +2359,13 @@
 
             var hsEl = document.getElementById('achHighestStack');
             if (hsEl) hsEl.textContent = (gameState.stacksMax || 0).toLocaleString();
+
+            var pcEl = document.getElementById('achPeakCoverage');
+            if (pcEl) {
+                var pcPct = gameState.peakCoverage || 0;
+                var pcCells = Math.round(pcPct * 256 / 100);
+                pcEl.textContent = pcCells + ' · ' + pcPct + '%';
+            }
 
             // --- Cat section ---
             var teaserEl = document.getElementById('achCatTeaser');
@@ -3196,6 +3315,29 @@
             }, 3000);
         }
 
+        // Coverage overlay — fade in/out on new peak record
+        var _covOverlayTimer = null;
+        function showCoverageOverlay(pct) {
+            var overlay = document.getElementById('coverageOverlay');
+            var textEl = document.getElementById('coverageOverlayText');
+            if (!overlay || !textEl) return;
+            // Update text and digit class
+            textEl.innerHTML = pct + '<span class="cov-pct">%</span>';
+            textEl.classList.remove('cov-digits-1', 'cov-digits-2', 'cov-digits-3');
+            if (pct >= 100) textEl.classList.add('cov-digits-3');
+            else if (pct >= 10) textEl.classList.add('cov-digits-2');
+            else textEl.classList.add('cov-digits-1');
+            // Cancel any pending fade-out
+            if (_covOverlayTimer) { clearTimeout(_covOverlayTimer); _covOverlayTimer = null; }
+            // Fade in
+            overlay.classList.add('visible');
+            // Fade out after 1s (transition takes 1s in + 1s out = 2s total appearance)
+            _covOverlayTimer = setTimeout(function() {
+                overlay.classList.remove('visible');
+                _covOverlayTimer = null;
+            }, 1000);
+        }
+
         // Update stats
         // Update Hint/Clue/Cheat button states based on treat balance
         // Cache previous button state to avoid DOM thrashing every tick
@@ -3228,6 +3370,57 @@
             }
         }
 
+        // --- Delay feature ---
+        var _delayTimer = null;
+        var _delayCountdown = null;
+        var _delayRemaining = 0;
+
+        function updateDelayButton() {
+            var btn = document.getElementById('delayBtn');
+            var stat = document.getElementById('delayStat');
+            if (!btn || !stat) return;
+
+            if (_delayRemaining > 0) {
+                // Active countdown
+                btn.className = 'stat stat-delay delay-active';
+                stat.textContent = Math.ceil(_delayRemaining / 1000) + 's';
+                return;
+            }
+
+            var times = Math.floor(gameState.treats / TREAT_DELAY_COST);
+            if (times > 0) {
+                btn.className = 'stat stat-delay delay-available';
+                stat.textContent = times + '\u00d7';
+            } else {
+                btn.className = 'stat stat-delay delay-disabled';
+                stat.textContent = '0\u00d7';
+            }
+        }
+
+        function pressDelay() {
+            if (gameState.isPaused) return;
+            if (_delayRemaining > 0) return; // already active
+            if (gameState.treats < TREAT_DELAY_COST) return;
+
+            gameState.treats -= TREAT_DELAY_COST;
+            gameState.isDelayed = true;
+            _delayRemaining = DELAY_DURATION;
+
+            updateDelayButton();
+
+            // Countdown interval — update every 200ms for smooth display
+            _delayCountdown = setInterval(function() {
+                _delayRemaining -= 200;
+                if (_delayRemaining <= 0) {
+                    _delayRemaining = 0;
+                    gameState.isDelayed = false;
+                    clearInterval(_delayCountdown);
+                    _delayCountdown = null;
+                }
+                updateDelayButton();
+            }, 200);
+        }
+
         function updateStats() {
             document.getElementById('lifeDays').textContent = gameState.lifeDays;
 
@@ -3243,7 +3436,7 @@
             }
 
             const seasonInfo = getSeasonInfo();
-            document.getElementById('seasonInfo').textContent = t('seasonDayFormat', seasonInfo.emoji + ' ' + seasonInfo.name, gameState.seasonDay, SEASON_LENGTH);
+            document.getElementById('seasonInfo').textContent = seasonInfo.emoji + ' ' + gameState.seasonDay + '/' + SEASON_LENGTH;
 
             gameState.floodLevel = gameState.floorLetters.size;
             document.getElementById('floodLevel').textContent = gameState.floodLevel;
@@ -3259,9 +3452,33 @@
             gameState.shelterHP = Math.floor(totalHP);
             document.getElementById('shelterHP').textContent = gameState.shelterHP.toLocaleString();
 
+            // Coverage: count bricks with HP>0 in rows 2-17 (16 rows × 16 cols = 256)
+            var coverageCount = 0;
+            var COVERAGE_TOTAL = 256;
+            for (var cy = 2; cy <= 17; cy++) {
+                for (var cx = 0; cx < GRID_WIDTH; cx++) {
+                    var cc = gameState.grid[cy][cx];
+                    if (cc && cc.type === 'brick' && cc.hp > 0) coverageCount++;
+                }
+            }
+            var coveragePct = Math.round((coverageCount / COVERAGE_TOTAL) * 100);
+            var prevPeakInt = Math.floor(gameState.peakCoverage || 0);
+            if (coveragePct > (gameState.peakCoverage || 0)) {
+                gameState.peakCoverage = coveragePct;
+            }
+            var newPeakInt = Math.floor(gameState.peakCoverage || 0);
+            if (newPeakInt > prevPeakInt) {
+                showCoverageOverlay(newPeakInt);
+            }
+            var covStatEl = document.getElementById('coverageStat');
+            if (covStatEl) covStatEl.textContent = coveragePct + '%';
+            var covDetailEl = document.getElementById('coverageDetail');
+            if (covDetailEl) covDetailEl.textContent = coverageCount + '/' + COVERAGE_TOTAL;
+
             document.getElementById('treats').textContent = gameState.treats;
             document.getElementById('xpDisplay').textContent = (gameState.xp || 0).toLocaleString();
             updateTreatButtons();
+            updateDelayButton();
         }
 
         // Update weather forecast
@@ -3715,16 +3932,21 @@
                 if (gameState.seasonTransition) return;
 
                 // Spawn letters at configurable interval (only during storm phase)
-                gameState.letterSpawnTimer += TICK_RATE;
-                if (gameState.letterSpawnTimer >= gameState.letterSpawnInterval) {
-                    if (gameState.isStorming && gameState.seasonDay <= SEASON_LENGTH - SEASON_SPAWN_CUTOFF) {
-                        spawnLetter();
+                // Skip spawn and descent when delay is active
+                if (!gameState.isDelayed) {
+                    gameState.letterSpawnTimer += TICK_RATE;
+                    if (gameState.letterSpawnTimer >= gameState.letterSpawnInterval) {
+                        if (gameState.isStorming && gameState.seasonDay <= SEASON_LENGTH - SEASON_SPAWN_CUTOFF) {
+                            spawnLetter();
+                        }
+                        gameState.letterSpawnTimer = 0;
                     }
-                    gameState.letterSpawnTimer = 0;
                 }
 
                 // Descend letters at configurable interval (1 descent = 1 game tick = 1 day)
-                gameState.letterDescentTimer += TICK_RATE;
+                if (!gameState.isDelayed) {
+                    gameState.letterDescentTimer += TICK_RATE;
+                }
                 if (gameState.letterDescentTimer >= gameState.letterDescentInterval) {
                     updateFallingLetters();
                     moveCat();
@@ -3819,6 +4041,7 @@
                 treats: gameState.treats,  // current spendable balance
                 maxLifeDays: Math.max(prev.maxLifeDays || 0, gameState.maxLifeDays || 0, gameState.lifeDays),
                 stacksMax: Math.max(prev.stacksMax || 0, gameState.stacksMax),
+                peakCoverage: Math.max(prev.peakCoverage || 0, gameState.peakCoverage || 0),
                 fullShelterCount: Math.max(prev.fullShelterCount || 0, gameState.fullShelterCount),
                 xp: Math.max(prev.xp || 0, gameState.xp || 0),
                 catXP: gameState.catXP || 0,
@@ -3893,6 +4116,7 @@
                 verticalWordsByLength: gameState.verticalWordsByLength,
                 fullShelterCount: gameState.fullShelterCount,
                 stacksMax: gameState.stacksMax,
+                peakCoverage: gameState.peakCoverage || 0,
                 hintTargetWord: gameState.hintTargetWord,
                 hintSequence: gameState.hintSequence,
                 hintStep: gameState.hintStep,
@@ -3970,6 +4194,7 @@
             gameState._verticalWordsFound = new Set();
             gameState.fullShelterCount = data.fullShelterCount;
             gameState.stacksMax = data.stacksMax;
+            gameState.peakCoverage = data.peakCoverage || 0;
             gameState.hintTargetWord = data.hintTargetWord;
             gameState.hintSequence = data.hintSequence;
             gameState.hintStep = data.hintStep;
@@ -3991,6 +4216,7 @@
                     treats: Math.max(local.treats || 0, imported.treats || 0, gameState.treats),
                     maxLifeDays: Math.max(local.maxLifeDays || 0, imported.maxLifeDays || 0, gameState.maxLifeDays),
                     stacksMax: Math.max(local.stacksMax || 0, imported.stacksMax || 0, gameState.stacksMax),
+                    peakCoverage: Math.max(local.peakCoverage || 0, imported.peakCoverage || 0, gameState.peakCoverage || 0),
                     fullShelterCount: Math.max(local.fullShelterCount || 0, imported.fullShelterCount || 0, gameState.fullShelterCount),
                     xp: Math.max(local.xp || 0, imported.xp || 0, gameState.xp || 0),
                     catXP: gameState.catXP || 0,
@@ -4020,6 +4246,7 @@
                 gameState._verticalWordsFound = new Set();
                 gameState.fullShelterCount = merged.fullShelterCount;
                 gameState.stacksMax = merged.stacksMax;
+                gameState.peakCoverage = merged.peakCoverage || 0;
                 gameState.maxLifeDays = merged.maxLifeDays;
                 gameState.xp = merged.xp;
                 gameState.catXP = merged.catXP || gameState.catXP || 0;
@@ -4221,6 +4448,7 @@
                 autoSave();
             }
         });
+        document.getElementById('delayBtn').addEventListener('click', pressDelay);
         document.getElementById('cheatBtn').addEventListener('click', showCheats);
         document.getElementById('hintBtn').addEventListener('click', pressHint);
         document.getElementById('clueBtn').addEventListener('click', pressClue);
