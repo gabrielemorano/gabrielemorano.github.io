@@ -4608,11 +4608,9 @@
                     return;
                 }
                 var st = gameArea.scrollTop;
-                if (st > lastScrollTop && st > 10) {
-                    // Scrolling down
+                if (st > 10) {
                     header.classList.add('collapsed');
-                } else if (st < lastScrollTop) {
-                    // Scrolling up
+                } else {
                     header.classList.remove('collapsed');
                 }
                 lastScrollTop = st;
