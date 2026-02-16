@@ -786,12 +786,37 @@
         @keyframes catLook48 {0%{filter:sepia(1) saturate(7) hue-rotate(300deg) brightness(1);transform:rotate(-180deg)}50%{filter:sepia(1) saturate(8) hue-rotate(60deg) brightness(1.3);transform:rotate(0deg)}100%{filter:sepia(1) saturate(7) hue-rotate(300deg) brightness(1);transform:rotate(180deg)}}
         @keyframes catLook49 {0%,100%{filter:sepia(1) saturate(6) hue-rotate(5deg) brightness(0.9)}50%{filter:sepia(1) saturate(6) hue-rotate(30deg) brightness(1.3)}}
 
-        .cat-look-gallery { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 4px; }
+        /* Achievement grid layout */
+        .ach-grids-wrap { display: flex; gap: 8px; }
+        .ach-grid { display: grid; grid-template-columns: 24px repeat(2, 1fr); gap: 2px; flex: 1; }
+        .ach-grid .ach-col-header { font-size: 0.6em; font-weight: 700; text-align: center; padding: 2px 1px; color: #555; letter-spacing: 0.5px; }
+        .ach-grid .ach-row-label { font-size: 0.6em; font-weight: 600; color: #888; display: flex; align-items: center; justify-content: center; padding: 1px; }
+        .ach-cell { border-radius: 4px; text-align: center; font-size: 0.7em; font-weight: 700; padding: 3px 2px; transition: all 0.3s ease; min-height: 22px; display: flex; align-items: center; justify-content: center; }
+        .ach-cell.ach-empty { background: #e8eaf0; color: #bbb; }
+        .ach-cell.ach-filled { background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white; text-shadow: 1px 1px 2px rgba(0,0,0,0.2); box-shadow: 0 1px 3px rgba(16, 185, 129, 0.25); }
+        .ach-cell.ach-filled.ach-milestone { background: linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%); box-shadow: 0 1px 3px rgba(124, 58, 237, 0.25); }
+        .ach-stats-row { display: flex; justify-content: center; gap: 6px; margin-top: 8px; }
+        .ach-stat-box { text-align: center; padding: 4px 8px; background: white; border-radius: 8px; min-width: 60px; box-shadow: 0 1px 3px rgba(0,0,0,0.08); }
+        .ach-stat-box .ach-val { font-size: 1em; font-weight: 700; color: #333; }
+        .ach-stat-box .ach-lbl { font-size: 0.55em; color: #888; margin-top: 1px; }
+        .ach-stat-box.ach-highlight { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
+        .ach-stat-box.ach-highlight .ach-val { color: white; }
+        .ach-stat-box.ach-highlight .ach-lbl { color: rgba(255,255,255,0.8); }
+        .ach-progress-wrap { margin: 8px 0 4px; }
+        .ach-progress-bar { height: 6px; background: #e0e0e0; border-radius: 3px; overflow: hidden; }
+        .ach-progress-fill { height: 100%; background: linear-gradient(90deg, #10b981 0%, #059669 50%, #7c3aed 100%); border-radius: 3px; transition: width 0.5s ease; }
+        .ach-progress-label { font-size: 0.55em; color: #888; text-align: center; margin-top: 2px; }
+        .ach-cat-section { margin-top: 8px; padding-top: 8px; border-top: 1px solid #e0e0e0; }
+        .ach-cat-teaser { display: flex; align-items: center; gap: 6px; font-size: 0.7em; color: #94a3b8; margin-bottom: 6px; }
+        .ach-cat-teaser .ach-next-preview { display: inline-block; font-size: 1.3em; line-height: 1; }
+        .ach-cat-teaser .ach-xp-needed { color: #667eea; font-weight: 600; }
+        .ach-cat-counter { font-size: 0.6em; color: #94a3b8; margin-top: 4px; }
+        .cat-look-gallery { display: flex; flex-wrap: wrap; gap: 4px; }
         .cat-look-btn { cursor: pointer; font-size: 1.1em; padding: 2px 4px; border-radius: 4px; border: 2px solid transparent; background: rgba(255,255,255,0.05); transition: all 0.15s; display: inline-block; line-height: 1; }
         .cat-look-btn:hover { border-color: #667eea; background: rgba(102,126,234,0.15); }
         .cat-look-btn.active { border-color: #667eea; box-shadow: 0 0 6px rgba(102,126,234,0.4); }
-        .cat-teaser { font-size: 0.85em; margin-bottom: 4px; color: #94a3b8; }
-        .cat-teaser .next-cat-preview { display: inline-block; font-size: 1.1em; vertical-align: middle; }
+        .cat-look-btn.cat-locked { opacity: 0.2; cursor: default; filter: grayscale(1); }
+        .cat-look-btn.cat-locked:hover { border-color: transparent; background: rgba(255,255,255,0.05); }
     </style>
 </head>
 <body>
@@ -870,7 +895,45 @@
 
                 <div class="panel">
                     <h3 data-i18n="panelAchievements">🏆 Trofei</h3>
-                    <div id="achievementBoard" style="font-size: 0.9em; color: #666; display: grid; grid-template-columns: 1fr 1fr; gap: 2px 12px;" data-i18n="lblNoAchievements">Ancora nessun trofei</div>
+                    <div id="achievementBoard">
+                        <div class="ach-grids-wrap">
+                            <div class="ach-grid" id="achGridLeft"></div>
+                            <div class="ach-grid" id="achGridRight"></div>
+                        </div>
+                        <div class="ach-progress-wrap">
+                            <div class="ach-progress-bar"><div class="ach-progress-fill" id="achProgressFill"></div></div>
+                            <div class="ach-progress-label" id="achProgressLabel"></div>
+                        </div>
+                        <div class="ach-stats-row">
+                            <div class="ach-stat-box ach-highlight">
+                                <div class="ach-val" id="achTotalWords">0</div>
+                                <div class="ach-lbl" data-i18n="achLblTotalWords">Parole Totali</div>
+                            </div>
+                            <div class="ach-stat-box">
+                                <div class="ach-val" id="achFilledCells">0 / 28</div>
+                                <div class="ach-lbl" data-i18n="achLblUnlocked">Sbloccati</div>
+                            </div>
+                        </div>
+                        <div class="ach-stats-row">
+                            <div class="ach-stat-box">
+                                <div class="ach-val" id="achLongestLife">0</div>
+                                <div class="ach-lbl" data-i18n="achLblLongestLife">📅 Vita più Lunga</div>
+                            </div>
+                            <div class="ach-stat-box">
+                                <div class="ach-val" id="achCurrentXP">0</div>
+                                <div class="ach-lbl" data-i18n="achLblXP">⭐ XP</div>
+                            </div>
+                            <div class="ach-stat-box">
+                                <div class="ach-val" id="achHighestStack">0</div>
+                                <div class="ach-lbl" data-i18n="achLblHighestStack">📐 Pila più Alta</div>
+                            </div>
+                        </div>
+                        <div class="ach-cat-section">
+                            <div class="ach-cat-teaser" id="achCatTeaser"></div>
+                            <div class="cat-look-gallery" id="achCatGallery"></div>
+                            <div class="ach-cat-counter" id="achCatCounter"></div>
+                        </div>
+                    </div>
                 </div>
 
                 <div class="panel">
@@ -1015,6 +1078,13 @@
             achBestDays: "📅 {0} giorni record",
             achFullShelter: "{0} × riparo completo",
             achStacksMax: "{0} livelli max",
+            achLblTotalWords: "Parole Totali",
+            achLblUnlocked: "Sbloccati",
+            achLblLongestLife: "📅 Vita più Lunga",
+            achLblXP: "⭐ XP",
+            achLblHighestStack: "📐 Pila più Alta",
+            achLblCatLooks: "Look del Gatto",
+            achCatCounter: "{0} / {1} sbloccati",
             catNextLook: "tra {0} XP",
             catAllUnlocked: "🐱 Tutti i look sbloccati!",
             catDefault: "Predefinito",
@@ -1066,7 +1136,7 @@
 
         // --- Grid dimensions (columns x rows) ---
         const GRID_WIDTH = 16;               // number of columns
-        const GRID_HEIGHT = 20;              // number of rows
+        const GRID_HEIGHT = 21;              // number of rows (row 20 is hidden spawn buffer)
 
         // --- Timing ---
         const TICK_RATE = 25;               // ms per game tick (main loop interval)
@@ -1081,8 +1151,8 @@
         // --- Letter types: damage per hit, tile colours ---
         const LETTER_TYPES = {
             rain:      { damage: 1,  bg: '#4A90D9', color: '#FFFFFF' },
-            hail:      { damage: 5,  bg: '#FFFFFF', color: '#4A90D9' },
-            lightning: { damage: 10, bg: '#F0FB3E', color: '#4A90D9' }
+            hail:      { damage: 3,  bg: '#FFFFFF', color: '#4A90D9' },
+            lightning: { damage: 7, bg: '#F0FB3E', color: '#4A90D9' }
         };
 
         // --- Speed presets (ms per descent tick) ---
@@ -1895,8 +1965,8 @@
             applySeasonTheme();
             gridEl.innerHTML = '';
 
-            // Render from top to bottom
-            for (let y = GRID_HEIGHT - 1; y >= 0; y--) {
+            // Render from top to bottom (rows 0-19 visible; row 20 is hidden spawn buffer)
+            for (let y = GRID_HEIGHT - 2; y >= 0; y--) {
                 for (let x = 0; x < GRID_WIDTH; x++) {
                     const cell = document.createElement('div');
                     cell.className = 'cell';
@@ -2088,102 +2158,144 @@
             }
         }
 
-        // Word Radar: count formable words by length, show top 3 groups (3+ letters)
-        // Achievement board: render current achievements
+        // Achievement board: render grid layout with word counts, stats, cat looks
         function updateAchievements() {
             const el = document.getElementById('achievementBoard');
             if (!el) return;
 
-            // Keep maxLifeDays current regardless of game-loop state
+            // Keep maxLifeDays current
             if (gameState.lifeDays > (gameState.maxLifeDays || 0)) {
                 gameState.maxLifeDays = gameState.lifeDays;
             }
 
-            const lines = [];
+            var MIN_LEN = 3, MAX_LEN = 16, SPLIT = 10;
+            var TOTAL_CELLS = (MAX_LEN - MIN_LEN + 1) * 2; // 28 cells total
+            var hData = gameState.wordsPlacedByLength || {};
+            var vData = gameState.verticalWordsByLength || {};
 
-            // --- Cat look teaser (first line) ---
-            if (gameState.catLevel < CAT_THRESHOLDS.length) {
-                const nextThreshold = CAT_THRESHOLDS[gameState.catLevel];
-                const remaining = nextThreshold - (gameState.catXP || 0);
-                const nextLook = CAT_LOOKS[gameState.catLevel];
-                // Build a preview span for the next cat
-                let previewStyle = '';
-                if (nextLook.animated) {
-                    previewStyle = `animation:${nextLook.anim} ${nextLook.dur} ${nextLook.timing} infinite`;
-                } else if (nextLook.filter && nextLook.filter !== 'none') {
-                    previewStyle = `filter:${nextLook.filter}`;
+            // --- Build word grids ---
+            function buildHalf(container, from, to) {
+                container.innerHTML = '';
+                // Header row: empty corner + H + V
+                var corner = document.createElement('div');
+                corner.className = 'ach-col-header';
+                container.appendChild(corner);
+                var hH = document.createElement('div');
+                hH.className = 'ach-col-header';
+                hH.textContent = 'H';
+                container.appendChild(hH);
+                var vH = document.createElement('div');
+                vH.className = 'ach-col-header';
+                vH.textContent = 'V';
+                container.appendChild(vH);
+
+                for (var len = from; len <= to; len++) {
+                    var label = document.createElement('div');
+                    label.className = 'ach-row-label';
+                    label.textContent = len;
+                    container.appendChild(label);
+
+                    var hVal = hData[len] || 0;
+                    var hCell = document.createElement('div');
+                    hCell.className = 'ach-cell ' + (hVal > 0 ? 'ach-filled' : 'ach-empty');
+                    if (hVal >= 10) hCell.classList.add('ach-milestone');
+                    hCell.textContent = hVal;
+                    container.appendChild(hCell);
+
+                    var vVal = vData[len] || 0;
+                    var vCell = document.createElement('div');
+                    vCell.className = 'ach-cell ' + (vVal > 0 ? 'ach-filled' : 'ach-empty');
+                    if (vVal >= 10) vCell.classList.add('ach-milestone');
+                    vCell.textContent = vVal;
+                    container.appendChild(vCell);
                 }
-                lines.push(`<span class="cat-teaser"><span class="next-cat-preview" style="${previewStyle}">🐱</span> ${t('catNextLook', remaining.toLocaleString())}</span>`);
-            } else {
-                lines.push(`<span class="cat-teaser">${t('catAllUnlocked')}</span>`);
             }
 
-            // --- Unlocked cat looks gallery (clickable) ---
-            if (gameState.catLevel > 0) {
-                let gallery = '<div class="cat-look-gallery">';
-                const defActive = gameState.activeCatLook === -1;
-                gallery += `<span class="cat-look-btn${defActive ? ' active' : ''}" data-catlook="-1" title="${t('catDefault')}">🐱</span>`;
-                for (let i = 0; i < gameState.catLevel && i < CAT_LOOKS.length; i++) {
-                    const look = CAT_LOOKS[i];
-                    const isActive = gameState.activeCatLook === i;
-                    let style = '';
-                    if (look.animated) {
-                        style = `animation:${look.anim} ${look.dur} ${look.timing} infinite`;
-                    } else if (look.filter && look.filter !== 'none') {
-                        style = `filter:${look.filter}`;
+            var leftGrid = document.getElementById('achGridLeft');
+            var rightGrid = document.getElementById('achGridRight');
+            if (leftGrid) buildHalf(leftGrid, MIN_LEN, SPLIT - 1);
+            if (rightGrid) buildHalf(rightGrid, SPLIT, MAX_LEN);
+
+            // --- Progress bar ---
+            var filledCount = 0;
+            for (var len = MIN_LEN; len <= MAX_LEN; len++) {
+                if ((hData[len] || 0) > 0) filledCount++;
+                if ((vData[len] || 0) > 0) filledCount++;
+            }
+            var pct = Math.round((filledCount / TOTAL_CELLS) * 100);
+            var progressFill = document.getElementById('achProgressFill');
+            var progressLabel = document.getElementById('achProgressLabel');
+            if (progressFill) progressFill.style.width = pct + '%';
+            if (progressLabel) progressLabel.textContent = filledCount + ' / ' + TOTAL_CELLS + ' (' + pct + '%)';
+
+            // --- Stats ---
+            var totalWords = 0;
+            for (var k in hData) totalWords += hData[k];
+            for (var k in vData) totalWords += vData[k];
+
+            var twEl = document.getElementById('achTotalWords');
+            if (twEl) twEl.textContent = totalWords.toLocaleString();
+
+            var fcEl = document.getElementById('achFilledCells');
+            if (fcEl) fcEl.textContent = filledCount + ' / ' + TOTAL_CELLS;
+
+            var llEl = document.getElementById('achLongestLife');
+            if (llEl) llEl.textContent = (gameState.maxLifeDays || 0).toLocaleString();
+
+            var xpEl = document.getElementById('achCurrentXP');
+            if (xpEl) xpEl.textContent = (gameState.xp || 0).toLocaleString();
+
+            var hsEl = document.getElementById('achHighestStack');
+            if (hsEl) hsEl.textContent = (gameState.stacksMax || 0).toLocaleString();
+
+            // --- Cat section ---
+            var teaserEl = document.getElementById('achCatTeaser');
+            if (teaserEl) {
+                if (gameState.catLevel < CAT_THRESHOLDS.length) {
+                    var nextThreshold = CAT_THRESHOLDS[gameState.catLevel];
+                    var remaining = nextThreshold - (gameState.catXP || 0);
+                    var nextLook = CAT_LOOKS[gameState.catLevel];
+                    var previewStyle = '';
+                    if (nextLook.animated) {
+                        previewStyle = 'animation:' + nextLook.anim + ' ' + nextLook.dur + ' ' + nextLook.timing + ' infinite';
+                    } else if (nextLook.filter && nextLook.filter !== 'none') {
+                        previewStyle = 'filter:' + nextLook.filter;
                     }
-                    gallery += `<span class="cat-look-btn${isActive ? ' active' : ''}" data-catlook="${i}" title="${look.name}" style="${style}">🐱</span>`;
-                }
-                gallery += '</div>';
-                lines.push(gallery);
-            }
-
-            // Max life ever
-            if (gameState.maxLifeDays > 0) {
-                lines.push(`<b>${t('achBestDays', gameState.maxLifeDays)}</b>`);
-            }
-
-            // XP — bold
-            if (gameState.xp > 0) {
-                lines.push(`<b>${t('achXP', gameState.xp.toLocaleString())}</b>`);
-            }
-
-            // Word placements by length, sorted descending
-            const lengths = Object.keys(gameState.wordsPlacedByLength)
-                .map(Number)
-                .sort((a, b) => b - a);
-            for (const len of lengths) {
-                const count = gameState.wordsPlacedByLength[len];
-                lines.push(t('achWordCount', count, len, count === 1 ? t('achWordSingular') : t('achWordPlural')));
-            }
-
-            // Vertical word placements by length, sorted descending
-            const vLengths = Object.keys(gameState.verticalWordsByLength || {})
-                .map(Number)
-                .sort((a, b) => b - a);
-            for (const vLen of vLengths) {
-                const vCount = gameState.verticalWordsByLength[vLen];
-                if (vCount > 0) {
-                    lines.push(vCount + ' x ' + vLen + '-' + (vCount === 1 ? t('achWordSingular') : t('achWordPlural')) + ' V');
+                    teaserEl.innerHTML = '<span class="ach-next-preview" style="' + previewStyle + '">🐱</span> ' + t('catNextLook', remaining.toLocaleString());
+                } else {
+                    teaserEl.innerHTML = t('catAllUnlocked');
                 }
             }
 
-            // Full shelter
-            if (gameState.fullShelterCount > 0) {
-                lines.push(t('achFullShelter', gameState.fullShelterCount));
+            // Cat gallery — show all looks: unlocked clickable, locked greyed
+            var galleryEl = document.getElementById('achCatGallery');
+            if (galleryEl) {
+                var html = '';
+                var defActive = gameState.activeCatLook === -1;
+                html += '<span class="cat-look-btn' + (defActive ? ' active' : '') + '" data-catlook="-1" title="' + t('catDefault') + '">🐱</span>';
+                for (var i = 0; i < CAT_LOOKS.length; i++) {
+                    var look = CAT_LOOKS[i];
+                    var unlocked = i < gameState.catLevel;
+                    var isActive = gameState.activeCatLook === i;
+                    var style = '';
+                    if (look.animated) {
+                        style = 'animation:' + look.anim + ' ' + look.dur + ' ' + look.timing + ' infinite';
+                    } else if (look.filter && look.filter !== 'none') {
+                        style = 'filter:' + look.filter;
+                    }
+                    if (unlocked) {
+                        html += '<span class="cat-look-btn' + (isActive ? ' active' : '') + '" data-catlook="' + i + '" title="' + look.name + '" style="' + style + '">🐱</span>';
+                    } else {
+                        html += '<span class="cat-look-btn cat-locked" title="?" style="">🐱</span>';
+                    }
+                }
+                galleryEl.innerHTML = html;
             }
 
-            // Stacks max
-            if (gameState.stacksMax > 0) {
-                lines.push(t('achStacksMax', gameState.stacksMax));
-            }
-
-            if (lines.length === 0) {
-                el.style.display = 'block';
-                el.textContent = t('lblNoAchievements');
-            } else {
-                el.style.display = 'grid';
-                el.innerHTML = lines.map(l => `<span>${l}</span>`).join('');
+            // Cat counter
+            var counterEl = document.getElementById('achCatCounter');
+            if (counterEl) {
+                counterEl.textContent = t('achCatCounter', gameState.catLevel, CAT_LOOKS.length);
             }
         }
 
@@ -2871,9 +2983,12 @@
                 }
             }
 
-            // Feature 2: Vertical Word Bonus — scan each column top-to-bottom
+            // Feature 2: Vertical Words — scan each column top-to-bottom
+            // 3+ letters: achievement tracking only
+            // 4+ letters: achievement tracking AND bonus (HP + color)
+            if (!gameState._verticalWordsFound) gameState._verticalWordsFound = new Set();
             for (var x = 0; x < GRID_WIDTH; x++) {
-                // Collect consecutive brick runs in this column from top to bottom
+                // Collect consecutive brick runs (3+ long) in this column from top to bottom
                 var runs = [];
                 var currentRun = [];
                 for (var y = GRID_HEIGHT - 1; y >= 2; y--) {
@@ -2881,29 +2996,31 @@
                     if (cell && cell.type === 'brick' && cell.hp > 0) {
                         currentRun.push({ y: y, letter: cell.letter });
                     } else {
-                        if (currentRun.length >= 4) runs.push(currentRun);
+                        if (currentRun.length >= 3) runs.push(currentRun);
                         currentRun = [];
                     }
                 }
-                if (currentRun.length >= 4) runs.push(currentRun);
+                if (currentRun.length >= 3) runs.push(currentRun);
 
-                // For each run, find all valid words (4+ letters) reading top-to-bottom
+                // For each run, find all valid words (3+ letters) reading top-to-bottom
                 for (var r = 0; r < runs.length; r++) {
                     var run = runs[r];
-                    for (var start = 0; start < run.length - 3; start++) {
-                        for (var end = start + 4; end <= run.length; end++) {
+                    for (var start = 0; start < run.length - 2; start++) {
+                        for (var end = start + 3; end <= run.length; end++) {
                             var word = '';
                             for (var k = start; k < end; k++) word += run[k].letter;
                             if (DICTIONARY.has(word.toLowerCase())) {
-                                for (var k = start; k < end; k++) {
-                                    colBonus[run[k].y + ',' + x] = true;
+                                var wLen = end - start;
+                                // Bonus only for 4+ letters
+                                if (wLen >= 4) {
+                                    for (var k = start; k < end; k++) {
+                                        colBonus[run[k].y + ',' + x] = true;
+                                    }
                                 }
-                                // Track vertical word for achievements
+                                // Achievement tracking for all (3+)
                                 var vKey = x + ':' + run[start].y + ':' + word.toLowerCase();
-                                if (!gameState._verticalWordsFound) gameState._verticalWordsFound = new Set();
                                 if (!gameState._verticalWordsFound.has(vKey)) {
                                     gameState._verticalWordsFound.add(vKey);
-                                    var wLen = end - start;
                                     gameState.verticalWordsByLength[wLen] = (gameState.verticalWordsByLength[wLen] || 0) + 1;
                                 }
                             }
@@ -3362,7 +3479,7 @@
             overlay.id = 'nextSeasonOverlay';
             var gr = grid.getBoundingClientRect();
             var wr = wrapper.getBoundingClientRect();
-            var rowH = gr.height / GRID_HEIGHT;
+            var rowH = gr.height / (GRID_HEIGHT - 1);
             var bottomFromWrapper = (wr.bottom - gr.bottom) + rowH;
             overlay.style.cssText = `
                 position: absolute;
@@ -4091,7 +4208,7 @@
             renderReservoir();
         });
         // Cat look gallery — delegated listener (survives re-renders)
-        document.getElementById('achievementBoard').addEventListener('click', (e) => {
+        document.getElementById('achCatGallery').addEventListener('click', (e) => {
             const btn = e.target.closest('.cat-look-btn');
             if (!btn) return;
             e.stopPropagation();
@@ -4180,8 +4297,8 @@
                 const col = Math.floor(relX / cellW);
                 const rowFromTop = Math.floor(relY / cellH);
 
-                // Grid renders top-to-bottom: row 0 in DOM = y=GRID_HEIGHT-1
-                const y = (GRID_HEIGHT - 1) - rowFromTop;
+                // Grid renders top-to-bottom: row 0 in DOM = y=GRID_HEIGHT-2 (visible rows 0-19)
+                const y = (GRID_HEIGHT - 2) - rowFromTop;
 
                 if (col >= 0 && col < GRID_WIDTH && y >= 0 && y < GRID_HEIGHT) {
                     catchFallingLetter(col, y);
