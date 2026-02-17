@@ -790,11 +790,11 @@
                 padding: 0 16px;
                 border: none;
                 border-radius: 24px;
-                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                background: linear-gradient(135deg, #374151 0%, #1f2937 100%);
                 color: white;
                 font-size: 1em;
                 font-weight: 700;
-                box-shadow: 0 4px 14px rgba(102, 126, 234, 0.5);
+                box-shadow: 0 4px 14px rgba(55, 65, 81, 0.5);
                 cursor: pointer;
                 -webkit-tap-highlight-color: transparent;
                 white-space: nowrap;
@@ -1150,7 +1150,7 @@
             </div>
 
                 <div class="panel" id="panelWorkshop">
-                    <!-- Header: reservoir icon + title + count + shuffle -->
+                    <!-- Header -->
                     <div class="ws-header">
                         <div class="ws-title">
                             <span data-i18n="panelReservoir">🔤 Letter Reservoir</span>
@@ -1159,11 +1159,8 @@
                         <button class="ws-shuffle" id="shuffleBtn" data-i18n-title="tipShuffle" title="Shuffle tiles">🔀</button>
                     </div>
 
-                    <!-- Reservoir grid -->
-                    <div class="ws-reservoir" id="reservoir"></div>
-
-                    <!-- Radar chips (longest → shortest) OR cheat word chips -->
-                    <div class="ws-radar" id="wordRadar"></div>
+                    <!-- Word input area -->
+                    <div class="ws-word" id="wordInput"></div>
 
                     <!-- Hint/Clue placeholder row -->
                     <div class="ws-hint-row" id="hintPlaceholder">
@@ -1171,8 +1168,11 @@
                         <button class="ws-hint-reset" id="hintResetBtn" data-i18n-title="tipResetHint" title="Reset hint">✕</button>
                     </div>
 
-                    <!-- Word input area -->
-                    <div class="ws-word" id="wordInput"></div>
+                    <!-- Radar chips (longest → shortest) OR cheat word chips -->
+                    <div class="ws-radar" id="wordRadar"></div>
+
+                    <!-- Reservoir grid -->
+                    <div class="ws-reservoir" id="reservoir"></div>
 
                     <!-- Message -->
                     <div class="message" id="message"></div>
@@ -3530,25 +3530,61 @@
 
         // Coverage overlay — fade in/out on new peak record
         var _covOverlayTimer = null;
-        function showCoverageOverlay(pct) {
+        var _covPendingPct = null; // queued overlay for when grid becomes visible
+        var _covGridObserver = null;
+
+        function _fireCoverageOverlay(pct) {
             var overlay = document.getElementById('coverageOverlay');
             var textEl = document.getElementById('coverageOverlayText');
             if (!overlay || !textEl) return;
-            // Update text and digit class
             textEl.innerHTML = pct + '<span class="cov-pct">%</span>';
             textEl.classList.remove('cov-digits-1', 'cov-digits-2', 'cov-digits-3');
             if (pct >= 100) textEl.classList.add('cov-digits-3');
             else if (pct >= 10) textEl.classList.add('cov-digits-2');
             else textEl.classList.add('cov-digits-1');
-            // Cancel any pending fade-out
             if (_covOverlayTimer) { clearTimeout(_covOverlayTimer); _covOverlayTimer = null; }
-            // Fade in
             overlay.classList.add('visible');
-            // Fade out after 1s (transition takes 1s in + 1s out = 2s total appearance)
             _covOverlayTimer = setTimeout(function() {
                 overlay.classList.remove('visible');
                 _covOverlayTimer = null;
             }, 1000);
+        }
+
+        function _isGridVisibleMobile() {
+            var gameArea = document.querySelector('.game-area');
+            var gridEl = document.querySelector('.grid-container');
+            if (!gameArea || !gridEl) return true;
+            var gridTop = gridEl.offsetTop - gameArea.offsetTop;
+            var gridBottom = gridTop + gridEl.offsetHeight;
+            var scrollTop = gameArea.scrollTop;
+            var viewBottom = scrollTop + gameArea.clientHeight;
+            var visiblePx = Math.min(gridBottom, viewBottom) - Math.max(gridTop, scrollTop);
+            return visiblePx > gridEl.offsetHeight * 0.3;
+        }
+
+        function showCoverageOverlay(pct) {
+            // On mobile, defer until grid is scrolled into view in .game-area
+            if (window.innerWidth <= 500 && !_isGridVisibleMobile()) {
+                _covPendingPct = pct;
+                if (!_covGridObserver) {
+                    var gameArea = document.querySelector('.game-area');
+                    if (gameArea) {
+                        var onScroll = function() {
+                            if (_covPendingPct !== null && _isGridVisibleMobile()) {
+                                var p = _covPendingPct;
+                                _covPendingPct = null;
+                                gameArea.removeEventListener('scroll', onScroll);
+                                _covGridObserver = null;
+                                _fireCoverageOverlay(p);
+                            }
+                        };
+                        _covGridObserver = onScroll;
+                        gameArea.addEventListener('scroll', onScroll);
+                    }
+                }
+                return;
+            }
+            _fireCoverageOverlay(pct);
         }
 
         // Update Hint/Clue/Cheat button states based on treat balance
