@@ -172,6 +172,29 @@
             display: inline-block;
         }
 
+        /* Coverage border trace SVG */
+        .cov-border-svg {
+            position: absolute;
+            top: 0; left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 5;
+        }
+        .cov-border-bg {
+            fill: none;
+            stroke: rgba(255,255,255,0.07);
+            stroke-width: 5;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+        }
+        .cov-border-trace {
+            fill: none;
+            stroke-width: 5;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+        }
+
         /* Coverage overlay on grid */
         .coverage-grid-overlay {
             position: absolute;
@@ -220,13 +243,13 @@
             grid-template-rows: repeat(20, 28px);
             gap: 1px;
             background: var(--season-gap, #091f12);
-            border: 4px solid var(--season-border, #10b981);
+            border: 4px solid rgba(255,255,255,0.08);
             border-radius: 10px;
             padding: 5px;
             width: fit-content;
             box-shadow: inset 0 4px 10px rgba(0,0,0,0.4);
-            -webkit-transition: background 1.2s ease, border-color 1.2s ease;
-            transition: background 1.2s ease, border-color 1.2s ease;
+            -webkit-transition: background 1.2s ease;
+            transition: background 1.2s ease;
         }
 
         .grid.grid-alert {
@@ -819,6 +842,9 @@
                 padding: 3px;
                 border-width: 2px;
             }
+            /* Coverage border: thicker on mobile for visibility */
+            .cov-border-bg { stroke-width: 4; stroke: rgba(255,255,255,0.12); }
+            .cov-border-trace { stroke-width: 4; }
             .cell {
                 width: var(--cell);
                 height: var(--cell);
@@ -1874,6 +1900,8 @@
             gameState.hintRevealed = [];    // booleans for which positions are revealed
             gameState.hintTargetLength = 0;  // 0 = auto (longest), >0 = player-chosen length
             gameState.hintPositionMap = []; // maps step index to position in target word
+            gameState.clueRevealOrder = []; // outside-in position order for clue
+            gameState.clueRevealStep = 0;   // current step in clueRevealOrder
             gameState.cheatsActive = false; // true when cheat word chips are showing
             // Restore career records (persist across seeds)
             const career = loadCareer();
@@ -2203,6 +2231,8 @@
             gridEl.style.setProperty('--season-bg', s.gridBg);
             gridEl.style.setProperty('--season-gap', s.gridGap);
             gridEl.style.setProperty('--season-border', s.border);
+            // Update coverage border trace color
+            _updateCovBorder(gameState.peakCoverage || 0);
         }
 
         // Persistent cat overlay — absolutely positioned over the grid inside a
@@ -2376,6 +2406,14 @@
 
             _updateCatOverlay(gridEl);
             updateTutorialBlinks();
+
+            // Create coverage border SVG once grid has dimensions
+            if (!_covBorderInited) {
+                requestAnimationFrame(function() {
+                    _createCovBorderSVG();
+                    _updateCovBorder(gameState.peakCoverage || 0);
+                });
+            }
         }
 
         // Render reservoir
@@ -2848,6 +2886,19 @@
             gameState.hintPositionMap = positionMap;
             gameState.hintStep = 0;
             gameState.hintHighlights = [];
+
+            // Build outside-in reveal order for Clue: 1st, last, 2nd, 2nd-to-last, ...
+            var wordLen = longest.length;
+            var clueOrder = [];
+            var lo = 0, hi = wordLen - 1;
+            while (lo <= hi) {
+                clueOrder.push(lo);
+                if (lo !== hi) clueOrder.push(hi);
+                lo++;
+                hi--;
+            }
+            gameState.clueRevealOrder = clueOrder;
+            gameState.clueRevealStep = 0;
         }
 
         // Render the hint placeholder row (underscores with revealed letters)
@@ -2891,17 +2942,50 @@
                 return;
             }
 
-            if (gameState.hintStep >= gameState.hintSequence.length) {
-                // All letters already highlighted in reservoir
-                if (revealPosition) {
-                    // Clue: reveal next unrevealed position from previously hinted letters
-                    const nextUnrevealed = gameState.hintRevealed.indexOf(false);
-                    if (nextUnrevealed !== -1) {
-                        gameState.hintRevealed[nextUnrevealed] = true;
-                        renderPlaceholder();
-                        return;
-                    }
+            if (revealPosition) {
+                // Clue: reveal next position in outside-in order
+                if (gameState.clueRevealStep >= (gameState.clueRevealOrder || []).length) {
+                    showMessage(t('msgAllRevealed'), 'info');
+                    return;
                 }
+                var cluePos = gameState.clueRevealOrder[gameState.clueRevealStep];
+                gameState.hintRevealed[cluePos] = true;
+                gameState.clueRevealStep++;
+
+                // Also highlight the matching reservoir tile if not yet highlighted
+                var targetLetter = gameState.hintTargetWord[cluePos];
+                var alreadyHighlighted = new Set(gameState.hintHighlights);
+                var resIdx = gameState.reservoir.findIndex(function(l, i) {
+                    return l.toUpperCase() === targetLetter.toUpperCase() && !alreadyHighlighted.has(i);
+                });
+                if (resIdx !== -1) {
+                    // Move tile to front (next highlight slot)
+                    var clueSlot = gameState.hintHighlights.length;
+                    if (resIdx !== clueSlot) {
+                        var letter = gameState.reservoir.splice(resIdx, 1)[0];
+                        gameState.reservoir.splice(clueSlot, 0, letter);
+                        // Update hintHighlights indices
+                        for (var hi2 = 0; hi2 < gameState.hintHighlights.length; hi2++) {
+                            var hv = gameState.hintHighlights[hi2];
+                            if (hv >= clueSlot && hv < resIdx) gameState.hintHighlights[hi2] = hv + 1;
+                        }
+                        // Update selectedLetters
+                        for (var si2 = 0; si2 < gameState.selectedLetters.length; si2++) {
+                            var sv = gameState.selectedLetters[si2];
+                            if (sv === resIdx) gameState.selectedLetters[si2] = clueSlot;
+                            else if (sv >= clueSlot && sv < resIdx) gameState.selectedLetters[si2] = sv + 1;
+                        }
+                    }
+                    gameState.hintHighlights.push(clueSlot);
+                }
+
+                renderPlaceholder();
+                renderReservoir();
+                return;
+            }
+
+            // Hint: highlight next reservoir tile only
+            if (gameState.hintStep >= gameState.hintSequence.length) {
                 showMessage(t('msgAllRevealed'), 'info');
                 return;
             }
@@ -2947,13 +3031,6 @@
             }
 
             gameState.hintHighlights.push(targetSlot);
-
-            // Reveal position in placeholder if Clue
-            if (revealPosition) {
-                const wordPos = gameState.hintPositionMap[gameState.hintStep];
-                gameState.hintRevealed[wordPos] = true;
-                renderPlaceholder();
-            }
 
             gameState.hintStep++;
             renderPlaceholder();
@@ -3003,6 +3080,8 @@
             gameState.hintRevealed = [];
             gameState.hintTargetLength = 0;
             gameState.cheatsActive = false;
+            gameState.clueRevealOrder = [];
+            gameState.clueRevealStep = 0;
             document.getElementById('hintPlaceholder').classList.remove('visible');
             updateWordRadar(); // refresh radar chips
         }
@@ -3398,32 +3477,25 @@
         }
 
         // Show message
-        // Confetti burst effect
-        // Confetti burst — count and velocity scale with intensity
+        // Confetti burst — drops from top of screen, spread across viewport width
         function showConfetti(intensity) {
-            const container = document.getElementById('gameGrid');
-            if (!container) return;
-            const rect = container.getBoundingClientRect();
+            const vw = window.innerWidth;
             const colors = ['#667eea', '#22c55e', '#f59e0b', '#ef4444', '#ec4899', '#8b5cf6', '#06b6d4', '#fbbf24'];
             const count = intensity === 'mega' ? 120 : 60;
-            const velBase = intensity === 'mega' ? 100 : 60;
-            const velRange = intensity === 'mega' ? 200 : 120;
-            const durBase = intensity === 'mega' ? 1200 : 800;
-            const durRange = intensity === 'mega' ? 800 : 600;
+            const durBase = intensity === 'mega' ? 1800 : 1200;
+            const durRange = intensity === 'mega' ? 1200 : 800;
 
             for (let i = 0; i < count; i++) {
                 const particle = document.createElement('div');
                 const color = colors[Math.floor(Math.random() * colors.length)];
                 const size = intensity === 'mega' ? Math.random() * 10 + 5 : Math.random() * 7 + 4;
-                const startX = rect.left + rect.width * 0.2 + Math.random() * rect.width * 0.6;
-                const startY = rect.top + rect.height * (intensity === 'mega' ? 0.4 : 0.5);
-                const angle = Math.random() * Math.PI * 2;
-                const velocity = velBase + Math.random() * velRange;
-                const dx = Math.cos(angle) * velocity;
-                const dy = Math.sin(angle) * velocity - (intensity === 'mega' ? 140 : 80);
+                const startX = vw * 0.05 + Math.random() * vw * 0.9;
+                const startY = -(Math.random() * 30 + 10); // just above viewport
+                const drift = (Math.random() - 0.5) * (intensity === 'mega' ? 200 : 120); // horizontal drift
+                const fallDist = window.innerHeight * (0.7 + Math.random() * 0.4); // fall distance
 
                 const shapes = intensity === 'mega'
-                    ? ['50%', '2px', '0', '50% 0 50% 50%']  // circle, square, diamond, teardrop
+                    ? ['50%', '2px', '0', '50% 0 50% 50%']
                     : ['50%', '2px'];
                 const borderRadius = shapes[Math.floor(Math.random() * shapes.length)];
 
@@ -3437,19 +3509,26 @@
                 `;
                 document.body.appendChild(particle);
 
+                // Stagger start so particles don't all drop at once
+                const delay = Math.random() * (intensity === 'mega' ? 600 : 300);
                 const duration = durBase + Math.random() * durRange;
-                const startTime = performance.now();
+                const startTime = performance.now() + delay;
                 const rotDir = Math.random() > 0.5 ? 1 : -1;
                 const rotSpeed = 360 + Math.random() * 360;
+                const wobbleAmp = 20 + Math.random() * 30;
+                const wobbleFreq = 2 + Math.random() * 3;
 
                 function animate(now) {
-                    const t = Math.min((now - startTime) / duration, 1);
-                    const ease = 1 - (1 - t) * (1 - t);
-                    const gravity = (intensity === 'mega' ? 300 : 200) * t * t;
-                    particle.style.left = (startX + dx * ease) + 'px';
-                    particle.style.top = (startY + dy * ease + gravity) + 'px';
-                    particle.style.opacity = 1 - t * t;
-                    particle.style.transform = `rotate(${t * rotSpeed * rotDir}deg) scale(${1 - t * 0.5})`;
+                    const elapsed = now - startTime;
+                    if (elapsed < 0) { requestAnimationFrame(animate); return; }
+                    const t = Math.min(elapsed / duration, 1);
+                    // Ease-in for gravity feel
+                    const fallEase = t * t * 0.4 + t * 0.6;
+                    const wobble = Math.sin(t * wobbleFreq * Math.PI * 2) * wobbleAmp * (1 - t);
+                    particle.style.left = (startX + drift * t + wobble) + 'px';
+                    particle.style.top = (startY + fallDist * fallEase) + 'px';
+                    particle.style.opacity = t < 0.7 ? 1 : 1 - ((t - 0.7) / 0.3);
+                    particle.style.transform = `rotate(${t * rotSpeed * rotDir}deg) scale(${1 - t * 0.3})`;
                     if (t < 1) {
                         requestAnimationFrame(animate);
                     } else {
@@ -3530,6 +3609,90 @@
 
         // Coverage overlay — fade in/out on new peak record
         var _covOverlayTimer = null;
+        // --- Coverage border trace ---
+        var _covTracePath = null;
+        var _covPathLen = 0;
+        var _covBorderInited = false;
+
+        function _createCovBorderSVG() {
+            var wrap = document.querySelector('.grid-wrap-inner');
+            var gridEl = document.getElementById('gameGrid');
+            if (!wrap || !gridEl) return;
+            var old = wrap.querySelector('.cov-border-svg');
+            if (old) old.remove();
+
+            var w = gridEl.offsetWidth;
+            var h = gridEl.offsetHeight;
+            if (w === 0 || h === 0) return; // not rendered yet
+            var r = 10;
+
+            var svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+            svg.setAttribute('class', 'cov-border-svg');
+            svg.setAttribute('viewBox', '0 0 ' + w + ' ' + h);
+            svg.setAttribute('width', w);
+            svg.setAttribute('height', h);
+
+            // Counter-clockwise from bottom-right
+            var d = 'M ' + w + ' ' + (h - r) +
+                ' Q ' + w + ' ' + h + ' ' + (w - r) + ' ' + h +
+                ' L ' + r + ' ' + h +
+                ' Q 0 ' + h + ' 0 ' + (h - r) +
+                ' L 0 ' + r +
+                ' Q 0 0 ' + r + ' 0' +
+                ' L ' + (w - r) + ' 0' +
+                ' Q ' + w + ' 0 ' + w + ' ' + r +
+                ' Z';
+
+            var bg = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+            bg.setAttribute('d', d);
+            bg.setAttribute('class', 'cov-border-bg');
+            svg.appendChild(bg);
+
+            _covTracePath = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+            _covTracePath.setAttribute('d', d);
+            _covTracePath.setAttribute('class', 'cov-border-trace');
+            svg.appendChild(_covTracePath);
+
+            wrap.appendChild(svg);
+
+            _covPathLen = _covTracePath.getTotalLength();
+            _covTracePath.style.strokeDasharray = _covPathLen;
+            _covTracePath.style.strokeDashoffset = _covPathLen;
+            _covBorderInited = true;
+        }
+
+        // Recreate SVG on resize (grid dimensions change)
+        var _covResizeTimer = null;
+        window.addEventListener('resize', function() {
+            if (!_covBorderInited) return;
+            clearTimeout(_covResizeTimer);
+            _covResizeTimer = setTimeout(function() {
+                _covBorderInited = false;
+                _createCovBorderSVG();
+                _updateCovBorder(gameState.peakCoverage || 0);
+            }, 200);
+        });
+
+        function _updateCovBorder(pct) {
+            if (!_covTracePath || !_covPathLen) return;
+            var fraction = Math.min(1, Math.max(0, pct / 100));
+            _covTracePath.style.strokeDashoffset = _covPathLen * (1 - fraction);
+
+            // Season accent color for stroke
+            var s = typeof getSeasonInfo === 'function' ? getSeasonInfo() : null;
+            var color = s ? s.border : '#10b981';
+            _covTracePath.style.stroke = color;
+
+            // Glow and thickness scale with coverage
+            var glowSize = (2 + fraction * 14).toFixed(1);
+            var glowAlpha = (0.2 + fraction * 0.8).toFixed(2);
+            _covTracePath.style.filter = 'drop-shadow(0 0 ' + glowSize + 'px ' + color + ')';
+
+            var isMobile = window.innerWidth <= 500;
+            var baseStroke = isMobile ? 4 : 5;
+            _covTracePath.style.strokeWidth = (baseStroke + fraction * 3).toFixed(1);
+        }
+
         var _covPendingPct = null; // queued overlay for when grid becomes visible
         var _covGridObserver = null;
 
@@ -3713,6 +3876,9 @@
             if (newPeakInt > prevPeakInt) {
                 showCoverageOverlay(newPeakInt);
             }
+            // Update coverage border trace to peak coverage
+            _updateCovBorder(gameState.peakCoverage || 0);
+
             var covStatEl = document.getElementById('coverageStat');
             if (covStatEl) covStatEl.textContent = coveragePct + '%';
             var covDetailEl = document.getElementById('coverageDetail');
