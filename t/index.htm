@@ -444,12 +444,6 @@
         }
         .ws-cheat-chip:active { transform: scale(0.95); }
 
-        .ws-hint-row { display: none; align-items: center; justify-content: center; gap: 8px; padding: 6px 0; }
-        .ws-hint-row.visible { display: flex; }
-        .ws-hint-text { display: flex; flex-direction: column; align-items: center; gap: 2px; font-family: monospace; font-size: 1.1em; letter-spacing: 4px; color: #555; }
-        .ws-hint-letters { color: #667eea; font-weight: bold; font-size: 0.85em; }
-        .ws-hint-reset { background: none; border: 1.5px solid #ccc; border-radius: 4px; font-size: 0.75em; color: #999; padding: 2px 6px; cursor: pointer; -webkit-tap-highlight-color: transparent; }
-
         .ws-word {
             display: flex; gap: 3px; min-height: 40px;
             padding: 5px 6px; background: #f8f9fa;
@@ -458,9 +452,25 @@
             transition: border-color 0.2s;
         }
         .ws-word:empty::after { content: "Tap letters..."; color: #bbb; font-size: 0.8em; font-style: italic; }
-        .ws-word .letter-tile,
-        .ws-word .letter-tile.selected,
-        .ws-word .letter-tile:hover { width: 30px; height: 30px; font-size: 0.8em; transform: none !important; }
+        .input-slot {
+            width: 30px; height: 30px; border-radius: 5px;
+            display: flex; align-items: center; justify-content: center;
+            font-weight: bold; font-size: 0.8em;
+            border: 2px dashed rgba(102,126,234,0.35);
+            background: transparent; color: transparent;
+            transition: all 0.15s;
+        }
+        .input-slot.filled {
+            border-style: solid; border-color: transparent;
+            color: white; cursor: default;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+        .input-slot.filled.user {
+            background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
+        }
+        .input-slot.filled.clue {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+        }
 
         .ws-btn-row { display: flex; gap: 5px; margin-top: 6px; }
         .ws-btn-row button {
@@ -470,10 +480,13 @@
             transition: all 0.12s; touch-action: manipulation;
         }
         .ws-btn-row button:active { transform: scale(0.97); }
-        .ws-submit { flex: 2; font-size: 0.9em; color: white; background: linear-gradient(135deg, #10b981, #059669); box-shadow: 0 2px 6px rgba(16,185,129,0.3); }
+        .ws-submit { flex: 3; font-size: 0.9em; color: white; background: linear-gradient(135deg, #10b981, #059669); box-shadow: 0 2px 6px rgba(16,185,129,0.3); }
         .ws-submit:disabled { opacity: 0.4; cursor: default; }
-        .ws-backspace, .ws-clearall { flex: 1; font-size: 1.15em; background: #e5e7eb; color: #555; }
-        .ws-backspace:active, .ws-clearall:active { background: #d1d5db !important; }
+        .ws-backspace { flex: 1; font-size: 2em; color: white; background: linear-gradient(135deg, #f59e0b, #d97706); box-shadow: 0 2px 6px rgba(245,158,11,0.3); line-height: 1; }
+        .ws-clearall { flex: 1; font-size: 1.15em; color: white; background: linear-gradient(135deg, #ef4444, #dc2626); box-shadow: 0 2px 6px rgba(239,68,68,0.3); }
+        .ws-clearall .icon-white { filter: grayscale(1) brightness(100); }
+        .ws-backspace:active { background: linear-gradient(135deg, #d97706, #b45309) !important; }
+        .ws-clearall:active { background: linear-gradient(135deg, #dc2626, #b91c1c) !important; }
         .ws-tool-btn { flex: 1; gap: 4px; font-size: 0.82em; font-weight: 600; color: white; }
         .ws-tool-btn .tool-cost { font-size: 0.85em; opacity: 0.85; }
         .ws-tool-btn.affordable { background: linear-gradient(135deg, #10b981, #059669); box-shadow: 0 1px 4px rgba(16,185,129,0.25); }
@@ -1209,23 +1222,17 @@
                     <!-- Word input area -->
                     <div class="ws-word" id="wordInput"></div>
 
-                    <!-- Hint/Clue placeholder row -->
-                    <div class="ws-hint-row" id="hintPlaceholder">
-                        <span class="ws-hint-text" id="wsHintText"></span>
-                        <button class="ws-hint-reset" id="hintResetBtn" data-i18n-title="tipResetHint" title="Reset hint">✕</button>
-                    </div>
-
                     <!-- Radar chips (longest → shortest) OR cheat word chips -->
                     <div class="ws-radar" id="wordRadar"></div>
 
                     <!-- Reservoir grid -->
                     <div class="ws-reservoir" id="reservoir"></div>
 
-                    <!-- Row 1: Submit 50% | ⌫ 25% | 🗑 25% -->
+                    <!-- Row 1: Submit 60% | ⟲ 20% | 🗑 20% -->
                     <div class="ws-btn-row">
                         <button class="ws-submit" id="submitBtn" disabled data-i18n="btnSubmitWord">Submit Word</button>
-                        <button class="ws-backspace" id="clearBtn">⌫</button>
-                        <button class="ws-clearall" id="clearAllBtn" data-i18n-title="tipClearAll" title="Clear all tiles">🗑️</button>
+                        <button class="ws-backspace" id="clearBtn">⟲</button>
+                        <button class="ws-clearall" id="clearAllBtn" data-i18n-title="tipClearAll" title="Clear all tiles"><span class="icon-white">🗑</span></button>
                     </div>
 
                     <!-- Row 2: Hint 33% | Clue 33% | Cheat 33% -->
@@ -1473,7 +1480,8 @@
             tutBtnGo: "Let's Go!",
             tutSkipped: "Tutorial skipped. Good luck! 🐱",
             tutComplete: "You're ready! Protect your cat! 🐱",
-            catLookNames: ["Cool Mono","Malware","Silver","Lightning Strike","Vermilion Dusty","Heartbeat","X-Ray","Heartbeat Gold","Berry Jam","Fade In Out","Sky Blue","CRT","Honey","Pulse Ice","Emerald","Solar Eclipse","Inverted","Bioluminescent","Ice","Pulse Crimson","Charcoal","Pulse Red","Ash","Hack","Shadow","Bounce","Purple","Strobe","Tangerine","Inferno","Classic","Pulse Purple","Spin Cat","Corrupt","Pulse Invert","Pulse Spring","Emergency","Static","Blizzard","Pendulum","Throb","Bonfire","Neutron Star","Heartbeat Blue","Float","Sway","Jitter","Glitch","Ribbon","Campfire"]
+            catLookNames: ["Cool Mono","Malware","Silver","Lightning Strike","Vermilion Dusty","Heartbeat","X-Ray","Heartbeat Gold","Berry Jam","Fade In Out","Sky Blue","CRT","Honey","Pulse Ice","Emerald","Solar Eclipse","Inverted","Bioluminescent","Ice","Pulse Crimson","Charcoal","Pulse Red","Ash","Hack","Shadow","Bounce","Purple","Strobe","Tangerine","Inferno","Classic","Pulse Purple","Spin Cat","Corrupt","Pulse Invert","Pulse Spring","Emergency","Static","Blizzard","Pendulum","Throb","Bonfire","Neutron Star","Heartbeat Blue","Float","Sway","Jitter","Glitch","Ribbon","Campfire"],
+            msgCompleteWord: "Fill all slots to complete the word!"
         };
 
         function t(key) {
@@ -1643,7 +1651,7 @@
             { id: 3, name: 'spell',     type: 'tooltip', target: '#reservoir', arrow: 'left',
               title: t('tutSpellTitle'),
               text: t('tutSpellText'),
-              trigger: () => gameState.selectedLetters.length >= 2 },
+              trigger: () => gameState.inputSlots.filter(function(s){return s !== null;}).length >= 2 },
             { id: 4, name: 'submit',    type: 'tooltip', target: '#submitBtn', arrow: 'left',
               title: t('tutSubmitTitle'),
               text: t('tutSubmitText'),
@@ -1829,7 +1837,7 @@
         let gameState = {
             grid: [],
             reservoir: [],
-            selectedLetters: [],
+            inputSlots: [],         // array of {letter, source:'user'|'clue'} or null
             fallingLetters: [],
             floorLetters: new Map(), // Map<x, {letter, hp}>
             catPosition: { x: 14, y: 0 },
@@ -1895,7 +1903,7 @@
 
             // Full state reset
             gameState.reservoir = [];
-            gameState.selectedLetters = [];
+            gameState.inputSlots = [];
             gameState.fallingLetters = [];
             gameState.floorLetters = new Map();
             gameState.catPosition = { x: 14, y: 0 };
@@ -1911,13 +1919,10 @@
             gameState.letterSpawnInterval = SPEED_NORMAL;
             gameState.letterDescentInterval = SPEED_NORMAL;
             gameState.isPaused = false;
-            gameState.hintHighlights = [];  // reservoir indices currently highlighted by hint
-            gameState.hintSequence = [];    // pre-computed sequence of reservoir indices to highlight
-            gameState.hintStep = 0;         // current position in hintSequence
             gameState.hintTargetWord = '';   // the target word for hint/clue
-            gameState.hintRevealed = [];    // booleans for which positions are revealed
-            gameState.hintTargetLength = 0;  // 0 = auto (longest), >0 = player-chosen length
-            gameState.hintPositionMap = []; // maps step index to position in target word
+            gameState.hintRevealed = [];    // booleans for which positions are revealed by clue
+            gameState.hintedPositions = []; // word positions revealed by hint (glow in reservoir)
+            gameState.hintTargetLength = 0; // 0 = auto (longest), >0 = player-chosen length
             gameState.clueRevealOrder = []; // outside-in position order for clue
             gameState.clueRevealStep = 0;   // current step in clueRevealOrder
             gameState.cheatsActive = false; // true when cheat word chips are showing
@@ -1943,7 +1948,7 @@
                 gameState.fullShelterCount = 0;
                 gameState.stacksMax = 0;
                 gameState.peakCoverage = 0;
-                gameState.treats = 99999;
+                gameState.treats = 0;
                 gameState.maxLifeDays = 0;
                 gameState.xp = 0;
                 gameState.catXP = 0;
@@ -1980,7 +1985,6 @@
             updateAchievements();
 
             // Clear UI leftovers from previous game
-            document.getElementById('hintPlaceholder').classList.remove('visible');
             gameState.cheatsActive = false;
             const existingOverlay = document.getElementById('nextSeasonOverlay');
             if (existingOverlay) existingOverlay.remove();
@@ -2213,7 +2217,7 @@
 
             const hasLettersOnGrid = gameState.fallingLetters.length > 0 || gameState.floorLetters.size > 0;
             const allInReservoir = gameState.reservoir.length >= 5 && !hasLettersOnGrid;
-            const spelled = gameState.selectedLetters.length >= 4;
+            const spelled = gameState.inputSlots.filter(function(s){return s !== null;}).length >= 4;
             const placed = gameState.tutorial._wordPlaced;
 
             // Phase 1: grid blinks while ANY letters are still on the grid
@@ -2436,12 +2440,34 @@
             }
         }
 
+        // --- Reservoir index remap helpers ---
+        // No index remapping needed — hint system uses word positions, not reservoir indices
+        function _remapAfterSplice(removedIndex) {
+            // No-op: hintedPositions are word positions, not reservoir indices
+        }
+        function _remapAfterInsert(insertedIndex) {
+            // No-op: hintedPositions are word positions, not reservoir indices
+        }
+
         // Render reservoir
         function renderReservoir() {
             const reservoirEl = document.getElementById('reservoir');
             const countEl = document.getElementById('reservoirCount');
 
             reservoirEl.innerHTML = '';
+
+            // Compute which reservoir letters should glow (hinted positions whose letter is still in reservoir)
+            var hintGlowNeeded = {};
+            if (gameState.hintTargetWord && gameState.hintedPositions) {
+                for (var hp = 0; hp < gameState.hintedPositions.length; hp++) {
+                    var pos = gameState.hintedPositions[hp];
+                    // Only glow if position not already filled by Clue or user in inputSlots
+                    if (gameState.inputSlots[pos]) continue;
+                    var ch = gameState.hintTargetWord[pos].toUpperCase();
+                    hintGlowNeeded[ch] = (hintGlowNeeded[ch] || 0) + 1;
+                }
+            }
+
             // Render letter tiles
             gameState.reservoir.forEach((letter, index) => {
                 const tile = document.createElement('div');
@@ -2449,20 +2475,14 @@
                 tile.textContent = letter;
                 tile.dataset.index = index;
 
-                const isUsed = gameState.selectedLetters.includes(index);
-                if (isUsed) {
-                    tile.classList.add('selected');
-                    tile.style.opacity = '0.35';
-                    tile.style.cursor = 'default';
-                    tile.style.pointerEvents = 'none';
-                }
-                if (gameState.hintHighlights && gameState.hintHighlights.includes(index)) {
+                // Apply hint glow by letter matching
+                var upper = letter.toUpperCase();
+                if (hintGlowNeeded[upper] && hintGlowNeeded[upper] > 0) {
                     tile.classList.add('hinted');
+                    hintGlowNeeded[upper]--;
                 }
 
-                if (!isUsed) {
-                    tile.addEventListener('click', () => selectLetter(index));
-                }
+                tile.addEventListener('click', () => selectLetter(index));
                 reservoirEl.appendChild(tile);
             });
             // Fill empty slots up to RESERVOIR_CAPACITY
@@ -2483,65 +2503,107 @@
             renderWordInput();
         }
 
-        // Render word input with live validation feedback
+        // Render word input: fixed slots when target word active, free-form otherwise
         function renderWordInput() {
-            const wordInputEl = document.getElementById('wordInput');
-            wordInputEl.innerHTML = '';
+            var el = document.getElementById('wordInput');
+            el.innerHTML = '';
 
-            gameState.selectedLetters.forEach(index => {
-                const tile = document.createElement('div');
-                tile.className = 'letter-tile selected';
-                tile.textContent = gameState.reservoir[index];
-                wordInputEl.appendChild(tile);
-            });
+            if (gameState.hintTargetWord) {
+                // Fixed-slot mode: show N slots for target word length
+                var len = gameState.hintTargetWord.length;
+                // Ensure inputSlots array is correct length
+                while (gameState.inputSlots.length < len) gameState.inputSlots.push(null);
+                for (var i = 0; i < len; i++) {
+                    var slot = document.createElement('div');
+                    slot.className = 'input-slot';
+                    var data = gameState.inputSlots[i];
+                    if (data) {
+                        slot.textContent = data.letter;
+                        slot.classList.add('filled', data.source);
+                    }
+                    el.appendChild(slot);
+                }
+            } else {
+                // Free mode: render placed letters as orange tiles
+                for (var i = 0; i < gameState.inputSlots.length; i++) {
+                    var data = gameState.inputSlots[i];
+                    if (!data) continue;
+                    var slot = document.createElement('div');
+                    slot.className = 'input-slot filled user';
+                    slot.textContent = data.letter;
+                    el.appendChild(slot);
+                }
+            }
 
-            document.getElementById('submitBtn').disabled = gameState.selectedLetters.length < 3;
+            var filledCount = gameState.inputSlots.filter(function(s) { return s !== null; }).length;
+            document.getElementById('submitBtn').disabled = filledCount < 3;
         }
 
-        // Select letter (append only — no toggle; use backspace to remove from the end)
+        // Select letter: splice from reservoir, place in input
         function selectLetter(index) {
-            if (gameState.selectedLetters.includes(index)) return; // already used
-            gameState.selectedLetters.push(index);
+            var letter = gameState.reservoir[index];
+
+            if (gameState.hintTargetWord) {
+                // Find leftmost empty slot (not occupied by clue or user)
+                var emptyIdx = -1;
+                for (var i = 0; i < gameState.inputSlots.length; i++) {
+                    if (gameState.inputSlots[i] === null) { emptyIdx = i; break; }
+                }
+                if (emptyIdx === -1) return; // input full
+                gameState.inputSlots[emptyIdx] = { letter: letter, source: 'user' };
+            } else {
+                gameState.inputSlots.push({ letter: letter, source: 'user' });
+            }
+
+            // Remove from reservoir and remap indices
+            gameState.reservoir.splice(index, 1);
+            _remapAfterSplice(index);
+
             renderReservoir();
+            renderWordInput();
             checkTutorialTrigger();
         }
 
-        // Shuffle reservoir tiles, remapping selectedLetters and hintHighlights
+        // Shuffle reservoir tiles (no index remapping needed — highlights are position-based)
         function shuffleReservoir() {
-            const n = gameState.reservoir.length;
+            var n = gameState.reservoir.length;
             if (n < 2) return;
-            // Build permutation: Fisher-Yates
-            const perm = Array.from({ length: n }, (_, i) => i);
-            for (let i = n - 1; i > 0; i--) {
-                const j = Math.floor(Math.random() * (i + 1));
-                [perm[i], perm[j]] = [perm[j], perm[i]];
-            }
-            // Build inverse map: oldIndex → newIndex
-            const newPos = new Array(n);
-            for (let i = 0; i < n; i++) newPos[perm[i]] = i;
-            // Shuffle the reservoir array
-            const newRes = new Array(n);
-            for (let i = 0; i < n; i++) newRes[newPos[i]] = gameState.reservoir[i];
-            gameState.reservoir = newRes;
-            // Remap selectedLetters
-            gameState.selectedLetters = gameState.selectedLetters.map(i => newPos[i]);
-            // Remap hintHighlights
-            if (gameState.hintHighlights) {
-                gameState.hintHighlights = gameState.hintHighlights.map(i => newPos[i]);
-            }
-            // Remap hintSequence (future steps)
-            if (gameState.hintSequence) {
-                gameState.hintSequence = gameState.hintSequence.map(i => newPos[i]);
+            for (var i = n - 1; i > 0; i--) {
+                var j = Math.floor(Math.random() * (i + 1));
+                var tmp = gameState.reservoir[i];
+                gameState.reservoir[i] = gameState.reservoir[j];
+                gameState.reservoir[j] = tmp;
             }
             renderReservoir();
         }
 
-        // Remove last selected letter (backspace)
+        // Backspace: remove last user-placed letter (not clue), return to reservoir
         function backspaceLetter() {
-            if (gameState.selectedLetters.length > 0) {
-                gameState.selectedLetters.pop();
-                renderReservoir();
+            // Find rightmost user-placed slot
+            var idx = -1;
+            for (var i = gameState.inputSlots.length - 1; i >= 0; i--) {
+                if (gameState.inputSlots[i] && gameState.inputSlots[i].source === 'user') {
+                    idx = i; break;
+                }
             }
+            if (idx === -1) return;
+
+            var letter = gameState.inputSlots[idx].letter;
+            // Return letter to reservoir (append at end)
+            var insertIdx = gameState.reservoir.length;
+            gameState.reservoir.push(letter);
+            _remapAfterInsert(insertIdx); // no-op when appending at end, but safe
+
+            if (gameState.hintTargetWord) {
+                // In fixed-slot mode, set slot to null (keep array length)
+                gameState.inputSlots[idx] = null;
+            } else {
+                // In free mode, remove the entry
+                gameState.inputSlots.splice(idx, 1);
+            }
+
+            renderReservoir();
+            renderWordInput();
         }
 
         // Achievement board: render grid layout with word counts, stats, cat looks
@@ -2759,15 +2821,22 @@
                     } else {
                         gameState.hintTargetLength = l;
                     }
+                    // Return all input letters to reservoir before resetting
+                    for (var ri = 0; ri < gameState.inputSlots.length; ri++) {
+                        if (gameState.inputSlots[ri]) {
+                            gameState.reservoir.push(gameState.inputSlots[ri].letter);
+                        }
+                    }
                     // Reset hint state when changing target
                     gameState.hintTargetWord = '';
-                    gameState.hintSequence = [];
-                    gameState.hintStep = 0;
-                    gameState.hintHighlights = [];
                     gameState.hintRevealed = [];
-                    document.getElementById('hintPlaceholder').classList.remove('visible');
+                    gameState.hintedPositions = [];
+                    gameState.clueRevealOrder = [];
+                    gameState.clueRevealStep = 0;
+                    gameState.inputSlots = [];
+                    renderWordInput();
                     updateWordRadar();
-                    renderReservoir(); // clear hinted tiles
+                    renderReservoir();
                 });
                 radarEl.appendChild(chip);
             });
@@ -2776,22 +2845,31 @@
         // Build hint sequence: letters needed for longest word, sub-word first, sorted by reservoir frequency
         // Also stores the target word and a mapping from step → position in target word
         function buildHintSequence() {
-            if (gameState.reservoir.length < 3) return;
-
-            // Count available letters in reservoir
-            const available = {};
-            gameState.reservoir.forEach(l => {
-                const lower = l.toLowerCase();
+            // Count all available letters (reservoir + letters in inputSlots)
+            var available = {};
+            gameState.reservoir.forEach(function(l) {
+                var lower = l.toLowerCase();
                 available[lower] = (available[lower] || 0) + 1;
             });
+            // Also count letters already in inputSlots (they were removed from reservoir)
+            for (var si = 0; si < gameState.inputSlots.length; si++) {
+                if (gameState.inputSlots[si]) {
+                    var lower = gameState.inputSlots[si].letter.toLowerCase();
+                    available[lower] = (available[lower] || 0) + 1;
+                }
+            }
 
-            // Find all formable words (3+ letters, using common words)
-            const formable = [];
-            for (const word of COMMON_WORDS) {
-                if (word.length < 3 || word.length > gameState.reservoir.length) continue;
-                const needed = {};
-                let valid = true;
-                for (const ch of word) {
+            if (Object.values(available).reduce(function(a,b){return a+b;},0) < 3) return;
+
+            // Find all formable words (3+ letters)
+            var totalAvail = Object.values(available).reduce(function(a,b){return a+b;},0);
+            var formable = [];
+            for (var word of COMMON_WORDS) {
+                if (word.length < 3 || word.length > totalAvail) continue;
+                var needed = {};
+                var valid = true;
+                for (var ci = 0; ci < word.length; ci++) {
+                    var ch = word[ci];
                     needed[ch] = (needed[ch] || 0) + 1;
                     if (needed[ch] > (available[ch] || 0)) { valid = false; break; }
                 }
@@ -2800,287 +2878,120 @@
 
             if (formable.length === 0) return;
 
-            // Filter by chosen length if player selected one, otherwise pick longest
+            // Filter by chosen length
             if (gameState.hintTargetLength > 0) {
-                const filtered = formable.filter(w => w.length === gameState.hintTargetLength);
-                if (filtered.length > 0) {
-                    formable.length = 0;
-                    filtered.forEach(w => formable.push(w));
-                }
+                var filtered = formable.filter(function(w) { return w.length === gameState.hintTargetLength; });
+                if (filtered.length > 0) formable = filtered;
             }
-            formable.sort((a, b) => b.length - a.length);
-            const longest = formable[0];
-            const longestLen = longest.length;
+            formable.sort(function(a, b) { return b.length - a.length; });
+            var target = formable[0];
 
             // Store target word
-            gameState.hintTargetWord = longest;
-            gameState.hintRevealed = new Array(longestLen).fill(false);
-
-            // Get letter counts for the longest word
-            const longestNeeded = {};
-            for (const ch of longest) {
-                longestNeeded[ch] = (longestNeeded[ch] || 0) + 1;
-            }
-
-            // Check if letters of a shorter word are a subset of the longest word's letters
-            function isSubsetOf(shorter, longerNeeded) {
-                const sNeeded = {};
-                for (const ch of shorter) {
-                    sNeeded[ch] = (sNeeded[ch] || 0) + 1;
-                    if (sNeeded[ch] > (longerNeeded[ch] || 0)) return false;
-                }
-                return true;
-            }
-
-            // Find longest sub-word contained within the longest word
-            let subWord = null;
-            for (const w of formable) {
-                if (w.length >= longestLen) continue;
-                if (isSubsetOf(w, longestNeeded)) {
-                    subWord = w;
-                    break;
-                }
-            }
-
-            // Build letter need counts: sub-word letters first, then remaining for longest
-            const subNeeded = {};
-            if (subWord) {
-                for (const ch of subWord) {
-                    subNeeded[ch] = (subNeeded[ch] || 0) + 1;
-                }
-            }
-
-            // Remaining letters = longest letters minus sub-word letters
-            const remainNeeded = { ...longestNeeded };
-            for (const [ch, count] of Object.entries(subNeeded)) {
-                remainNeeded[ch] = (remainNeeded[ch] || 0) - count;
-                if (remainNeeded[ch] <= 0) delete remainNeeded[ch];
-            }
-
-            // Sort letters by reservoir frequency descending
-            function sortByFrequency(letterCounts) {
-                const entries = [];
-                for (const [ch, count] of Object.entries(letterCounts)) {
-                    entries.push({ ch, count, freq: available[ch] || 0 });
-                }
-                entries.sort((a, b) => b.freq - a.freq);
-                const result = [];
-                for (const e of entries) {
-                    for (let i = 0; i < e.count; i++) result.push(e.ch);
-                }
-                return result;
-            }
-
-            const phase1 = subWord ? sortByFrequency(subNeeded) : [];
-            const phase2 = sortByFrequency(remainNeeded);
-            const letterOrder = [...phase1, ...phase2];
-
-            // Map letter order to reservoir indices AND target word positions
-            const usedIndices = new Set();
-            const usedWordPositions = new Set();
-            const sequence = [];      // reservoir index per step
-            const positionMap = [];   // target word position per step
-
-            for (const ch of letterOrder) {
-                const upper = ch.toUpperCase();
-                const idx = gameState.reservoir.findIndex((l, i) => l === upper && !usedIndices.has(i));
-                // Find position of this letter in target word (first unused occurrence)
-                let wordPos = -1;
-                for (let p = 0; p < longest.length; p++) {
-                    if (longest[p] === ch && !usedWordPositions.has(p)) {
-                        wordPos = p;
-                        break;
-                    }
-                }
-                if (idx !== -1 && wordPos !== -1) {
-                    sequence.push(idx);
-                    positionMap.push(wordPos);
-                    usedIndices.add(idx);
-                    usedWordPositions.add(wordPos);
-                }
-            }
-
-            gameState.hintSequence = sequence;
-            gameState.hintPositionMap = positionMap;
-            gameState.hintStep = 0;
-            gameState.hintHighlights = [];
+            gameState.hintTargetWord = target;
+            gameState.hintRevealed = new Array(target.length).fill(false);
+            gameState.hintedPositions = [];
 
             // Build outside-in reveal order for Clue: 1st, last, 2nd, 2nd-to-last, ...
-            var wordLen = longest.length;
             var clueOrder = [];
-            var lo = 0, hi = wordLen - 1;
+            var lo = 0, hi = target.length - 1;
             while (lo <= hi) {
                 clueOrder.push(lo);
                 if (lo !== hi) clueOrder.push(hi);
-                lo++;
-                hi--;
+                lo++; hi--;
             }
             gameState.clueRevealOrder = clueOrder;
             gameState.clueRevealStep = 0;
         }
 
-        // Render the hint placeholder row (underscores with revealed letters)
-        function renderPlaceholder() {
-            const el = document.getElementById('hintPlaceholder');
-            const textEl = document.getElementById('wsHintText');
-            if (!gameState.hintTargetWord) {
-                el.classList.remove('visible');
-                return;
-            }
-            el.classList.add('visible');
-            // Build display: underscores with clue-revealed letters
-            const chars = gameState.hintTargetWord.split('').map((ch, i) =>
-                gameState.hintRevealed[i] ? ch.toUpperCase() : '_'
-            );
-            // Hinted letters so far (in hint sequence order)
-            const hintedLetters = gameState.hintHighlights
-                .map(idx => gameState.reservoir[idx])
-                .filter(l => l !== undefined);
-            let html = '<div>' + chars.join(' ') + '</div>';
-            if (hintedLetters.length > 0) {
-                html += '<div class="ws-hint-letters">' + hintedLetters.join(' ') + '</div>';
-            }
-            textEl.innerHTML = html;
-        }
+        // (renderPlaceholder removed — input box now handles slot display)
 
         // Advance hint/clue by one step; revealPosition = true for Clue
         function advanceHint(revealPosition) {
-            if (gameState.reservoir.length < 3) {
-                showMessage(t('msgNeedLetters'), 'error');
-                return;
-            }
-
-            // Build sequence on first press or if reservoir changed
-            if (!gameState.hintTargetWord || gameState.hintSequence.length === 0) {
+            // Build target word on first press
+            if (!gameState.hintTargetWord) {
                 buildHintSequence();
             }
-
-            if (!gameState.hintTargetWord || gameState.hintSequence.length === 0) {
+            if (!gameState.hintTargetWord) {
                 showMessage(t('msgNoWords'), 'error');
                 return;
             }
 
+            var twLen = gameState.hintTargetWord.length;
+            while (gameState.inputSlots.length < twLen) gameState.inputSlots.push(null);
+
+            // Count how many positions are already fully resolved (clue-placed or hinted+user-placed)
+            var allDone = true;
+            for (var i = 0; i < twLen; i++) {
+                if (!gameState.inputSlots[i]) { allDone = false; break; }
+            }
+
             if (revealPosition) {
-                // Clue: reveal next position in outside-in order
-                // Skip positions already revealed (e.g. by Hint)
-                while (gameState.clueRevealStep < (gameState.clueRevealOrder || []).length
+                // === CLUE: place letter in correct input slot ===
+                // Find next unrevealed position (outside-in order)
+                while (gameState.clueRevealStep < gameState.clueRevealOrder.length
                        && gameState.hintRevealed[gameState.clueRevealOrder[gameState.clueRevealStep]]) {
                     gameState.clueRevealStep++;
                 }
-                if (gameState.clueRevealStep >= (gameState.clueRevealOrder || []).length) {
+                if (gameState.clueRevealStep >= gameState.clueRevealOrder.length) {
                     showMessage(t('msgAllRevealed'), 'info');
                     return;
                 }
+
                 var cluePos = gameState.clueRevealOrder[gameState.clueRevealStep];
                 gameState.hintRevealed[cluePos] = true;
                 gameState.clueRevealStep++;
 
-                // Check if Hint already highlighted a tile for this word position
-                var alreadyCovered = false;
-                for (var hp = 0; hp < gameState.hintStep; hp++) {
-                    if (gameState.hintPositionMap[hp] === cluePos) {
-                        alreadyCovered = true;
-                        break;
-                    }
+                // If user already placed a letter here, return it to reservoir
+                if (gameState.inputSlots[cluePos] && gameState.inputSlots[cluePos].source === 'user') {
+                    gameState.reservoir.push(gameState.inputSlots[cluePos].letter);
+                    gameState.inputSlots[cluePos] = null;
                 }
 
-                // Only highlight a new reservoir tile if Hint didn't already cover this position
-                if (!alreadyCovered) {
-                var targetLetter = gameState.hintTargetWord[cluePos];
-                var alreadyHighlighted = new Set(gameState.hintHighlights);
-                var resIdx = gameState.reservoir.findIndex(function(l, i) {
-                    return l.toUpperCase() === targetLetter.toUpperCase() && !alreadyHighlighted.has(i);
+                // Skip if already filled by previous clue
+                if (gameState.inputSlots[cluePos] && gameState.inputSlots[cluePos].source === 'clue') {
+                    renderWordInput();
+                    renderReservoir();
+                    return;
+                }
+
+                // Find matching letter in reservoir and move to input
+                var targetLetter = gameState.hintTargetWord[cluePos].toUpperCase();
+                var resIdx = gameState.reservoir.findIndex(function(l) {
+                    return l.toUpperCase() === targetLetter;
                 });
-                } else {
-                    var resIdx = -1;
-                }
                 if (resIdx !== -1) {
-                    // Move tile to front (next highlight slot)
-                    var clueSlot = gameState.hintHighlights.length;
-                    if (resIdx !== clueSlot) {
-                        var letter = gameState.reservoir.splice(resIdx, 1)[0];
-                        gameState.reservoir.splice(clueSlot, 0, letter);
-                        // Update hintHighlights indices
-                        for (var hi2 = 0; hi2 < gameState.hintHighlights.length; hi2++) {
-                            var hv = gameState.hintHighlights[hi2];
-                            if (hv >= clueSlot && hv < resIdx) gameState.hintHighlights[hi2] = hv + 1;
-                        }
-                        // Update selectedLetters
-                        for (var si2 = 0; si2 < gameState.selectedLetters.length; si2++) {
-                            var sv = gameState.selectedLetters[si2];
-                            if (sv === resIdx) gameState.selectedLetters[si2] = clueSlot;
-                            else if (sv >= clueSlot && sv < resIdx) gameState.selectedLetters[si2] = sv + 1;
-                        }
-                        // Update hintSequence indices so Hint still points to correct tiles
-                        for (var hs2 = gameState.hintStep; hs2 < gameState.hintSequence.length; hs2++) {
-                            var hsv = gameState.hintSequence[hs2];
-                            if (hsv === resIdx) gameState.hintSequence[hs2] = clueSlot;
-                            else if (hsv >= clueSlot && hsv < resIdx) gameState.hintSequence[hs2] = hsv + 1;
-                        }
-                    }
-                    gameState.hintHighlights.push(clueSlot);
+                    var letter = gameState.reservoir.splice(resIdx, 1)[0];
+                    gameState.inputSlots[cluePos] = { letter: letter, source: 'clue' };
                 }
 
-                renderPlaceholder();
+                // If this position was also hinted, remove from hintedPositions (letter moved to input)
+                var hpIdx = gameState.hintedPositions.indexOf(cluePos);
+                if (hpIdx !== -1) gameState.hintedPositions.splice(hpIdx, 1);
+
+                renderWordInput();
                 renderReservoir();
                 return;
             }
 
-            // Hint: highlight next reservoir tile only — skip positions already revealed by Clue
-            while (gameState.hintStep < gameState.hintSequence.length) {
-                var wordPos = gameState.hintPositionMap[gameState.hintStep];
-                if (!gameState.hintRevealed[wordPos]) break;
-                gameState.hintStep++;
+            // === HINT: mark a position as hinted (letter glows in reservoir) ===
+            // Find all unhinted, unrevealed positions
+            var candidates = [];
+            for (var i = 0; i < twLen; i++) {
+                if (!gameState.hintRevealed[i] && gameState.hintedPositions.indexOf(i) === -1
+                    && !gameState.inputSlots[i]) {
+                    candidates.push(i);
+                }
             }
-            if (gameState.hintStep >= gameState.hintSequence.length) {
+            if (candidates.length === 0) {
                 showMessage(t('msgAllRevealed'), 'info');
                 return;
             }
 
-            // Highlight reservoir tile and move it to the front
-            const nextIdx = gameState.hintSequence[gameState.hintStep];
-            const targetSlot = gameState.hintHighlights.length; // next front position
+            // Pick random position from candidates
+            var pick = candidates[Math.floor(Math.random() * candidates.length)];
+            gameState.hintedPositions.push(pick);
 
-            // Move tile from nextIdx to targetSlot in the reservoir
-            if (nextIdx !== targetSlot) {
-                const [letter] = gameState.reservoir.splice(nextIdx, 1);
-                gameState.reservoir.splice(targetSlot, 0, letter);
-
-                // Update all future indices in hintSequence to reflect the move
-                for (let i = gameState.hintStep + 1; i < gameState.hintSequence.length; i++) {
-                    const si = gameState.hintSequence[i];
-                    if (si === nextIdx) {
-                        // This shouldn't happen (same index twice), but handle it
-                        gameState.hintSequence[i] = targetSlot;
-                    } else if (si >= targetSlot && si < nextIdx) {
-                        // Indices in [targetSlot, nextIdx) shift right by 1
-                        gameState.hintSequence[i] = si + 1;
-                    }
-                }
-
-                // Update existing hintHighlights indices similarly
-                for (let i = 0; i < gameState.hintHighlights.length; i++) {
-                    const hi = gameState.hintHighlights[i];
-                    if (hi >= targetSlot && hi < nextIdx) {
-                        gameState.hintHighlights[i] = hi + 1;
-                    }
-                }
-
-                // Also update selectedLetters if any are affected
-                for (let i = 0; i < gameState.selectedLetters.length; i++) {
-                    const si = gameState.selectedLetters[i];
-                    if (si === nextIdx) {
-                        gameState.selectedLetters[i] = targetSlot;
-                    } else if (si >= targetSlot && si < nextIdx) {
-                        gameState.selectedLetters[i] = si + 1;
-                    }
-                }
-            }
-
-            gameState.hintHighlights.push(targetSlot);
-
-            gameState.hintStep++;
-            renderPlaceholder();
+            renderWordInput();
             renderReservoir();
         }
 
@@ -3090,13 +3001,20 @@
             if (gameState.hintTargetLength > 0) return; // already selected
             const firstChip = document.querySelector('#wordRadar .ws-len-chip');
             if (!firstChip) return;
+            // Return any input letters to reservoir first
+            for (var ri = 0; ri < gameState.inputSlots.length; ri++) {
+                if (gameState.inputSlots[ri]) {
+                    gameState.reservoir.push(gameState.inputSlots[ri].letter);
+                }
+            }
             gameState.hintTargetLength = Number(firstChip.dataset.len);
             gameState.hintTargetWord = '';
-            gameState.hintSequence = [];
-            gameState.hintStep = 0;
-            gameState.hintHighlights = [];
             gameState.hintRevealed = [];
-            document.getElementById('hintPlaceholder').classList.remove('visible');
+            gameState.hintedPositions = [];
+            gameState.clueRevealOrder = [];
+            gameState.clueRevealStep = 0;
+            gameState.inputSlots = [];
+            renderWordInput();
             updateWordRadar();
         }
 
@@ -3119,39 +3037,48 @@
 
         // Clear hint highlights and placeholder (called on word submit)
         function clearHintHighlights() {
-            gameState.hintHighlights = [];
-            gameState.hintSequence = [];
-            gameState.hintPositionMap = [];
-            gameState.hintStep = 0;
             gameState.hintTargetWord = '';
             gameState.hintRevealed = [];
+            gameState.hintedPositions = [];
             gameState.hintTargetLength = 0;
             gameState.cheatsActive = false;
             gameState.clueRevealOrder = [];
             gameState.clueRevealStep = 0;
-            document.getElementById('hintPlaceholder').classList.remove('visible');
+            gameState.inputSlots = [];
             updateWordRadar(); // refresh radar chips
+            renderWordInput();
         }
 
         // Show cheat word chips (green) replacing radar — filtered by selected length
         function showCheats() {
             if (gameState.treats < TREAT_CHEAT_COST) return;
-            if (gameState.reservoir.length === 0) {
+            var totalLettersAvail = gameState.reservoir.length;
+            for (var ti = 0; ti < gameState.inputSlots.length; ti++) {
+                if (gameState.inputSlots[ti]) totalLettersAvail++;
+            }
+            if (totalLettersAvail === 0) {
                 showMessage(t('msgNoLetters'), 'error');
                 return;
             }
 
-            // Count available letters in reservoir
+            // Count available letters (reservoir + inputSlots)
             const available = {};
             gameState.reservoir.forEach(l => {
                 const lower = l.toLowerCase();
                 available[lower] = (available[lower] || 0) + 1;
             });
+            for (var si = 0; si < gameState.inputSlots.length; si++) {
+                if (gameState.inputSlots[si]) {
+                    var lower = gameState.inputSlots[si].letter.toLowerCase();
+                    available[lower] = (available[lower] || 0) + 1;
+                }
+            }
+            var totalAvailCheat = Object.values(available).reduce(function(a,b){return a+b;},0);
 
             // Find all formable common words
             const formable = [];
             for (const word of COMMON_WORDS) {
-                if (word.length < 3 || word.length > gameState.reservoir.length) continue;
+                if (word.length < 3 || word.length > totalAvailCheat) continue;
                 const needed = {};
                 let valid = true;
                 for (const ch of word) {
@@ -3207,13 +3134,15 @@
 
         // Auto-select letters for a cheat word
         function autoSelectWord(word) {
-            gameState.selectedLetters = [];
-            const used = [];
-            for (const ch of word.toUpperCase()) {
-                const idx = gameState.reservoir.findIndex((l, i) => l === ch && !used.includes(i));
+            // For cheat: splice letters from reservoir into inputSlots directly
+            gameState.inputSlots = [];
+            for (var ci = 0; ci < word.length; ci++) {
+                var ch = word[ci].toUpperCase();
+                var idx = gameState.reservoir.findIndex(function(l) { return l === ch; });
                 if (idx !== -1) {
-                    gameState.selectedLetters.push(idx);
-                    used.push(idx);
+                    var letter = gameState.reservoir.splice(idx, 1)[0];
+                    _remapAfterSplice(idx);
+                    gameState.inputSlots.push({ letter: letter, source: 'user' });
                 }
             }
             submitWord();
@@ -3221,14 +3150,25 @@
 
         // Submit word
         function submitWord() {
-            if (gameState.selectedLetters.length === 0) {
+            var filledSlots = gameState.inputSlots.filter(function(s) { return s !== null; });
+            if (filledSlots.length === 0) {
                 showMessage(t('msgSelectLetters'), 'error');
                 return;
             }
 
-            const word = gameState.selectedLetters
-                .map(i => gameState.reservoir[i])
-                .join('');
+            // In fixed-slot mode (hint/clue target), all slots must be filled
+            if (gameState.hintTargetWord) {
+                var emptyCount = 0;
+                for (var ei = 0; ei < gameState.inputSlots.length; ei++) {
+                    if (!gameState.inputSlots[ei]) emptyCount++;
+                }
+                if (emptyCount > 0) {
+                    showMessage(t('msgCompleteWord'), 'error');
+                    return;
+                }
+            }
+
+            const word = filledSlots.map(function(s) { return s.letter; }).join('');
 
             const isValid = validateWord(word);
 
@@ -3310,12 +3250,8 @@
 
             updateAchievements();
 
-            gameState.selectedLetters.sort((a, b) => b - a);
-            gameState.selectedLetters.forEach(index => {
-                gameState.reservoir.splice(index, 1);
-            });
-
-            gameState.selectedLetters = [];
+            // Letters already removed from reservoir when placed in input — just clear inputSlots
+            gameState.inputSlots = [];
 
             // --- Cat mood reactions ---
             if (isFullRow) {
@@ -4542,7 +4478,7 @@
                 catMoveIndex,
                 gridData,
                 reservoir: gameState.reservoir,
-                selectedLetters: gameState.selectedLetters,
+                inputSlots: gameState.inputSlots,
                 fallingLetters: gameState.fallingLetters,
                 floorData,
                 catPosition: gameState.catPosition,
@@ -4565,11 +4501,8 @@
                 stacksMax: gameState.stacksMax,
                 peakCoverage: gameState.peakCoverage || 0,
                 hintTargetWord: gameState.hintTargetWord,
-                hintSequence: gameState.hintSequence,
-                hintStep: gameState.hintStep,
-                hintHighlights: gameState.hintHighlights,
                 hintRevealed: gameState.hintRevealed,
-                hintPositionMap: gameState.hintPositionMap,
+                hintedPositions: gameState.hintedPositions,
                 hintTargetLength: gameState.hintTargetLength,
                 maxLifeDays: gameState.maxLifeDays || 0,
                 xp: gameState.xp || 0,
@@ -4620,7 +4553,7 @@
             // Restore all gameState fields
             gameState.gameSeed = data.gameSeed;
             gameState.reservoir = data.reservoir;
-            gameState.selectedLetters = data.selectedLetters;
+            gameState.inputSlots = data.inputSlots || [];
             gameState.fallingLetters = data.fallingLetters;
             gameState.catPosition = data.catPosition;
             gameState.catHP = data.catHP;
@@ -4643,11 +4576,8 @@
             gameState.stacksMax = data.stacksMax;
             gameState.peakCoverage = data.peakCoverage || 0;
             gameState.hintTargetWord = data.hintTargetWord;
-            gameState.hintSequence = data.hintSequence;
-            gameState.hintStep = data.hintStep;
-            gameState.hintHighlights = data.hintHighlights;
-            gameState.hintRevealed = data.hintRevealed;
-            gameState.hintPositionMap = data.hintPositionMap;
+            gameState.hintRevealed = data.hintRevealed || [];
+            gameState.hintedPositions = data.hintedPositions || [];
             gameState.hintTargetLength = data.hintTargetLength;
             gameState.maxLifeDays = data.maxLifeDays || 0;
             gameState.xp = data.xp || 0;
@@ -4734,12 +4664,8 @@
                 if (o) o.remove();
             }
 
-            // Hint placeholder
-            if (gameState.hintTargetWord) {
-                renderPlaceholder();
-            } else {
-                document.getElementById('hintPlaceholder').classList.remove('visible');
-            }
+            // Render word input (may show fixed slots if hintTargetWord active)
+            renderWordInput();
 
             // Start game loop (will be paused)
             startGameLoop();
@@ -4878,7 +4804,14 @@
         document.getElementById('clearBtn').addEventListener('click', backspaceLetter);
         document.getElementById('shuffleBtn').addEventListener('click', shuffleReservoir);
         document.getElementById('clearAllBtn').addEventListener('click', () => {
-            gameState.selectedLetters = [];
+            // Return all letters (user + clue) to reservoir
+            for (var i = 0; i < gameState.inputSlots.length; i++) {
+                if (gameState.inputSlots[i]) {
+                    gameState.reservoir.push(gameState.inputSlots[i].letter);
+                }
+            }
+            gameState.inputSlots = [];
+            clearHintHighlights();
             renderReservoir();
         });
         // Cat look gallery — delegated listener (survives re-renders)
@@ -4899,10 +4832,7 @@
         document.getElementById('cheatBtn').addEventListener('click', showCheats);
         document.getElementById('hintBtn').addEventListener('click', pressHint);
         document.getElementById('clueBtn').addEventListener('click', pressClue);
-        document.getElementById('hintResetBtn').addEventListener('click', () => {
-            clearHintHighlights();
-            renderReservoir();
-        });
+        // (hintResetBtn removed — trash button now handles full reset)
         document.getElementById('pauseBtn').addEventListener('click', togglePause);
         document.getElementById('nukeBtn').addEventListener('click', () => {
             if (confirm(t('confirmNuke'))) {
@@ -5003,17 +4933,16 @@
 
             // Letter selection
             if (key.length === 1 && key >= 'A' && key <= 'Z') {
-                const index = gameState.reservoir.findIndex((letter, i) =>
-                    letter === key && !gameState.selectedLetters.includes(i)
-                );
+                const index = gameState.reservoir.findIndex(function(letter) {
+                    return letter === key;
+                });
                 if (index !== -1) selectLetter(index);
             }
 
             // Backspace to deselect
-            if (e.key === 'Backspace' && gameState.selectedLetters.length > 0) {
+            if (e.key === 'Backspace') {
                 e.preventDefault();
-                gameState.selectedLetters.pop();
-                renderReservoir();
+                backspaceLetter();
             }
 
             // Enter to submit
@@ -5022,10 +4951,17 @@
                 submitWord();
             }
 
-            // Escape to clear selection
+            // Escape to clear all (trash)
             if (e.key === 'Escape') {
                 e.preventDefault();
-                gameState.selectedLetters = [];
+                // Return all letters to reservoir
+                for (var i = 0; i < gameState.inputSlots.length; i++) {
+                    if (gameState.inputSlots[i]) {
+                        gameState.reservoir.push(gameState.inputSlots[i].letter);
+                    }
+                }
+                gameState.inputSlots = [];
+                clearHintHighlights();
                 renderReservoir();
             }
 
