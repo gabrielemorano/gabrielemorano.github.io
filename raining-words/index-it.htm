@@ -1353,6 +1353,17 @@
         </div>
     </div>
 
+    <div class="modal" id="victoryModal">
+        <div class="modal-content">
+            <h2 id="victoryTitle">🏆 Victory!</h2>
+            <p id="victoryMessage"></p>
+            <div id="victoryStats" style="text-align: left; margin: 12px 0; font-size: 0.9em; line-height: 1.8;"></div>
+            <div class="controls">
+                <button class="btn btn-primary" id="restartFromVictory" data-i18n="btnRestart">🔄 Nuova Partita</button>
+            </div>
+        </div>
+    </div>
+
     <script>
         // ================================================================
         //  LOCALISATION — all user-facing strings
@@ -1441,6 +1452,13 @@
             confirmNuke: "Cancellare TUTTI i dati locali (salvataggio e carriera)? Non si può annullare.",
             gameOverTitle: "💔 Fine Partita",
             gameOverMsg: "Il tuo gatto è sopravvissuto {0} giorni con {1} punti riparo.",
+            victoryTitle: "🏆 Vittoria!",
+            victoryMsg: "Hai costruito il riparo fino in cima! Non c'è più spazio per nuove parole — il tuo gatto è completamente protetto!",
+            victoryStatDays: "🗓️ Giorni sopravvissuti: {0}",
+            victoryStatCoverage: "🏗️ Copertura: {0}%",
+            victoryStatWords: "📝 Parole piazzate: {0}",
+            victoryStatCatHP: "❤️ Vita gatto: {0}",
+            victoryStatShelterHP: "🛡️ Punti riparo: {0}",
             achXP: "⭐ {0} XP",
             achWordCount: "{0} × parola di {1} lettere",
             achWordSingular: "parola",
@@ -3416,6 +3434,11 @@
                 gameState.tutorial._wordPlaced = true;
                 checkTutorialTrigger();
             }
+
+            // Check victory condition (grid fully built)
+            if (!gameState.tutorial.enabled && checkVictory()) {
+                setTimeout(showVictory, 500); // slight delay for visual feedback
+            }
         }
 
         // Find valid placement for word
@@ -4870,6 +4893,89 @@
             openModal('gameOverModal');
         }
 
+        // Check if the grid is fully built — no 3+ empty run with support anywhere in rows 2-17
+        function checkVictory() {
+            // Pre-check: any brick on row 17? If not, game definitely continues
+            var hasBrickOnRow17 = false;
+            for (var x = 0; x < GRID_WIDTH; x++) {
+                var cell = gameState.grid[17][x];
+                if (cell && cell.type === 'brick' && cell.hp > 0) {
+                    hasBrickOnRow17 = true;
+                    break;
+                }
+            }
+            if (!hasBrickOnRow17) return false;
+
+            // Scan rows 2-17 for any playable 3+ empty run with at least 1 supported cell
+            for (var y = 2; y <= 17; y++) {
+                var run = 0;
+                var supportedInRun = 0;
+                for (var x = 0; x < GRID_WIDTH; x++) {
+                    var cell = gameState.grid[y][x];
+                    if (!cell || cell.type !== 'brick' || cell.hp <= 0) {
+                        // Empty cell
+                        run++;
+                        // Check support: row below has a brick?
+                        var below = gameState.grid[y - 1][x];
+                        if (below && below.type === 'brick' && below.hp > 0) {
+                            supportedInRun++;
+                        }
+                        // Also count pole as support
+                        if (below && below.type === 'pole') {
+                            supportedInRun++;
+                        }
+                        if (run >= 3 && supportedInRun >= 1) {
+                            return false; // placement exists, game continues
+                        }
+                    } else {
+                        // Occupied cell — reset run
+                        run = 0;
+                        supportedInRun = 0;
+                    }
+                }
+            }
+
+            return true; // no valid placement found — victory!
+        }
+
+        // Show victory modal with session stats
+        function showVictory() {
+            gameState.isPaused = true;
+            if (gameState.gameLoopId) {
+                clearInterval(gameState.gameLoopId);
+                gameState.gameLoopId = null;
+            }
+            gameState.maxLifeDays = Math.max(gameState.maxLifeDays || 0, gameState.lifeDays);
+            saveCareer();
+
+            // Compute stats
+            var hData = gameState.wordsPlacedByLength || {};
+            var totalWords = 0;
+            for (var k in hData) totalWords += hData[k];
+
+            var coverageCount = 0;
+            for (var cy = 2; cy <= 17; cy++) {
+                for (var cx = 0; cx < GRID_WIDTH; cx++) {
+                    var cc = gameState.grid[cy][cx];
+                    if (cc && cc.type === 'brick' && cc.hp > 0) coverageCount++;
+                }
+            }
+            var coveragePct = Math.round((coverageCount / 256) * 100);
+
+            document.getElementById('victoryTitle').textContent = t('victoryTitle');
+            document.getElementById('victoryMessage').textContent = t('victoryMsg');
+            document.getElementById('victoryStats').innerHTML =
+                t('victoryStatDays', gameState.lifeDays) + '<br>' +
+                t('victoryStatCoverage', coveragePct) + '<br>' +
+                t('victoryStatWords', totalWords.toLocaleString()) + '<br>' +
+                t('victoryStatCatHP', gameState.catHP) + '<br>' +
+                t('victoryStatShelterHP', gameState.shelterHP.toLocaleString());
+
+            showConfetti('mega');
+            clearAutoSave();
+            openModal('victoryModal');
+        }
+
         // Restart game
         function restartGame() {
             if (confirm(t('confirmRestart'))) {
@@ -4901,7 +5007,7 @@
 
         function closeModal(id) {
             document.getElementById(id).classList.remove('active');
-            if (id !== 'gameOverModal') {
+            if (id !== 'gameOverModal' && id !== 'victoryModal') {
                 gameState.isPaused = false;
             }
         }
@@ -5021,6 +5127,15 @@
         });
 
         document.getElementById('restartFromGameOver').addEventListener('click', restartFromGameOver);
+        document.getElementById('restartFromVictory').addEventListener('click', function() {
+            if (gameState.gameLoopId) {
+                clearInterval(gameState.gameLoopId);
+                gameState.gameLoopId = null;
+            }
+            clearAutoSave();
+            initGame();
+            closeModal('victoryModal');
+        });
         document.getElementById('speedSlowBtn').addEventListener('click', () => setSpeed(SPEED_SLOW));
         document.getElementById('speedNormalBtn').addEventListener('click', () => setSpeed(SPEED_NORMAL));
         document.getElementById('speedFastBtn').addEventListener('click', () => setSpeed(SPEED_FAST));
