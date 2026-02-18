@@ -1318,13 +1318,13 @@
                         <input type="file" id="importFile" accept=".json" style="display: none;">
                     </div>
                     <div style="margin-top: 10px;">
-                        <label style="font-size: 0.85em; color: #666;" data-i18n="lblSeed">🔑 Keyword:</label>
+                        <label style="font-size: 0.85em; color: #666;" data-i18n="lblPassword">🔑 Password:</label>
                         <div style="display: flex; gap: 4px; margin-top: 4px;">
-                            <input type="text" id="seedInput" placeholder="testo o numero qualsiasi" data-i18n-placeholder="phSeed"
+                            <input type="text" id="seedInput" placeholder="qualsiasi parola o numero" data-i18n-placeholder="phPassword"
                                 style="flex: 1; padding: 4px 8px; border: 1px solid #ddd; border-radius: 6px; font-size: 0.9em;">
                             <button class="btn btn-primary" id="seedStartBtn" style="padding: 4px 10px; font-size: 0.85em;" data-i18n="btnPlay">Gioca</button>
                         </div>
-                        <div id="seedLabel" style="font-size: 0.8em; color: #667eea; margin-top: 4px; display: none;"></div>
+                        <button id="shareBtn" class="btn btn-secondary" style="font-size: 0.8em; margin-top: 6px; width: 100%; display: none;" data-i18n="btnShare">📋 Condividi il link per giocare la stessa sequenza di lettere</button>
                     </div>
                 </div>
 
@@ -1398,10 +1398,11 @@
             tipClearAll: "Deseleziona tutto",
             tipShuffle: "Mescola lettere",
             tipResetHint: "Resetta indizio",
-            phSeed: "testo o numero qualsiasi",
+            phPassword: "qualsiasi parola o numero",
             phWordRadar: "In attesa di lettere...",
-            lblSeed: "🔑 Keyword:",
-            lblSeedDisplay: "🔑 Keyword: {0}",
+            lblPassword: "🔑 Password:",
+            btnShare: "📋 Condividi il link per giocare la stessa sequenza di lettere",
+            msgLinkCopied: "Link copiato negli appunti!",
             lblLongestWords: "Parole più lunghe disponibili:",
             lblRadarLongest: "Più lunghe",
             lblRadarShortest: "Più corte",
@@ -2000,12 +2001,10 @@
             if (existingOverlay) existingOverlay.remove();
             document.getElementById('pauseBtn').textContent = t('btnPause');
 
-            // Show seed label
-            const seedLabel = document.getElementById('seedLabel');
-            if (seedLabel && gameState.gameSeed !== undefined) {
-                seedLabel.textContent = t('lblSeedDisplay', gameState.gameSeed);
-                seedLabel.style.display = 'block';
-            }
+            // Show share button and populate seed input
+            var shareBtn = document.getElementById('shareBtn');
+            if (shareBtn) shareBtn.style.display = gameState.gameSeed ? 'block' : 'none';
+            document.getElementById('seedInput').value = gameState.gameSeed || '';
 
             // Tutorial: launch for first-time players with no save
             if (!localStorage.getItem(TUTORIAL_KEY) && !localStorage.getItem(SAVE_KEY)) {
@@ -4759,12 +4758,9 @@
             // Pause button text
             document.getElementById('pauseBtn').textContent = t('btnResume');
 
-            // Seed label
-            const seedLabel = document.getElementById('seedLabel');
-            if (seedLabel && gameState.gameSeed) {
-                seedLabel.textContent = t('lblSeedDisplay', gameState.gameSeed);
-                seedLabel.style.display = 'block';
-            }
+            // Show share button and populate seed input
+            var shareBtn = document.getElementById('shareBtn');
+            if (shareBtn) shareBtn.style.display = gameState.gameSeed ? 'block' : 'none';
             document.getElementById('seedInput').value = gameState.gameSeed || '';
 
             // Season transition prompt
@@ -4974,6 +4970,43 @@
             }
             e.stopPropagation();  // prevent game key handlers from firing
         });
+
+        // Share button: copy link with password parameter to clipboard
+        document.getElementById('shareBtn').addEventListener('click', function() {
+            var password = gameState.gameSeed || document.getElementById('seedInput').value.trim();
+            if (!password) return;
+            var url = new URL(window.location.href);
+            url.search = '';  // clear existing params
+            url.searchParams.set('password', password);
+            var shareUrl = url.toString();
+            // Use navigator.clipboard if available, fallback for older iOS
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                navigator.clipboard.writeText(shareUrl).then(function() {
+                    showMessage(t('msgLinkCopied'), 'info');
+                }).catch(function() {
+                    _fallbackCopy(shareUrl);
+                });
+            } else {
+                _fallbackCopy(shareUrl);
+            }
+        });
+        function _fallbackCopy(text) {
+            var ta = document.createElement('textarea');
+            ta.value = text;
+            ta.style.position = 'fixed';
+            ta.style.left = '-9999px';
+            document.body.appendChild(ta);
+            ta.focus();
+            ta.select();
+            try {
+                document.execCommand('copy');
+                showMessage(t('msgLinkCopied'), 'info');
+            } catch (e) {
+                // If even fallback fails, show the URL so user can copy manually
+                prompt('Copy this link:', text);
+            }
+            document.body.removeChild(ta);
+        }
 
         // Export/Import listeners
         document.getElementById('exportBtn').addEventListener('click', exportSave);
@@ -5288,6 +5321,21 @@
         // Start game (dictionary is embedded inline)
         window.addEventListener('load', () => {
             console.log(`Dictionary loaded: ${DICTIONARY.size} words`);
+
+            // Check URL for ?password= parameter — start new game with that seed
+            var urlParams = new URLSearchParams(window.location.search);
+            var urlPassword = urlParams.get('password');
+            if (urlPassword) {
+                // Clean the URL so refreshing doesn't re-trigger
+                var cleanUrl = window.location.origin + window.location.pathname;
+                window.history.replaceState({}, '', cleanUrl);
+                // Start game with the shared password as seed
+                gameState.gameSeed = urlPassword;
+                clearAutoSave();
+                initGame();
+                return;
+            }
+
             // Try to restore from auto-save, otherwise start fresh
             if (!autoLoad()) {
                 initGame();
