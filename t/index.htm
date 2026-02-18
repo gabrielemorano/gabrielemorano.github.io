@@ -270,7 +270,7 @@
             align-items: center;
             justify-content: center;
             font-weight: bold;
-            font-size: 14px;
+            font-size: 20px;
             border-radius: 3px;
             position: relative;
             -webkit-transition: background 0.2s, background-color 1.2s ease;
@@ -361,22 +361,7 @@
             opacity: 0.7;
         }
 
-        .hp-bar {
-            position: absolute;
-            bottom: 2px;
-            left: 2px;
-            right: 2px;
-            height: 4px;
-            background: rgba(0,0,0,0.2);
-            border-radius: 2px;
-            overflow: hidden;
-        }
-
-        .hp-bar-fill {
-            height: 100%;
-            background: linear-gradient(90deg, #10b981 0%, #fbbf24 50%, #ef4444 100%);
-            transition: width 0.3s;
-        }
+        /* HP bar removed — brick color indicates health */
 
         .panel {
             background: #f8f9fa;
@@ -456,7 +441,7 @@
         .input-slot {
             width: 30px; height: 30px; border-radius: 5px;
             display: flex; align-items: center; justify-content: center;
-            font-weight: bold; font-size: 0.8em;
+            font-weight: bold; font-size: 1.1em;
             border: 2px dashed rgba(102,126,234,0.35);
             background: transparent; color: transparent;
             transition: all 0.15s;
@@ -515,6 +500,7 @@
         .letter-tile {
             width: 36px;
             height: 36px;
+            font-size: 1.1em;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
             display: flex;
@@ -885,7 +871,7 @@
             .cell {
                 width: var(--cell);
                 height: var(--cell);
-                font-size: 10px;
+                font-size: 14px;
                 border-radius: 2px;
             }
             .coverage-grid-text.cov-digits-1 { font-size: 70vw; }
@@ -895,17 +881,12 @@
                 font-size: clamp(0.7em, 4vw, 1.4em);
             }
             .cell.falling-letter {
-                font-size: 10px;
+                font-size: 14px;
             }
             .cell.pole {
                 font-size: 1em;
             }
-            .hp-bar {
-                height: 2px;
-                bottom: 1px;
-                left: 1px;
-                right: 1px;
-            }
+            /* HP bar removed */
 
             /* Workshop: 6-col grid on mobile */
             .ws-reservoir {
@@ -916,7 +897,7 @@
             .ws-reservoir .letter-tile {
                 width: 100%;
                 height: 34px;
-                font-size: 0.85em;
+                font-size: 1em;
             }
 
             /* Word input — now handled by .ws-word */
@@ -2414,13 +2395,7 @@
                                         else if (hpPercent < 0.66) cell.classList.add('yellow');
                                     }
 
-                                    const hpBar = document.createElement('div');
-                                    hpBar.className = 'hp-bar';
-                                    const hpFill = document.createElement('div');
-                                    hpFill.className = 'hp-bar-fill';
-                                    hpFill.style.width = (hpPercent * 100) + '%';
-                                    hpBar.appendChild(hpFill);
-                                    cell.appendChild(hpBar);
+                                    // HP bar removed — brick color already indicates health
                                 } else if (gridCell.type === 'pole') {
                                     cell.classList.add('pole');
                                     cell.textContent = '|';
