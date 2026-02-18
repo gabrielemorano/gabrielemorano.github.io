@@ -1162,7 +1162,7 @@
                 <div class="stat-value" id="delayStat">0×</div>
             </div>
             <div class="stat-flow-row">
-                <div class="stat stat-mobile-hide-reservoir">
+                <div class="stat stat-mobile-hide-reservoir" id="statReservoirBox">
                     <div class="stat-label" data-i18n="statReservoir">🔤 Serbatoio</div>
                     <div class="stat-value" id="reservoirStat">0/18</div>
                 </div>
@@ -2527,9 +2527,28 @@
             var rCount = reservoirCount();
             countEl.textContent = rCount + '/' + RESERVOIR_CAPACITY;
             var rStatEl = document.getElementById('reservoirStat');
+            var rStatBox = document.getElementById('statReservoirBox');
             if (rStatEl) {
                 rStatEl.textContent = rCount + '/' + RESERVOIR_CAPACITY;
-                rStatEl.style.color = (rCount >= RESERVOIR_CAPACITY) ? '#ff4444' : '';
+            }
+            if (rStatBox) {
+                var rLabel = rStatBox.querySelector('.stat-label');
+                if (rCount >= RESERVOIR_CAPACITY) {
+                    rStatBox.style.background = 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)';
+                    rStatBox.style.boxShadow = '0 2px 8px rgba(239,68,68,0.4)';
+                    if (rStatEl) rStatEl.style.color = 'white';
+                    if (rLabel) rLabel.style.color = 'white';
+                } else if (rCount >= 14) {
+                    rStatBox.style.background = 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)';
+                    rStatBox.style.boxShadow = '0 2px 8px rgba(245,158,11,0.4)';
+                    if (rStatEl) rStatEl.style.color = 'white';
+                    if (rLabel) rLabel.style.color = 'white';
+                } else {
+                    rStatBox.style.background = '';
+                    rStatBox.style.boxShadow = '';
+                    if (rStatEl) rStatEl.style.color = '';
+                    if (rLabel) rLabel.style.color = '';
+                }
             }
 
             updateTutorialBlinks();
@@ -2954,57 +2973,59 @@
             var twLen = gameState.hintTargetWord.length;
             while (gameState.inputSlots.length < twLen) gameState.inputSlots.push(null);
 
-            // Count how many positions are already fully resolved (clue-placed or hinted+user-placed)
+            // Check if all positions are already filled
             var allDone = true;
             for (var i = 0; i < twLen; i++) {
                 if (!gameState.inputSlots[i]) { allDone = false; break; }
             }
+            if (allDone) {
+                showMessage(t('msgAllRevealed'), 'info');
+                return;
+            }
 
             if (revealPosition) {
                 // === CLUE: place letter in correct input slot ===
-                // Find next unrevealed position (outside-in order)
-                while (gameState.clueRevealStep < gameState.clueRevealOrder.length
-                       && gameState.hintRevealed[gameState.clueRevealOrder[gameState.clueRevealStep]]) {
+                // Try positions in outside-in order, skip filled ones and ones
+                // whose letter is missing from the reservoir
+                var placed = false;
+                var startStep = gameState.clueRevealStep;
+                while (gameState.clueRevealStep < gameState.clueRevealOrder.length) {
+                    var cluePos = gameState.clueRevealOrder[gameState.clueRevealStep];
                     gameState.clueRevealStep++;
-                }
-                if (gameState.clueRevealStep >= gameState.clueRevealOrder.length) {
-                    showMessage(t('msgAllRevealed'), 'info');
-                    return;
-                }
 
-                var cluePos = gameState.clueRevealOrder[gameState.clueRevealStep];
-                gameState.hintRevealed[cluePos] = true;
-                gameState.clueRevealStep++;
+                    // Skip if already filled (by clue or user)
+                    if (gameState.inputSlots[cluePos]) continue;
 
-                // If user already placed a letter here, return it to reservoir
-                if (gameState.inputSlots[cluePos] && gameState.inputSlots[cluePos].source === 'user') {
-                    reservoirAdd(gameState.inputSlots[cluePos].letter);
-                    gameState.inputSlots[cluePos] = null;
-                }
+                    // If user placed a letter here, return it to reservoir first
+                    // (this branch shouldn't trigger since we just checked inputSlots[cluePos])
 
-                // Skip if already filled by previous clue
-                if (gameState.inputSlots[cluePos] && gameState.inputSlots[cluePos].source === 'clue') {
-                    renderWordInput();
-                    renderReservoir();
-                    return;
-                }
-
-                // Find matching letter in reservoir and move to input
-                var targetLetter = gameState.hintTargetWord[cluePos].toUpperCase();
-                var resIdx = -1;
-                for (var fi = 0; fi < gameState.reservoir.length; fi++) {
-                    if (gameState.reservoir[fi] !== null && gameState.reservoir[fi].toUpperCase() === targetLetter) {
-                        resIdx = fi; break;
+                    // Find matching letter in reservoir
+                    var targetLetter = gameState.hintTargetWord[cluePos].toUpperCase();
+                    var resIdx = -1;
+                    for (var fi = 0; fi < gameState.reservoir.length; fi++) {
+                        if (gameState.reservoir[fi] !== null && gameState.reservoir[fi].toUpperCase() === targetLetter) {
+                            resIdx = fi; break;
+                        }
                     }
-                }
-                if (resIdx !== -1) {
+
+                    if (resIdx === -1) continue; // letter not in reservoir, try next position
+
+                    // Place the letter
                     var letter = reservoirRemove(resIdx);
                     gameState.inputSlots[cluePos] = { letter: letter, source: 'clue' };
+                    gameState.hintRevealed[cluePos] = true;
+                    placed = true;
+
+                    // If this position was also hinted, remove from hintedPositions
+                    var hpIdx = gameState.hintedPositions.indexOf(cluePos);
+                    if (hpIdx !== -1) gameState.hintedPositions.splice(hpIdx, 1);
+
+                    break;
                 }
 
-                // If this position was also hinted, remove from hintedPositions (letter moved to input)
-                var hpIdx = gameState.hintedPositions.indexOf(cluePos);
-                if (hpIdx !== -1) gameState.hintedPositions.splice(hpIdx, 1);
+                if (!placed) {
+                    showMessage(t('msgAllRevealed'), 'info');
+                }
 
                 renderWordInput();
                 renderReservoir();
@@ -3012,11 +3033,10 @@
             }
 
             // === HINT: mark a position as hinted (letter glows in reservoir) ===
-            // Find all unhinted, unrevealed positions
+            // Find all positions that are: empty, not already hinted
             var candidates = [];
             for (var i = 0; i < twLen; i++) {
-                if (!gameState.hintRevealed[i] && gameState.hintedPositions.indexOf(i) === -1
-                    && !gameState.inputSlots[i]) {
+                if (!gameState.inputSlots[i] && gameState.hintedPositions.indexOf(i) === -1) {
                     candidates.push(i);
                 }
             }
