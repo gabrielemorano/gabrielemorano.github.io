@@ -865,11 +865,14 @@
             .game-area {
                 padding: 6px;
                 gap: 8px;
-                scroll-snap-type: y proximity;
+                scroll-snap-type: y mandatory;
             }
             .grid-container { scroll-snap-align: start; scroll-margin-top: 0; }
             #panelWorkshop { scroll-snap-align: start; scroll-margin-top: 0; }
             #panelAchievements { scroll-snap-align: start; scroll-margin-top: 0; }
+            #panelCatLooks { scroll-snap-align: start; scroll-margin-top: 0; }
+            #panelWeather { scroll-snap-align: start; scroll-margin-top: 0; }
+            #panelGameMenu { scroll-snap-align: start; scroll-margin-top: 0; }
 
             /* Grid: shrink cells to fit screen */
             .grid {
@@ -1286,22 +1289,25 @@
                                 <div class="ach-lbl" data-i18n="achLblPeakCoverage">🏗️ Peak Coverage</div>
                             </div>
                         </div>
-                        <div class="ach-cat-section">
-                            <div class="ach-cat-teaser" id="achCatTeaser"></div>
-                            <div class="cat-look-gallery" id="achCatGallery"></div>
-                            <div class="ach-cat-counter" id="achCatCounter"></div>
-                        </div>
                     </div>
                 </div>
 
-                <div class="panel">
+                <div class="panel" id="panelCatLooks">
+                    <div class="ach-cat-section">
+                        <div class="ach-cat-teaser" id="achCatTeaser"></div>
+                        <div class="cat-look-gallery" id="achCatGallery"></div>
+                        <div class="ach-cat-counter" id="achCatCounter"></div>
+                    </div>
+                </div>
+
+                <div class="panel" id="panelWeather">
                     <h3 data-i18n="panelWeather">🌩️</h3>
                     <div class="weather-forecast" id="weatherForecast">
                         <p style="color: #666;" data-i18n="lblLoadingForecast">Loading forecast...</p>
                     </div>
                 </div>
 
-                <div class="panel">
+                <div class="panel" id="panelGameMenu">
                     <h3 data-i18n="panelGameMenu">⚙️ Game Menu</h3>
                     <div class="controls">
                         <button class="btn btn-secondary" id="pauseBtn" data-i18n="btnPause">⏸️ Pause</button>
