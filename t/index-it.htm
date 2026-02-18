@@ -270,7 +270,7 @@
             align-items: center;
             justify-content: center;
             font-weight: bold;
-            font-size: 14px;
+            font-size: 20px;
             border-radius: 3px;
             position: relative;
             -webkit-transition: background 0.2s, background-color 1.2s ease;
@@ -361,22 +361,7 @@
             opacity: 0.7;
         }
 
-        .hp-bar {
-            position: absolute;
-            bottom: 2px;
-            left: 2px;
-            right: 2px;
-            height: 4px;
-            background: rgba(0,0,0,0.2);
-            border-radius: 2px;
-            overflow: hidden;
-        }
-
-        .hp-bar-fill {
-            height: 100%;
-            background: linear-gradient(90deg, #10b981 0%, #fbbf24 50%, #ef4444 100%);
-            transition: width 0.3s;
-        }
+        /* HP bar removed — brick color indicates health */
 
         .panel {
             background: #f8f9fa;
@@ -456,7 +441,7 @@
         .input-slot {
             width: 30px; height: 30px; border-radius: 5px;
             display: flex; align-items: center; justify-content: center;
-            font-weight: bold; font-size: 0.8em;
+            font-weight: bold; font-size: 1.1em;
             border: 2px dashed rgba(102,126,234,0.35);
             background: transparent; color: transparent;
             transition: all 0.15s;
@@ -515,6 +500,7 @@
         .letter-tile {
             width: 36px;
             height: 36px;
+            font-size: 1.1em;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
             display: flex;
@@ -866,6 +852,27 @@
                 transform: scale(0.93);
                 box-shadow: 0 2px 8px rgba(102, 126, 234, 0.4);
             }
+            .fab.fab-ring-ping {
+                overflow: visible;
+            }
+            .fab.fab-ring-ping::after {
+                content: '';
+                position: absolute;
+                inset: -4px;
+                border-radius: 28px;
+                border: 2px solid rgba(239, 68, 68, 0.6);
+                -webkit-animation: fab-ring-ping 1s ease-out infinite;
+                animation: fab-ring-ping 1s ease-out infinite;
+                pointer-events: none;
+            }
+            @-webkit-keyframes fab-ring-ping {
+                0% { -webkit-transform: scale(1); opacity: 0.8; }
+                100% { -webkit-transform: scale(1.4); opacity: 0; }
+            }
+            @keyframes fab-ring-ping {
+                0% { transform: scale(1); opacity: 0.8; }
+                100% { transform: scale(1.4); opacity: 0; }
+            }
             .game-area {
                 padding: 6px;
                 gap: 8px;
@@ -885,7 +892,7 @@
             .cell {
                 width: var(--cell);
                 height: var(--cell);
-                font-size: 10px;
+                font-size: 14px;
                 border-radius: 2px;
             }
             .coverage-grid-text.cov-digits-1 { font-size: 70vw; }
@@ -895,17 +902,12 @@
                 font-size: clamp(0.7em, 4vw, 1.4em);
             }
             .cell.falling-letter {
-                font-size: 10px;
+                font-size: 14px;
             }
             .cell.pole {
                 font-size: 1em;
             }
-            .hp-bar {
-                height: 2px;
-                bottom: 1px;
-                left: 1px;
-                right: 1px;
-            }
+            /* HP bar removed */
 
             /* Workshop: 6-col grid on mobile */
             .ws-reservoir {
@@ -916,7 +918,7 @@
             .ws-reservoir .letter-tile {
                 width: 100%;
                 height: 34px;
-                font-size: 0.85em;
+                font-size: 1em;
             }
 
             /* Word input — now handled by .ws-word */
@@ -1843,7 +1845,8 @@
         let gameState = {
             grid: [],
             reservoir: [],
-            inputSlots: [],         // array of {letter, source:'user'|'clue'} or null
+            reservoirReserved: [],  // parallel boolean array: true = slot reserved (letter in input box)
+            inputSlots: [],         // array of {letter, source:'user'|'clue', reservoirIndex} or null
             fallingLetters: [],
             floorLetters: new Map(), // Map<x, {letter, hp}>
             catPosition: { x: 14, y: 0 },
@@ -1909,6 +1912,7 @@
 
             // Full state reset
             gameState.reservoir = [];
+            gameState.reservoirReserved = [];
             gameState.inputSlots = [];
             gameState.fallingLetters = [];
             gameState.floorLetters = new Map();
@@ -2414,13 +2418,7 @@
                                         else if (hpPercent < 0.66) cell.classList.add('yellow');
                                     }
 
-                                    const hpBar = document.createElement('div');
-                                    hpBar.className = 'hp-bar';
-                                    const hpFill = document.createElement('div');
-                                    hpFill.className = 'hp-bar-fill';
-                                    hpFill.style.width = (hpPercent * 100) + '%';
-                                    hpBar.appendChild(hpFill);
-                                    cell.appendChild(hpBar);
+                                    // HP bar removed — brick color already indicates health
                                 } else if (gridCell.type === 'pole') {
                                     cell.classList.add('pole');
                                     cell.textContent = '|';
@@ -2455,33 +2453,63 @@
             // No-op: hintedPositions are word positions, not reservoir indices
         }
 
-        // --- Reservoir helpers (null-gap model) ---
-        // Count non-null letters in reservoir
+        // --- Reservoir helpers (null-gap model with reservation support) ---
+        // Count letters effectively in reservoir (non-null + reserved slots)
         function reservoirCount() {
             var c = 0;
             for (var i = 0; i < gameState.reservoir.length; i++) {
                 if (gameState.reservoir[i] !== null) c++;
             }
+            // Reserved slots count as occupied (letter exists, just in input box)
+            for (var i = 0; i < gameState.reservoirReserved.length; i++) {
+                if (gameState.reservoirReserved[i]) c++;
+            }
             return c;
         }
-        // Add letter to first null gap, or push at end
+        // Add NEW letter to first unreserved null gap, or push at end
         function reservoirAdd(letter) {
             for (var i = 0; i < gameState.reservoir.length; i++) {
-                if (gameState.reservoir[i] === null) {
+                if (gameState.reservoir[i] === null && !gameState.reservoirReserved[i]) {
                     gameState.reservoir[i] = letter;
                     return;
                 }
             }
             gameState.reservoir.push(letter);
         }
-        // Remove letter at index: set to null, trim trailing nulls
+        // Return letter to its reserved slot (from backspace/clearAll/Escape)
+        function reservoirReturnToSlot(letter, reservoirIndex) {
+            if (reservoirIndex !== undefined && reservoirIndex !== null &&
+                reservoirIndex >= 0 && reservoirIndex < gameState.reservoir.length &&
+                gameState.reservoirReserved[reservoirIndex]) {
+                gameState.reservoir[reservoirIndex] = letter;
+                gameState.reservoirReserved[reservoirIndex] = false;
+            } else {
+                // Fallback: add to first free gap
+                reservoirAdd(letter);
+            }
+        }
+        // Remove letter at index: set to null, trim trailing nulls (but not reserved ones)
         function reservoirRemove(index) {
             var letter = gameState.reservoir[index];
             gameState.reservoir[index] = null;
-            while (gameState.reservoir.length > 0 && gameState.reservoir[gameState.reservoir.length - 1] === null) {
+            // Trim trailing nulls only if not reserved
+            while (gameState.reservoir.length > 0) {
+                var lastIdx = gameState.reservoir.length - 1;
+                if (gameState.reservoir[lastIdx] !== null) break;
+                if (gameState.reservoirReserved[lastIdx]) break;
                 gameState.reservoir.pop();
+                if (gameState.reservoirReserved.length > gameState.reservoir.length) {
+                    gameState.reservoirReserved.pop();
+                }
             }
             return letter;
+        }
+        // Mark a reservoir slot as reserved
+        function reservoirMarkReserved(index) {
+            while (gameState.reservoirReserved.length <= index) {
+                gameState.reservoirReserved.push(false);
+            }
+            gameState.reservoirReserved[index] = true;
         }
 
         // Render reservoir
@@ -2608,13 +2636,14 @@
                     if (gameState.inputSlots[i] === null) { emptyIdx = i; break; }
                 }
                 if (emptyIdx === -1) return; // input full
-                gameState.inputSlots[emptyIdx] = { letter: letter, source: 'user' };
+                gameState.inputSlots[emptyIdx] = { letter: letter, source: 'user', reservoirIndex: index };
             } else {
-                gameState.inputSlots.push({ letter: letter, source: 'user' });
+                gameState.inputSlots.push({ letter: letter, source: 'user', reservoirIndex: index });
             }
 
-            // Remove from reservoir (null gap, no shift)
+            // Remove from reservoir (null gap, no shift) and mark reserved
             reservoirRemove(index);
+            reservoirMarkReserved(index);
 
             renderReservoir();
             renderWordInput();
@@ -2623,6 +2652,10 @@
 
         // Shuffle reservoir tiles (no index remapping needed — highlights are position-based)
         function shuffleReservoir() {
+            // Disable shuffle while any slots are reserved (letters in input box)
+            for (var ri = 0; ri < gameState.reservoirReserved.length; ri++) {
+                if (gameState.reservoirReserved[ri]) return;
+            }
             // Compact: extract non-null letters, shuffle, place back contiguously
             var letters = gameState.reservoir.filter(function(l) { return l !== null; });
             if (letters.length < 2) return;
@@ -2633,6 +2666,7 @@
                 letters[j] = tmp;
             }
             gameState.reservoir = letters;
+            gameState.reservoirReserved = [];
             renderReservoir();
         }
 
@@ -2647,9 +2681,10 @@
             }
             if (idx === -1) return;
 
-            var letter = gameState.inputSlots[idx].letter;
-            // Return letter to reservoir (fill first gap)
-            reservoirAdd(letter);
+            var slotData = gameState.inputSlots[idx];
+            var letter = slotData.letter;
+            // Return letter to its reserved reservoir slot
+            reservoirReturnToSlot(letter, slotData.reservoirIndex);
 
             if (gameState.hintTargetWord) {
                 // In fixed-slot mode, set slot to null (keep array length)
@@ -2878,10 +2913,11 @@
                     } else {
                         gameState.hintTargetLength = l;
                     }
-                    // Return all input letters to reservoir before resetting
+                    // Return all input letters to their reserved reservoir slots
                     for (var ri = 0; ri < gameState.inputSlots.length; ri++) {
                         if (gameState.inputSlots[ri]) {
-                            reservoirAdd(gameState.inputSlots[ri].letter);
+                            var slotData = gameState.inputSlots[ri];
+                            reservoirReturnToSlot(slotData.letter, slotData.reservoirIndex);
                         }
                     }
                     // Reset hint state when changing target
@@ -3014,9 +3050,10 @@
 
                     if (resIdx === -1) continue; // letter not in reservoir, try next position
 
-                    // Place the letter
+                    // Place the letter and mark reservoir slot as reserved
                     var letter = reservoirRemove(resIdx);
-                    gameState.inputSlots[cluePos] = { letter: letter, source: 'clue' };
+                    gameState.inputSlots[cluePos] = { letter: letter, source: 'clue', reservoirIndex: resIdx };
+                    reservoirMarkReserved(resIdx);
                     gameState.hintRevealed[cluePos] = true;
                     placed = true;
 
@@ -3063,10 +3100,11 @@
             if (gameState.hintTargetLength > 0) return; // already selected
             const firstChip = document.querySelector('#wordRadar .ws-len-chip');
             if (!firstChip) return;
-            // Return any input letters to reservoir first
+            // Return any input letters to their reserved reservoir slots
             for (var ri = 0; ri < gameState.inputSlots.length; ri++) {
                 if (gameState.inputSlots[ri]) {
-                    reservoirAdd(gameState.inputSlots[ri].letter);
+                    var slotData = gameState.inputSlots[ri];
+                    reservoirReturnToSlot(slotData.letter, slotData.reservoirIndex);
                 }
             }
             gameState.hintTargetLength = Number(firstChip.dataset.len);
@@ -3099,6 +3137,13 @@
 
         // Clear hint highlights and placeholder (called on word submit)
         function clearHintHighlights() {
+            // Return any input letters to their reserved reservoir slots before clearing
+            for (var ri = 0; ri < gameState.inputSlots.length; ri++) {
+                if (gameState.inputSlots[ri]) {
+                    var slotData = gameState.inputSlots[ri];
+                    reservoirReturnToSlot(slotData.letter, slotData.reservoirIndex);
+                }
+            }
             gameState.hintTargetWord = '';
             gameState.hintRevealed = [];
             gameState.hintedPositions = [];
@@ -3209,7 +3254,8 @@
                 }
                 if (idx !== -1) {
                     var letter = reservoirRemove(idx);
-                    gameState.inputSlots.push({ letter: letter, source: 'user' });
+                    reservoirMarkReserved(idx);
+                    gameState.inputSlots.push({ letter: letter, source: 'user', reservoirIndex: idx });
                 }
             }
             submitWord();
@@ -3319,6 +3365,8 @@
 
             // Letters already removed from reservoir when placed in input — just clear inputSlots
             gameState.inputSlots = [];
+            // Clear all reservations — slots are now truly available for new letters
+            gameState.reservoirReserved = [];
 
             // --- Cat mood reactions ---
             if (isFullRow) {
@@ -4539,6 +4587,7 @@
                 catMoveIndex,
                 gridData,
                 reservoir: gameState.reservoir,
+                reservoirReserved: gameState.reservoirReserved,
                 inputSlots: gameState.inputSlots,
                 fallingLetters: gameState.fallingLetters,
                 floorData,
@@ -4614,6 +4663,7 @@
             // Restore all gameState fields
             gameState.gameSeed = data.gameSeed;
             gameState.reservoir = data.reservoir;
+            gameState.reservoirReserved = data.reservoirReserved || [];
             gameState.inputSlots = data.inputSlots || [];
             gameState.fallingLetters = data.fallingLetters;
             gameState.catPosition = data.catPosition;
@@ -4865,10 +4915,11 @@
         document.getElementById('clearBtn').addEventListener('click', backspaceLetter);
         document.getElementById('shuffleBtn').addEventListener('click', shuffleReservoir);
         document.getElementById('clearAllBtn').addEventListener('click', () => {
-            // Return all letters (user + clue) to reservoir
+            // Return all letters (user + clue) to their reserved reservoir slots
             for (var i = 0; i < gameState.inputSlots.length; i++) {
                 if (gameState.inputSlots[i]) {
-                    reservoirAdd(gameState.inputSlots[i].letter);
+                    var slotData = gameState.inputSlots[i];
+                    reservoirReturnToSlot(slotData.letter, slotData.reservoirIndex);
                 }
             }
             gameState.inputSlots = [];
@@ -5015,10 +5066,11 @@
             // Escape to clear all (trash)
             if (e.key === 'Escape') {
                 e.preventDefault();
-                // Return all letters to reservoir
+                // Return all letters to their reserved reservoir slots
                 for (var i = 0; i < gameState.inputSlots.length; i++) {
                     if (gameState.inputSlots[i]) {
-                        reservoirAdd(gameState.inputSlots[i].letter);
+                        var slotData = gameState.inputSlots[i];
+                        reservoirReturnToSlot(slotData.letter, slotData.reservoirIndex);
                     }
                 }
                 gameState.inputSlots = [];
@@ -5145,13 +5197,16 @@
                     if (rLen >= rCap) {
                         fab.style.background = 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)';
                         fab.style.borderColor = 'rgba(255,255,255,0.4)';
+                        fab.classList.add('fab-ring-ping');
                     } else if (rLen >= 14) {
                         fab.style.background = 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)';
                         fab.style.borderColor = 'rgba(255,255,255,0.35)';
+                        fab.classList.remove('fab-ring-ping');
                     } else {
                         fab.style.background = '';
                         fab.style.borderColor = '';
                         fab.style.color = '';
+                        fab.classList.remove('fab-ring-ping');
                     }
                 } else {
                     // Season display: current emoji → days left → next emoji
@@ -5168,10 +5223,12 @@
                         fab.style.background = 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)';
                         fab.style.borderColor = 'rgba(255,255,255,0.4)';
                         fab.style.color = 'white';
+                        fab.classList.add('fab-ring-ping');
                     } else {
                         fab.style.background = '';
                         fab.style.borderColor = '';
                         fab.style.color = '';
+                        fab.classList.remove('fab-ring-ping');
                     }
                 }
             }
