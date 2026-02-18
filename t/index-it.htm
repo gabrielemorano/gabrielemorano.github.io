@@ -404,6 +404,7 @@
             display: flex;
             flex-wrap: wrap;
             gap: 4px;
+            margin-top: 8px;
         }
         .letter-tile.empty-slot {
             background: none;
@@ -413,7 +414,7 @@
             color: transparent;
         }
 
-        .ws-radar { display: flex; gap: 4px; flex-wrap: wrap; justify-content: center; padding: 8px 0; }
+        .ws-radar { display: flex; gap: 4px; flex-wrap: wrap; justify-content: center; padding-top: 8px; }
         .ws-len-chip {
             display: flex; align-items: center; gap: 3px;
             padding: 4px 10px; border-radius: 14px;
@@ -472,7 +473,7 @@
             background: linear-gradient(135deg, #10b981 0%, #059669 100%);
         }
 
-        .ws-btn-row { display: flex; gap: 5px; margin-top: 6px; }
+        .ws-btn-row { display: flex; gap: 5px; margin-top: 8px; }
         .ws-btn-row button {
             border: none; border-radius: 6px; font-weight: 700; cursor: pointer;
             display: flex; align-items: center; justify-content: center;
@@ -1225,21 +1226,21 @@
                     <!-- Radar chips (longest → shortest) OR cheat word chips -->
                     <div class="ws-radar" id="wordRadar"></div>
 
-                    <!-- Reservoir grid -->
-                    <div class="ws-reservoir" id="reservoir"></div>
-
-                    <!-- Row 1: Submit 60% | ⟲ 20% | 🗑 20% -->
-                    <div class="ws-btn-row">
-                        <button class="ws-submit" id="submitBtn" disabled data-i18n="btnSubmitWord">Invia Parola</button>
-                        <button class="ws-backspace" id="clearBtn">⟲</button>
-                        <button class="ws-clearall" id="clearAllBtn" data-i18n-title="tipClearAll" title="Deseleziona tutto"><span class="icon-white">🗑</span></button>
-                    </div>
-
-                    <!-- Row 2: Hint 33% | Clue 33% | Cheat 33% -->
+                    <!-- Hint | Clue | Cheat -->
                     <div class="ws-btn-row">
                         <button class="ws-tool-btn too-expensive" id="hintBtn"><span data-i18n="btnHint">💡 Indizio</span> <span class="tool-cost">0×</span></button>
                         <button class="ws-tool-btn too-expensive" id="clueBtn"><span data-i18n="btnClue">🔍 Aiuto</span> <span class="tool-cost">0×</span></button>
                         <button class="ws-tool-btn too-expensive" id="cheatBtn"><span data-i18n="btnCheat">🔨 Mostra</span> <span class="tool-cost">0×</span></button>
+                    </div>
+
+                    <!-- Reservoir grid -->
+                    <div class="ws-reservoir" id="reservoir"></div>
+
+                    <!-- Submit 60% | ⟲ 20% | 🗑 20% -->
+                    <div class="ws-btn-row">
+                        <button class="ws-submit" id="submitBtn" disabled data-i18n="btnSubmitWord">Invia Parola</button>
+                        <button class="ws-backspace" id="clearBtn">⟲</button>
+                        <button class="ws-clearall" id="clearAllBtn" data-i18n-title="tipClearAll" title="Deseleziona tutto"><span class="icon-white">🗑</span></button>
                     </div>
                 </div>
 
