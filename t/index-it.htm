@@ -865,15 +865,7 @@
             .game-area {
                 padding: 6px;
                 gap: 8px;
-                scroll-snap-type: y mandatory;
-                -webkit-overflow-scrolling: auto;
             }
-            .grid-container,
-            #panelWorkshop,
-            #panelAchievements,
-            #panelCatLooks,
-            #panelWeather,
-            #panelGameMenu { scroll-snap-align: start; scroll-snap-stop: always; }
 
             /* Grid: shrink cells to fit screen */
             .grid {
@@ -5046,49 +5038,108 @@
             }, { passive: true });
         })();
 
-        // Mobile: JS-based scroll snap (backup for CSS snap on iOS Safari)
+        // Mobile: pointer-based scroll snap — tracks swipe direction and
+        // scrolls exactly one panel at a time, kills momentum before snapping.
+        // Works with touch (iOS/Android), pointer events (Chrome emulator), and mouse.
         (function() {
             var gameArea = document.querySelector('.game-area');
             if (!gameArea) return;
             var isMobile = function() { return window.innerWidth <= 500; };
             var snapSelectors = ['.grid-container', '#panelWorkshop', '#panelAchievements',
                                  '#panelCatLooks', '#panelWeather', '#panelGameMenu'];
-            var snapTimer = null;
+            var startY = 0;
+            var currentSnapIdx = 0;
             var isSnapping = false;
+            var pointerDown = false;
 
-            function snapToNearest() {
-                if (isSnapping) return;
+            function getSnapPositions() {
+                var positions = [];
                 var areaRect = gameArea.getBoundingClientRect();
                 var scrollTop = gameArea.scrollTop;
-                var closest = null;
-                var closestDist = Infinity;
                 for (var i = 0; i < snapSelectors.length; i++) {
                     var el = document.querySelector(snapSelectors[i]);
                     if (!el) continue;
                     var elRect = el.getBoundingClientRect();
-                    // Distance from element top to container top (in scroll coordinates)
-                    var snapPos = scrollTop + (elRect.top - areaRect.top);
-                    var dist = Math.abs(scrollTop - snapPos);
-                    if (dist < closestDist) { closest = snapPos; closestDist = dist; }
+                    positions.push(scrollTop + (elRect.top - areaRect.top));
                 }
-                if (closest === null) return;
-                if (closestDist < 2) return; // already snapped
-                if (closestDist > gameArea.clientHeight * 0.5) return;
-                isSnapping = true;
-                gameArea.scrollTo({ top: closest, behavior: 'smooth' });
-                setTimeout(function() { isSnapping = false; }, 500);
+                return positions;
             }
 
-            gameArea.addEventListener('scrollend', function() {
-                if (!isMobile() || isSnapping) return;
-                snapToNearest();
+            function findCurrentIdx(positions) {
+                var scrollTop = gameArea.scrollTop;
+                var bestIdx = 0;
+                var bestDist = Infinity;
+                for (var i = 0; i < positions.length; i++) {
+                    var dist = Math.abs(scrollTop - positions[i]);
+                    if (dist < bestDist) { bestDist = dist; bestIdx = i; }
+                }
+                return bestIdx;
+            }
+
+            function killMomentum() {
+                // Briefly disable scroll to kill iOS momentum, then restore
+                var scrollPos = gameArea.scrollTop;
+                gameArea.style.overflowY = 'hidden';
+                gameArea.scrollTop = scrollPos;
+                // Restore after one frame
+                requestAnimationFrame(function() {
+                    gameArea.style.overflowY = '';
+                });
+            }
+
+            function snapTo(idx) {
+                var positions = getSnapPositions();
+                if (idx < 0) idx = 0;
+                if (idx >= positions.length) idx = positions.length - 1;
+                currentSnapIdx = idx;
+                var target = positions[idx];
+                if (Math.abs(gameArea.scrollTop - target) < 2) return;
+                isSnapping = true;
+                // Wait one frame for momentum kill to take effect, then smooth scroll
+                requestAnimationFrame(function() {
+                    gameArea.scrollTo({ top: target, behavior: 'smooth' });
+                    setTimeout(function() { isSnapping = false; }, 600);
+                });
+            }
+
+            function onPointerDown(y) {
+                if (!isMobile()) return;
+                pointerDown = true;
+                startY = y;
+                currentSnapIdx = findCurrentIdx(getSnapPositions());
+            }
+
+            function onPointerUp(y) {
+                if (!isMobile() || !pointerDown || isSnapping) return;
+                pointerDown = false;
+                var deltaY = startY - y; // positive = finger moved up = scroll down
+                var threshold = 40;
+
+                killMomentum();
+
+                if (Math.abs(deltaY) < threshold) {
+                    snapTo(currentSnapIdx);
+                } else if (deltaY > 0) {
+                    snapTo(currentSnapIdx + 1);
+                } else {
+                    snapTo(currentSnapIdx - 1);
+                }
+            }
+
+            // Touch events (real mobile)
+            gameArea.addEventListener('touchstart', function(e) {
+                onPointerDown(e.touches[0].clientY);
+            }, { passive: true });
+            gameArea.addEventListener('touchend', function(e) {
+                onPointerUp(e.changedTouches[0].clientY);
             }, { passive: true });
 
-            // Fallback for browsers without scrollend
-            gameArea.addEventListener('scroll', function() {
-                if (!isMobile() || isSnapping) return;
-                clearTimeout(snapTimer);
-                snapTimer = setTimeout(snapToNearest, 150);
+            // Mouse events (Chrome emulator, desktop)
+            gameArea.addEventListener('mousedown', function(e) {
+                onPointerDown(e.clientY);
+            }, { passive: true });
+            gameArea.addEventListener('mouseup', function(e) {
+                onPointerUp(e.clientY);
             }, { passive: true });
         })();
 
