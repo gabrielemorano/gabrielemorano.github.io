@@ -865,14 +865,7 @@
             .game-area {
                 padding: 6px;
                 gap: 8px;
-                scroll-snap-type: y mandatory;
             }
-            .grid-container { scroll-snap-align: start; scroll-snap-stop: always; scroll-margin-top: 0; }
-            #panelWorkshop { scroll-snap-align: start; scroll-snap-stop: always; scroll-margin-top: 0; }
-            #panelAchievements { scroll-snap-align: start; scroll-snap-stop: always; scroll-margin-top: 0; }
-            #panelCatLooks { scroll-snap-align: start; scroll-snap-stop: always; scroll-margin-top: 0; }
-            #panelWeather { scroll-snap-align: start; scroll-snap-stop: always; scroll-margin-top: 0; }
-            #panelGameMenu { scroll-snap-align: start; scroll-snap-stop: always; scroll-margin-top: 0; }
 
             /* Grid: shrink cells to fit screen */
             .grid {
@@ -5042,6 +5035,58 @@
                     header.classList.remove('collapsed');
                 }
                 lastScrollTop = st;
+            }, { passive: true });
+        })();
+
+        // Mobile: JS-based scroll snap (more reliable than CSS on iOS Safari)
+        (function() {
+            var gameArea = document.querySelector('.game-area');
+            if (!gameArea) return;
+            var isMobile = function() { return window.innerWidth <= 500; };
+            var snapTargets = ['.grid-container', '#panelWorkshop', '#panelAchievements',
+                               '#panelCatLooks', '#panelWeather', '#panelGameMenu'];
+            var snapTimer = null;
+            var isSnapping = false;
+
+            function getSnapOffsets() {
+                var offsets = [];
+                for (var i = 0; i < snapTargets.length; i++) {
+                    var el = document.querySelector(snapTargets[i]);
+                    if (el) offsets.push({ top: el.offsetTop - gameArea.offsetTop, el: el });
+                }
+                return offsets;
+            }
+
+            function snapToNearest() {
+                if (isSnapping) return;
+                var offsets = getSnapOffsets();
+                if (offsets.length === 0) return;
+                var scrollTop = gameArea.scrollTop;
+                var closest = offsets[0];
+                var closestDist = Math.abs(scrollTop - closest.top);
+                for (var i = 1; i < offsets.length; i++) {
+                    var dist = Math.abs(scrollTop - offsets[i].top);
+                    if (dist < closestDist) { closest = offsets[i]; closestDist = dist; }
+                }
+                // Only snap if within reasonable distance (half viewport)
+                if (closestDist > gameArea.clientHeight * 0.5) return;
+                if (Math.abs(scrollTop - closest.top) < 2) return; // already there
+                isSnapping = true;
+                gameArea.scrollTo({ top: closest.top, behavior: 'smooth' });
+                setTimeout(function() { isSnapping = false; }, 400);
+            }
+
+            gameArea.addEventListener('scroll', function() {
+                if (!isMobile() || isSnapping) return;
+                clearTimeout(snapTimer);
+                snapTimer = setTimeout(snapToNearest, 120);
+            }, { passive: true });
+
+            // Also snap after touch ends (catches fast flings)
+            gameArea.addEventListener('touchend', function() {
+                if (!isMobile() || isSnapping) return;
+                clearTimeout(snapTimer);
+                snapTimer = setTimeout(snapToNearest, 200);
             }, { passive: true });
         })();
 
