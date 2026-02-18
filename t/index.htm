@@ -865,7 +865,15 @@
             .game-area {
                 padding: 6px;
                 gap: 8px;
+                scroll-snap-type: y mandatory;
+                -webkit-overflow-scrolling: auto;
             }
+            .grid-container,
+            #panelWorkshop,
+            #panelAchievements,
+            #panelCatLooks,
+            #panelWeather,
+            #panelGameMenu { scroll-snap-align: start; scroll-snap-stop: always; }
 
             /* Grid: shrink cells to fit screen */
             .grid {
@@ -5038,55 +5046,49 @@
             }, { passive: true });
         })();
 
-        // Mobile: JS-based scroll snap (more reliable than CSS on iOS Safari)
+        // Mobile: JS-based scroll snap (backup for CSS snap on iOS Safari)
         (function() {
             var gameArea = document.querySelector('.game-area');
             if (!gameArea) return;
             var isMobile = function() { return window.innerWidth <= 500; };
-            var snapTargets = ['.grid-container', '#panelWorkshop', '#panelAchievements',
-                               '#panelCatLooks', '#panelWeather', '#panelGameMenu'];
+            var snapSelectors = ['.grid-container', '#panelWorkshop', '#panelAchievements',
+                                 '#panelCatLooks', '#panelWeather', '#panelGameMenu'];
             var snapTimer = null;
             var isSnapping = false;
 
-            function getSnapOffsets() {
-                var offsets = [];
-                for (var i = 0; i < snapTargets.length; i++) {
-                    var el = document.querySelector(snapTargets[i]);
-                    if (el) offsets.push({ top: el.offsetTop - gameArea.offsetTop, el: el });
-                }
-                return offsets;
-            }
-
             function snapToNearest() {
                 if (isSnapping) return;
-                var offsets = getSnapOffsets();
-                if (offsets.length === 0) return;
+                var areaRect = gameArea.getBoundingClientRect();
                 var scrollTop = gameArea.scrollTop;
-                var closest = offsets[0];
-                var closestDist = Math.abs(scrollTop - closest.top);
-                for (var i = 1; i < offsets.length; i++) {
-                    var dist = Math.abs(scrollTop - offsets[i].top);
-                    if (dist < closestDist) { closest = offsets[i]; closestDist = dist; }
+                var closest = null;
+                var closestDist = Infinity;
+                for (var i = 0; i < snapSelectors.length; i++) {
+                    var el = document.querySelector(snapSelectors[i]);
+                    if (!el) continue;
+                    var elRect = el.getBoundingClientRect();
+                    // Distance from element top to container top (in scroll coordinates)
+                    var snapPos = scrollTop + (elRect.top - areaRect.top);
+                    var dist = Math.abs(scrollTop - snapPos);
+                    if (dist < closestDist) { closest = snapPos; closestDist = dist; }
                 }
-                // Only snap if within reasonable distance (half viewport)
+                if (closest === null) return;
+                if (closestDist < 2) return; // already snapped
                 if (closestDist > gameArea.clientHeight * 0.5) return;
-                if (Math.abs(scrollTop - closest.top) < 2) return; // already there
                 isSnapping = true;
-                gameArea.scrollTo({ top: closest.top, behavior: 'smooth' });
-                setTimeout(function() { isSnapping = false; }, 400);
+                gameArea.scrollTo({ top: closest, behavior: 'smooth' });
+                setTimeout(function() { isSnapping = false; }, 500);
             }
 
+            gameArea.addEventListener('scrollend', function() {
+                if (!isMobile() || isSnapping) return;
+                snapToNearest();
+            }, { passive: true });
+
+            // Fallback for browsers without scrollend
             gameArea.addEventListener('scroll', function() {
                 if (!isMobile() || isSnapping) return;
                 clearTimeout(snapTimer);
-                snapTimer = setTimeout(snapToNearest, 120);
-            }, { passive: true });
-
-            // Also snap after touch ends (catches fast flings)
-            gameArea.addEventListener('touchend', function() {
-                if (!isMobile() || isSnapping) return;
-                clearTimeout(snapTimer);
-                snapTimer = setTimeout(snapToNearest, 200);
+                snapTimer = setTimeout(snapToNearest, 150);
             }, { passive: true });
         })();
 
