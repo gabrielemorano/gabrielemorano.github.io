@@ -4347,13 +4347,10 @@
             updateSpeedButtons(SPEED_NORMAL);
             localStorage.setItem(TUTORIAL_KEY, '1');
             showMessage(t('tutSkipped'), 'info');
-            if (window.innerWidth <= 750) {
-                setTimeout(function() {
-                    window.scrollTo(0, 0);
-                    document.body.scrollTop = 0;
-                    document.documentElement.scrollTop = 0;
-                }, 100);
-            }
+            setTimeout(function() {
+                var ga = document.querySelector('.game-area');
+                if (ga) ga.scrollTo({ top: 0, behavior: 'smooth' });
+            }, 100);
         }
 
         function completeTutorial() {
@@ -4367,13 +4364,10 @@
             localStorage.setItem(TUTORIAL_KEY, '1');
             showConfetti('mega');
             showMessage(t('tutComplete'), 'success');
-            if (window.innerWidth <= 750) {
-                setTimeout(function() {
-                    window.scrollTo(0, 0);
-                    document.body.scrollTop = 0;
-                    document.documentElement.scrollTop = 0;
-                }, 100);
-            }
+            setTimeout(function() {
+                var ga = document.querySelector('.game-area');
+                if (ga) ga.scrollTo({ top: 0, behavior: 'smooth' });
+            }, 100);
         }
 
         // Debounced resize handler for tooltip repositioning
