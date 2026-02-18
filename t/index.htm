@@ -329,6 +329,19 @@
             overflow: visible;
         }
 
+        @keyframes heartbeat {
+            0%   { transform: scale(1); }
+            12%  { transform: scale(2); }
+            24%  { transform: scale(1); }
+            36%  { transform: scale(2); }
+            48%  { transform: scale(1); }
+            100% { transform: scale(1); }
+        }
+        .cat-healing-heart {
+            animation: heartbeat 1.2s ease-in-out infinite;
+            display: flex !important;
+        }
+
         .cell.falling-letter {
             background: linear-gradient(135deg, #818cf8 0%, #6366f1 100%);
             color: white;
@@ -568,35 +581,42 @@
         }
 
         .message {
-            padding: 6px;
-            border-radius: 5px;
-            margin-top: 6px;
+            position: fixed;
+            top: -60px;
+            left: 50%;
+            transform: translateX(-50%);
+            padding: 8px 18px;
+            border-radius: 8px;
             text-align: center;
             font-weight: bold;
             min-height: 32px;
             display: flex;
             align-items: center;
             justify-content: center;
-            visibility: hidden;
             font-size: 0.85em;
+            z-index: 9999;
+            pointer-events: none;
+            max-width: 90vw;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+            transition: top 0.3s ease;
         }
 
         .message.success {
             background: #d1fae5;
             color: #065f46;
-            visibility: visible;
+            top: 10px;
         }
 
         .message.error {
             background: #fee2e2;
             color: #991b1b;
-            visibility: visible;
+            top: 10px;
         }
 
         .message.info {
             background: #dbeafe;
             color: #1e40af;
-            visibility: visible;
+            top: 10px;
         }
 
         .weather-forecast {
@@ -811,18 +831,18 @@
                 min-width: 56px;
                 height: 48px;
                 padding: 0 16px;
-                border: none;
+                border: 2px solid rgba(255,255,255,0.25);
                 border-radius: 24px;
                 background: linear-gradient(135deg, #374151 0%, #1f2937 100%);
                 color: white;
                 font-size: 1em;
                 font-weight: 700;
                 box-shadow: 0 4px 14px rgba(55, 65, 81, 0.5);
+                -webkit-transition: transform 0.15s ease, box-shadow 0.15s ease, background 0.3s ease, border-color 0.3s ease;
+                transition: transform 0.15s ease, box-shadow 0.15s ease, background 0.3s ease, border-color 0.3s ease;
                 cursor: pointer;
                 -webkit-tap-highlight-color: transparent;
                 white-space: nowrap;
-                -webkit-transition: transform 0.15s ease, box-shadow 0.15s ease;
-                transition: transform 0.15s ease, box-shadow 0.15s ease;
             }
             .fab:active {
                 -webkit-transform: scale(0.93);
@@ -1110,6 +1130,7 @@
     </style>
 </head>
 <body>
+<div class="message" id="message"></div>
     <div class="game-container">
         <div class="game-header" style="position:relative;">
             <h1 data-i18n="gameTitle">🌧️ Raining Words 🐱</h1>
@@ -1199,9 +1220,6 @@
 
                     <!-- Reservoir grid -->
                     <div class="ws-reservoir" id="reservoir"></div>
-
-                    <!-- Message -->
-                    <div class="message" id="message"></div>
 
                     <!-- Row 1: Submit 50% | ⌫ 25% | 🗑 25% -->
                     <div class="ws-btn-row">
@@ -1378,8 +1396,8 @@
             lblNoAchievements: "No achievements yet",
             lblLoadingForecast: "Loading forecast...",
             msgWordPlaced: "✅ Placed \"{0}\"!",
-            msgCatHit: "😿 Cat hit by {0}! (-{1})",
-            msgCatDrowning: "😿 Cat drowning!",
+            msgCatHit: "💔 Cat hit by {0}! (-{1})",
+            msgCatDrowning: "💔 Cat drowning!",
             msgNeedLetters: "Need at least 3 letters!",
             msgNoWords: "No words available!",
             msgAllRevealed: "All letters revealed!",
@@ -2099,7 +2117,7 @@
                                 gameState.catHP -= power;
                                 gameState.treats = Math.max(0, gameState.treats - TREAT_CAT_HIT);
                                 gameState.catHitTime = Date.now();
-                                setCatMood('🙀', 2000, 'hit');
+                                setCatMood('💔', 2000, 'hit');
                                 showMessage(t("msgCatHit", fl.type, power), "error");
                                 power = 0;
                             }
@@ -2125,7 +2143,7 @@
                             gameState.catHP -= power;
                             gameState.treats = Math.max(0, gameState.treats - TREAT_CAT_HIT);
                             gameState.catHitTime = Date.now();
-                            setCatMood('🙀', 2000, 'hit');
+                            setCatMood('💔', 2000, 'hit');
                             showMessage(t("msgCatHit", fl.type, power), "error");
                         }
                     }
@@ -2141,7 +2159,7 @@
                         gameState.catHP -= dmg;
                         gameState.treats = Math.max(0, gameState.treats - TREAT_CAT_HIT);
                         gameState.catHitTime = Date.now();
-                        setCatMood('🙀', 2000, 'hit');
+                        setCatMood('💔', 2000, 'hit');
                         showMessage(t("msgCatHit", fl.type, dmg), "error");
                         toRemove.push(fl.id);
                     }
@@ -2286,10 +2304,17 @@
                 _catOverlayEmoji = catEmoji;
             }
 
-            // Hide overlay when healing animation shows 🏥 (toggle every 500ms)
+            // Healing: replace cat with ❤️ heartbeat pulse
             var isHealing = (gameState.catPosition.x === HEALTH_STATION_X && gameState.catHealTicks > 0);
-            var healShowHospital = isHealing && (Math.floor(Date.now() / 500) % 2 === 0);
-            _catOverlay.style.display = healShowHospital ? 'none' : 'flex';
+            if (isHealing) {
+                _catOverlay.textContent = '❤️';
+                _catOverlayEmoji = '❤️';
+                _catOverlay.classList.add('cat-healing-heart');
+                _catOverlay.style.display = 'flex';
+            } else {
+                _catOverlay.classList.remove('cat-healing-heart');
+                _catOverlay.style.display = 'flex';
+            }
 
             // Apply cat look — only change when look changes
             var wantLook = gameState.activeCatLook;
@@ -2323,11 +2348,6 @@
                     if (x === gameState.catPosition.x && y === gameState.catPosition.y) {
                         // Placeholder cell — actual cat is rendered by the persistent overlay
                         cell.classList.add('cat');
-                        // When cat is healing on station and it's the 🏥 frame, show hospital underneath
-                        if (x === HEALTH_STATION_X && gameState.catHealTicks > 0
-                            && (Math.floor(Date.now() / 500) % 2 === 0)) {
-                            cell.textContent = '🏥';
-                        }
                     } else {
 
                     // Health station at x=0 y=0 (when cat is not here and no floor letter)
@@ -2481,8 +2501,6 @@
         // Select letter (append only — no toggle; use backspace to remove from the end)
         function selectLetter(index) {
             if (gameState.selectedLetters.includes(index)) return; // already used
-            gameState.catIdleTicks = 0;
-            if (gameState.catMood && gameState.catMood.emoji === '😴') clearCatMood();
             gameState.selectedLetters.push(index);
             renderReservoir();
             checkTutorialTrigger();
@@ -3271,8 +3289,6 @@
             gameState.selectedLetters = [];
 
             // --- Cat mood reactions ---
-            gameState.catIdleTicks = 0; // player acted
-            if (gameState.catMood && gameState.catMood.emoji === '😴') clearCatMood();
             if (isFullRow) {
                 setCatMood('😸', 3000, 'fullrow');
             } else if (wordLen >= 5) {
@@ -3596,14 +3612,18 @@
             requestAnimationFrame(animateBanner);
         }
 
+        var _msgTimer = null;
         function showMessage(text, type) {
             const messageEl = document.getElementById('message');
+            if (_msgTimer) clearTimeout(_msgTimer);
             messageEl.textContent = text;
-            messageEl.className = `message ${type}`;
+            messageEl.className = 'message ' + type;
 
-            setTimeout(() => {
+            _msgTimer = setTimeout(function() {
                 messageEl.className = 'message';
-                messageEl.textContent = '';
+                _msgTimer = setTimeout(function() {
+                    messageEl.textContent = '';
+                }, 350);
             }, 3000);
         }
 
@@ -3947,7 +3967,7 @@
                     gameState.catHP -= 1;
                     gameState.treats = Math.max(0, gameState.treats - TREAT_CAT_HIT);
                     gameState.catHitTime = Date.now();
-                    setCatMood('🙀', 2000, 'hit');
+                    setCatMood('💔', 2000, 'hit');
                     showMessage(t('msgCatDrowning'), 'error');
                     // Letter is destroyed on impact — don't add to new map
                 } else if (shifted < 15) {
@@ -4398,18 +4418,7 @@
                     const wasStorming = gameState.isStorming;
                     gameState.isStorming = gameState.weatherCycleTick < season.stormTicks;
 
-                    // Cat mood: sleeping during calm if idle
-                    if (!gameState.isStorming) {
-                        gameState.catIdleTicks++;
-                        if (gameState.catIdleTicks >= 3) {
-                            setCatMood('😴', Infinity, 'sleep');
-                        }
-                    } else {
-                        // Storm started or ongoing — clear sleep
-                        if (gameState.catMood && gameState.catMood.emoji === '😴') {
-                            clearCatMood();
-                        }
-                    }
+                    // (sleeping mood removed)
 
                     updateWeatherForecast();
 
@@ -5038,19 +5047,38 @@
                 var rCap = (typeof RESERVOIR_CAPACITY !== 'undefined') ? RESERVOIR_CAPACITY : 18;
                 if (fabState === 'to-builder') {
                     fab.textContent = '\u270F\uFE0F ' + rLen + '/' + rCap;
+                    fab.style.color = 'white';
                     if (rLen >= rCap) {
-                        fab.style.color = '#ff4444';
+                        fab.style.background = 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)';
+                        fab.style.borderColor = 'rgba(255,255,255,0.4)';
                     } else if (rLen >= 14) {
-                        fab.style.color = '#f59e0b';
+                        fab.style.background = 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)';
+                        fab.style.borderColor = 'rgba(255,255,255,0.35)';
                     } else {
+                        fab.style.background = '';
+                        fab.style.borderColor = '';
                         fab.style.color = '';
                     }
                 } else {
-                    fab.style.color = '';
-                    var si = (typeof getSeasonInfo === 'function') ? getSeasonInfo() : { emoji: '\uD83C\uDF38' };
+                    // Season display: current emoji → days left → next emoji
+                    var si = (typeof getSeasonInfo === 'function') ? getSeasonInfo() : { emoji: '\uD83C\uDF31' };
                     var sd = (typeof gameState !== 'undefined') ? gameState.seasonDay : 1;
-                    var sl = (typeof SEASON_LENGTH !== 'undefined') ? SEASON_LENGTH : 30;
-                    fab.textContent = si.emoji + ' ' + sd + '/' + sl;
+                    var sl = (typeof SEASON_LENGTH !== 'undefined') ? SEASON_LENGTH : 90;
+                    var daysLeft = sl - sd;
+                    var sIdx = (typeof gameState !== 'undefined') ? gameState.seasonIndex : 0;
+                    var seasons = (typeof SEASONS !== 'undefined') ? SEASONS : [];
+                    var nextIdx = (sIdx + 1) % (seasons.length || 4);
+                    var nextEmoji = seasons.length ? seasons[nextIdx].emoji : '\u2744\uFE0F';
+                    fab.textContent = si.emoji + ' ' + daysLeft + 'd\u2192' + nextEmoji;
+                    if (daysLeft <= 0) {
+                        fab.style.background = 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)';
+                        fab.style.borderColor = 'rgba(255,255,255,0.4)';
+                        fab.style.color = 'white';
+                    } else {
+                        fab.style.background = '';
+                        fab.style.borderColor = '';
+                        fab.style.color = '';
+                    }
                 }
             }
 
