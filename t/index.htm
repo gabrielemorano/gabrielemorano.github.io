@@ -2962,6 +2962,11 @@
 
             if (revealPosition) {
                 // Clue: reveal next position in outside-in order
+                // Skip positions already revealed (e.g. by Hint)
+                while (gameState.clueRevealStep < (gameState.clueRevealOrder || []).length
+                       && gameState.hintRevealed[gameState.clueRevealOrder[gameState.clueRevealStep]]) {
+                    gameState.clueRevealStep++;
+                }
                 if (gameState.clueRevealStep >= (gameState.clueRevealOrder || []).length) {
                     showMessage(t('msgAllRevealed'), 'info');
                     return;
@@ -2970,12 +2975,25 @@
                 gameState.hintRevealed[cluePos] = true;
                 gameState.clueRevealStep++;
 
-                // Also highlight the matching reservoir tile if not yet highlighted
+                // Check if Hint already highlighted a tile for this word position
+                var alreadyCovered = false;
+                for (var hp = 0; hp < gameState.hintStep; hp++) {
+                    if (gameState.hintPositionMap[hp] === cluePos) {
+                        alreadyCovered = true;
+                        break;
+                    }
+                }
+
+                // Only highlight a new reservoir tile if Hint didn't already cover this position
+                if (!alreadyCovered) {
                 var targetLetter = gameState.hintTargetWord[cluePos];
                 var alreadyHighlighted = new Set(gameState.hintHighlights);
                 var resIdx = gameState.reservoir.findIndex(function(l, i) {
                     return l.toUpperCase() === targetLetter.toUpperCase() && !alreadyHighlighted.has(i);
                 });
+                } else {
+                    var resIdx = -1;
+                }
                 if (resIdx !== -1) {
                     // Move tile to front (next highlight slot)
                     var clueSlot = gameState.hintHighlights.length;
@@ -2993,6 +3011,12 @@
                             if (sv === resIdx) gameState.selectedLetters[si2] = clueSlot;
                             else if (sv >= clueSlot && sv < resIdx) gameState.selectedLetters[si2] = sv + 1;
                         }
+                        // Update hintSequence indices so Hint still points to correct tiles
+                        for (var hs2 = gameState.hintStep; hs2 < gameState.hintSequence.length; hs2++) {
+                            var hsv = gameState.hintSequence[hs2];
+                            if (hsv === resIdx) gameState.hintSequence[hs2] = clueSlot;
+                            else if (hsv >= clueSlot && hsv < resIdx) gameState.hintSequence[hs2] = hsv + 1;
+                        }
                     }
                     gameState.hintHighlights.push(clueSlot);
                 }
@@ -3002,7 +3026,12 @@
                 return;
             }
 
-            // Hint: highlight next reservoir tile only
+            // Hint: highlight next reservoir tile only — skip positions already revealed by Clue
+            while (gameState.hintStep < gameState.hintSequence.length) {
+                var wordPos = gameState.hintPositionMap[gameState.hintStep];
+                if (!gameState.hintRevealed[wordPos]) break;
+                gameState.hintStep++;
+            }
             if (gameState.hintStep >= gameState.hintSequence.length) {
                 showMessage(t('msgAllRevealed'), 'info');
                 return;
