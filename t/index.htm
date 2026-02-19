@@ -4560,12 +4560,14 @@
         // Game loop
         // Auto-pause when page goes to background (phone call, app switch, lock screen)
         var _wasPausedBeforeHidden = false;
+        var _gameReady = false; // gate: don't auto-pause until game is running
         document.addEventListener('visibilitychange', function() {
+            if (!_gameReady) return;
+            if (!gameState.gameLoopId) return; // no game loop = nothing to pause
             if (document.hidden) {
                 _wasPausedBeforeHidden = gameState.isPaused;
                 gameState.isPaused = true;
             } else {
-                // Only resume if the game wasn't already paused before hiding
                 if (!_wasPausedBeforeHidden) {
                     gameState.isPaused = false;
                 }
@@ -5624,6 +5626,7 @@
             if (!autoLoad()) {
                 initGame();
             }
+            _gameReady = true;
         });
     </script>
 </body>
