@@ -312,8 +312,7 @@
         }
 
         .cell.pole {
-            background: linear-gradient(135deg, #64748b 0%, #475569 100%);
-            color: white;
+            background: transparent;
             font-size: 1.2em;
         }
 
@@ -1829,7 +1828,9 @@
                         }
                         return 'E';
                     })();
-                    const column = gameRng.nextBelow(GRID_WIDTH);
+                    let column = gameRng.nextBelow(GRID_WIDTH);
+                    // OPT: avoid pole column (15) — shift to 14
+                    if (column === 15) column = 14;
 
                     // 3. Pre-roll zigzag path for lightning (full grid height)
                     let zigzag = null;
@@ -1932,8 +1933,11 @@
             }
 
             // Place pole at column 15, rows 0 and 1
-            gameState.grid[0][15] = { type: 'pole', letter: '|', hp: Infinity };
-            gameState.grid[1][15] = { type: 'pole', letter: '|', hp: Infinity };
+            gameState.grid[0][15] = { type: 'pole', letter: '💈', hp: Infinity };
+            gameState.grid[1][15] = { type: 'pole', letter: '💈', hp: Infinity };
+            // Place shields at column 15, rows 18-19
+            gameState.grid[18][15] = { type: 'shield', letter: '🛡️', hp: Infinity };
+            gameState.grid[19][15] = { type: 'shield', letter: '🛡️', hp: Infinity };
 
             console.log('Game initialized:', GRID_WIDTH, 'x', GRID_HEIGHT);
 
@@ -1997,6 +2001,7 @@
             gameState.weatherCycleTick = 0;      // current tick within storm/calm cycle
             gameState.isStorming = true;          // start in storm phase
             gameState.seasonTransition = false;   // true = between seasons, waiting for player
+            gameState.victoryPhase = null;         // null | 'shielding' | 'clearing' | 'done'
             gameState.catMood = null;
             gameState.catIdleTicks = 0;
             gameState.catHealTicks = 0;
@@ -2451,9 +2456,9 @@
                                     else if (hpPercent < 0.33) cls = 'cell brick red';
                                     else if (hpPercent < 0.66) cls = 'cell brick yellow';
                                     else cls = 'cell brick';
-                                } else if (gridCell.type === 'pole') {
+                                } else if (gridCell.type === 'pole' || gridCell.type === 'shield') {
                                     cls = 'cell pole';
-                                    text = '|';
+                                    text = gridCell.letter;
                                 }
                             }
                         }
@@ -3467,9 +3472,9 @@
                 checkTutorialTrigger();
             }
 
-            // Check victory condition (grid fully built)
-            if (!gameState.tutorial.enabled && checkVictory()) {
-                setTimeout(showVictory, 500); // slight delay for visual feedback
+            // Check victory condition (grid fully built) — start shield animation
+            if (!gameState.tutorial.enabled && !gameState.victoryPhase && checkVictory()) {
+                startVictorySequence();
             }
         }
 
@@ -4539,6 +4544,37 @@
                 // During season transition, skip spawning and time progression
                 if (gameState.seasonTransition) return;
 
+                // --- Victory clearing phase: letters still fall, no spawning, no day advance ---
+                if (gameState.victoryPhase === 'clearing' || gameState.victoryPhase === 'shielding') {
+                    // Keep letters descending during victory sequence
+                    gameState.letterDescentTimer += TICK_RATE;
+                    if (gameState.letterDescentTimer >= gameState.letterDescentInterval) {
+                        updateFallingLetters();
+                        moveCat();
+                        // Decay floor letters
+                        for (const [x, fl] of gameState.floorLetters) {
+                            fl.hp -= FLOOR_LETTER_DECAY;
+                            if (fl.hp <= 0) gameState.floorLetters.delete(x);
+                        }
+                        gameState.letterDescentTimer = 0;
+                    }
+                    renderGrid();
+                    updateStats();
+                    // During clearing: check if cat died
+                    if (gameState.catHP <= 0) {
+                        gameState.victoryPhase = null;
+                        gameOver();
+                        return;
+                    }
+                    // During clearing: all letters gone → victory!
+                    // Floor letters are harmless — only wait for falling letters
+                    if (gameState.victoryPhase === 'clearing' && gameState.fallingLetters.length === 0) {
+                        gameState.victoryPhase = 'done';
+                        showVictory();
+                    }
+                    return;
+                }
+
                 // Spawn letters at configurable interval (only during storm phase)
                 // Skip spawn and descent when delay is active
                 if (!gameState.isDelayed) {
@@ -4743,9 +4779,11 @@
                     gameState.grid[y][x] = null;
                 }
             }
-            // Poles always at fixed positions
-            gameState.grid[0][15] = { type: 'pole', letter: '|', hp: Infinity };
-            gameState.grid[1][15] = { type: 'pole', letter: '|', hp: Infinity };
+            // Poles and shield always at fixed positions
+            gameState.grid[0][15] = { type: 'pole', letter: '💈', hp: Infinity };
+            gameState.grid[1][15] = { type: 'pole', letter: '💈', hp: Infinity };
+            gameState.grid[18][15] = { type: 'shield', letter: '🛡️', hp: Infinity };
+            gameState.grid[19][15] = { type: 'shield', letter: '🛡️', hp: Infinity };
 
             // Restore saved cells
             for (const cell of data.gridData) {
@@ -5019,6 +5057,24 @@
             }
 
             return true; // no valid placement found — victory!
+        }
+
+        // --- Victory sequence: shield animation → clear letters → modal ---
+        function startVictorySequence() {
+            gameState.victoryPhase = 'shielding';
+            // Animate shields from right (col 15) to left (col 0) on rows 18-19
+            var shieldCol = GRID_WIDTH - 1; // start at 15
+            var shieldInterval = setInterval(function() {
+                // Place shields on both rows for current column
+                gameState.grid[18][shieldCol] = { type: 'shield', letter: '🛡️', hp: Infinity };
+                gameState.grid[19][shieldCol] = { type: 'shield', letter: '🛡️', hp: Infinity };
+                shieldCol--;
+                if (shieldCol < 0) {
+                    clearInterval(shieldInterval);
+                    // Animation done — move to clearing phase
+                    gameState.victoryPhase = 'clearing';
+                }
+            }, 125); // 16 columns × 125ms ≈ 2 seconds
         }
 
         // Show victory modal with session stats
