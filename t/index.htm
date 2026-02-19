@@ -273,8 +273,8 @@
             font-size: 20px;
             border-radius: 3px;
             position: relative;
-            -webkit-transition: background 0.2s, background-color 1.2s ease;
-            transition: background 0.2s, background-color 1.2s ease;
+            /* OPT: transitions removed — retained DOM means cells persist across frames,
+               so transitions would cause visual trails on falling letters */
             user-select: none;
             -webkit-user-select: none;
             cursor: default;
@@ -312,8 +312,7 @@
         }
 
         .cell.pole {
-            background: linear-gradient(135deg, #64748b 0%, #475569 100%);
-            color: white;
+            background: transparent;
             font-size: 1.2em;
         }
 
@@ -1829,7 +1828,9 @@
                         }
                         return 'E';
                     })();
-                    const column = gameRng.nextBelow(GRID_WIDTH);
+                    let column = gameRng.nextBelow(GRID_WIDTH);
+                    // OPT: avoid pole column (15) — shift to 14
+                    if (column === 15) column = 14;
 
                     // 3. Pre-roll zigzag path for lightning (full grid height)
                     let zigzag = null;
@@ -1908,6 +1909,14 @@
 
         // Initialize game
         function initGame() {
+            // OPT: Reset retained grid DOM so it rebuilds on first renderGrid()
+            _gridCells = null;
+            _gridPrev = null;
+            _gridEl = null;
+            _statEls = null;
+            _prevStats = {};
+            _reservoirEl = null;
+            _reservoirCountEl = null;
             // Reset cat overlay state so it picks up fresh look on first render
             var oldWrap = document.getElementById('catOverlayWrap');
             if (oldWrap) oldWrap.remove();
@@ -1924,8 +1933,11 @@
             }
 
             // Place pole at column 15, rows 0 and 1
-            gameState.grid[0][15] = { type: 'pole', letter: '|', hp: Infinity };
-            gameState.grid[1][15] = { type: 'pole', letter: '|', hp: Infinity };
+            gameState.grid[0][15] = { type: 'pole', letter: '💈', hp: Infinity };
+            gameState.grid[1][15] = { type: 'pole', letter: '💈', hp: Infinity };
+            // Place shields at column 15, rows 18-19
+            gameState.grid[18][15] = { type: 'shield', letter: '🛡️', hp: Infinity };
+            gameState.grid[19][15] = { type: 'shield', letter: '🛡️', hp: Infinity };
 
             console.log('Game initialized:', GRID_WIDTH, 'x', GRID_HEIGHT);
 
@@ -1989,6 +2001,7 @@
             gameState.weatherCycleTick = 0;      // current tick within storm/calm cycle
             gameState.isStorming = true;          // start in storm phase
             gameState.seasonTransition = false;   // true = between seasons, waiting for player
+            gameState.victoryPhase = null;         // null | 'shielding' | 'clearing' | 'done'
             gameState.catMood = null;
             gameState.catIdleTicks = 0;
             gameState.catHealTicks = 0;
@@ -2363,93 +2376,106 @@
             }
         }
 
-        function renderGrid() {
-            const gridEl = document.getElementById('gameGrid');
-            applySeasonTheme();
-            gridEl.innerHTML = '';
+        // --- OPT: Retained grid DOM — create cells once, update only diffs ---
+        var _gridCells = null;   // [y][x] → DOM element
+        var _gridPrev = null;    // [y][x] → {cls, text, style} cached state
+        var _gridEl = null;      // cached #gameGrid reference
 
-            // Render from top to bottom (rows 0-19 visible; row 20 is hidden spawn buffer)
-            for (let y = GRID_HEIGHT - 2; y >= 0; y--) {
-                for (let x = 0; x < GRID_WIDTH; x++) {
-                    const cell = document.createElement('div');
+        function _initGridDOM() {
+            _gridEl = document.getElementById('gameGrid');
+            _gridEl.innerHTML = '';
+            _gridCells = [];
+            _gridPrev = [];
+            for (var y = GRID_HEIGHT - 2; y >= 0; y--) {
+                _gridCells[y] = [];
+                _gridPrev[y] = [];
+                for (var x = 0; x < GRID_WIDTH; x++) {
+                    var cell = document.createElement('div');
                     cell.className = 'cell';
                     cell.dataset.x = x;
                     cell.dataset.y = y;
+                    _gridEl.appendChild(cell);
+                    _gridCells[y][x] = cell;
+                    _gridPrev[y][x] = { cls: 'cell', text: '', style: '' };
+                }
+            }
+        }
+
+        function renderGrid() {
+            if (!_gridCells) _initGridDOM();
+            applySeasonTheme();
+
+            // OPT: Build falling-letter position map for O(1) lookup
+            var flMap = new Map();
+            for (var fi = 0; fi < gameState.fallingLetters.length; fi++) {
+                var fl = gameState.fallingLetters[fi];
+                flMap.set(fl.y * GRID_WIDTH + fl.x, fl);
+            }
+
+            var resBelow = reservoirCount() < RESERVOIR_CAPACITY;
+
+            for (var y = GRID_HEIGHT - 2; y >= 0; y--) {
+                for (var x = 0; x < GRID_WIDTH; x++) {
+                    var cls = 'cell';
+                    var text = '';
+                    var style = '';
 
                     if (x === gameState.catPosition.x && y === gameState.catPosition.y) {
-                        // Placeholder cell — actual cat is rendered by the persistent overlay
-                        cell.classList.add('cat');
+                        cls = 'cell cat';
+                    } else if (x === HEALTH_STATION_X && y === 0 && !gameState.floorLetters.has(x)) {
+                        cls = 'cell health-station';
+                        text = '🏥';
+                    } else if (y === 0 && gameState.floorLetters.has(x)) {
+                        var flr = gameState.floorLetters.get(x);
+                        cls = 'cell falling-letter';
+                        text = flr.letter;
+                        style = 'opacity:' + Math.max(0.2, flr.hp / FLOOR_LETTER_MAX_HP).toFixed(2);
                     } else {
-
-                    // Health station at x=0 y=0 (when cat is not here and no floor letter)
-                    if (x === HEALTH_STATION_X && y === 0 && !gameState.floorLetters.has(x)) {
-                        cell.textContent = '🏥';
-                        cell.classList.add('health-station');
-                    }
-                    // Check for floor letters
-                    else if (y === 0 && gameState.floorLetters.has(x)) {
-                        const fl = gameState.floorLetters.get(x);
-                        cell.classList.add('falling-letter');
-                        cell.textContent = fl.letter;
-                        cell.style.opacity = Math.max(0.2, fl.hp / FLOOR_LETTER_MAX_HP).toFixed(2);
-                    }
-                    // Check for falling letters
-                    else {
-                        const fallingLetter = gameState.fallingLetters.find(fl => fl.x === x && fl.y === y);
-
+                        var fallingLetter = flMap.get(y * GRID_WIDTH + x);
                         if (fallingLetter) {
-                            cell.classList.add('falling-letter');
-                            cell.textContent = fallingLetter.letter;
-                            const lt = LETTER_TYPES[fallingLetter.type] || LETTER_TYPES.rain;
-                            cell.style.cssText += `background: ${lt.bg} !important; background-image: none !important; color: ${lt.color} !important;`;
-                            if (fallingLetter.type === 'rain' && reservoirCount() < RESERVOIR_CAPACITY) {
-                                cell.style.cursor = 'pointer';
+                            cls = 'cell falling-letter';
+                            text = fallingLetter.letter;
+                            var lt = LETTER_TYPES[fallingLetter.type] || LETTER_TYPES.rain;
+                            style = 'background:' + lt.bg + ' !important;background-image:none !important;color:' + lt.color + ' !important;';
+                            if (fallingLetter.type === 'rain' && resBelow) {
+                                style += 'cursor:pointer;';
                             }
                         } else {
-                            // Check grid content
-                            const gridCell = gameState.grid[y][x];
-
+                            var gridCell = gameState.grid[y][x];
                             if (gridCell) {
                                 if (gridCell.type === 'brick') {
-                                    cell.classList.add('brick');
-                                    cell.textContent = gridCell.letter;
-
-                                    // Bonus color revert: if HP dropped to normal max, clear bonus
+                                    text = gridCell.letter;
                                     if (gridCell.bonus && gridCell.hp <= HP_PER_LETTER) {
                                         gridCell.bonus = null;
                                         gridCell.maxHP = HP_PER_LETTER;
                                     }
-
-                                    // HP percent for bar and color thresholds
-                                    const hpPercent = gridCell.hp / (gridCell.maxHP || HP_PER_LETTER);
-
-                                    // Apply bonus visual or standard HP colors
-                                    if (gridCell.bonus === 'both') {
-                                        cell.classList.add('both-bonus');
-                                    } else if (gridCell.bonus === 'row') {
-                                        cell.classList.add('row-bonus');
-                                    } else if (gridCell.bonus === 'col') {
-                                        cell.classList.add('col-bonus');
-                                    } else {
-                                        if (hpPercent < 0.33) cell.classList.add('red');
-                                        else if (hpPercent < 0.66) cell.classList.add('yellow');
-                                    }
-
-                                    // HP bar removed — brick color already indicates health
-                                } else if (gridCell.type === 'pole') {
-                                    cell.classList.add('pole');
-                                    cell.textContent = '|';
+                                    var hpPercent = gridCell.hp / (gridCell.maxHP || HP_PER_LETTER);
+                                    if (gridCell.bonus === 'both') cls = 'cell brick both-bonus';
+                                    else if (gridCell.bonus === 'row') cls = 'cell brick row-bonus';
+                                    else if (gridCell.bonus === 'col') cls = 'cell brick col-bonus';
+                                    else if (hpPercent < 0.33) cls = 'cell brick red';
+                                    else if (hpPercent < 0.66) cls = 'cell brick yellow';
+                                    else cls = 'cell brick';
+                                } else if (gridCell.type === 'pole' || gridCell.type === 'shield') {
+                                    cls = 'cell pole';
+                                    text = gridCell.letter;
                                 }
                             }
                         }
                     }
-                    } // end non-cat else
 
-                    gridEl.appendChild(cell);
+                    // OPT: Only touch DOM when state actually changed
+                    var prev = _gridPrev[y][x];
+                    if (prev.cls !== cls || prev.text !== text || prev.style !== style) {
+                        var cell = _gridCells[y][x];
+                        if (prev.cls !== cls) { cell.className = cls; prev.cls = cls; }
+                        if (prev.text !== text) { cell.textContent = text; prev.text = text; }
+                        if (prev.style !== style) { cell.style.cssText = style; prev.style = style; }
+                    }
                 }
             }
 
-            _updateCatOverlay(gridEl);
+            _updateCatOverlay(_gridEl);
             updateTutorialBlinks();
 
             // Create coverage border SVG once grid has dimensions
@@ -2529,19 +2555,33 @@
             gameState.reservoirReserved[index] = true;
         }
 
+        // OPT: Event delegation for reservoir — single listener instead of per-tile closures
+        var _reservoirDelegated = false;
+        var _reservoirEl = null;
+        var _reservoirCountEl = null;
+
         // Render reservoir
         function renderReservoir() {
-            const reservoirEl = document.getElementById('reservoir');
-            const countEl = document.getElementById('reservoirCount');
+            if (!_reservoirEl) {
+                _reservoirEl = document.getElementById('reservoir');
+                _reservoirCountEl = document.getElementById('reservoirCount');
+                // OPT: Single delegated click handler
+                if (!_reservoirDelegated) {
+                    _reservoirEl.addEventListener('click', function(e) {
+                        var tile = e.target.closest('.letter-tile[data-index]');
+                        if (tile) selectLetter(Number(tile.dataset.index));
+                    });
+                    _reservoirDelegated = true;
+                }
+            }
 
-            reservoirEl.innerHTML = '';
+            _reservoirEl.innerHTML = '';
 
             // Compute which reservoir letters should glow (hinted positions whose letter is still in reservoir)
             var hintGlowNeeded = {};
             if (gameState.hintTargetWord && gameState.hintedPositions) {
                 for (var hp = 0; hp < gameState.hintedPositions.length; hp++) {
                     var pos = gameState.hintedPositions[hp];
-                    // Only glow if position not already filled by Clue or user in inputSlots
                     if (gameState.inputSlots[pos]) continue;
                     var ch = gameState.hintTargetWord[pos].toUpperCase();
                     hintGlowNeeded[ch] = (hintGlowNeeded[ch] || 0) + 1;
@@ -2549,7 +2589,6 @@
             }
 
             // Render tiles: letters at their positions, nulls as empty gaps
-            var maxIdx = Math.max(gameState.reservoir.length, RESERVOIR_CAPACITY);
             for (var ri = 0; ri < RESERVOIR_CAPACITY; ri++) {
                 var letter = ri < gameState.reservoir.length ? gameState.reservoir[ri] : null;
                 if (letter !== null) {
@@ -2557,23 +2596,21 @@
                     tile.className = 'letter-tile';
                     tile.textContent = letter;
                     tile.dataset.index = ri;
-                    // Apply hint glow by letter matching
                     var upper = letter.toUpperCase();
                     if (hintGlowNeeded[upper] && hintGlowNeeded[upper] > 0) {
                         tile.classList.add('hinted');
                         hintGlowNeeded[upper]--;
                     }
-                    tile.addEventListener('click', (function(idx) { return function() { selectLetter(idx); }; })(ri));
-                    reservoirEl.appendChild(tile);
+                    _reservoirEl.appendChild(tile);
                 } else {
                     var empty = document.createElement('div');
                     empty.className = 'letter-tile empty-slot';
-                    reservoirEl.appendChild(empty);
+                    _reservoirEl.appendChild(empty);
                 }
             }
 
             var rCount = reservoirCount();
-            countEl.textContent = rCount + '/' + RESERVOIR_CAPACITY;
+            _reservoirCountEl.textContent = rCount + '/' + RESERVOIR_CAPACITY;
             var rStatEl = document.getElementById('reservoirStat');
             var rStatBox = document.getElementById('statReservoirBox');
             if (rStatEl) {
@@ -3435,9 +3472,9 @@
                 checkTutorialTrigger();
             }
 
-            // Check victory condition (grid fully built)
-            if (!gameState.tutorial.enabled && checkVictory()) {
-                setTimeout(showVictory, 500); // slight delay for visual feedback
+            // Check victory condition (grid fully built) — start shield animation
+            if (!gameState.tutorial.enabled && !gameState.victoryPhase && checkVictory()) {
+                startVictorySequence();
             }
         }
 
@@ -3949,43 +3986,78 @@
             }, 200);
         }
 
-        function updateStats() {
-            document.getElementById('lifeDays').textContent = gameState.lifeDays;
+        // OPT: Cache DOM element references for updateStats (called 40×/sec)
+        var _statEls = null;
+        function _getStatEls() {
+            if (!_statEls) {
+                _statEls = {
+                    lifeDays: document.getElementById('lifeDays'),
+                    catHP: document.getElementById('catHP'),
+                    seasonInfo: document.getElementById('seasonInfo'),
+                    floodLevel: document.getElementById('floodLevel'),
+                    shelterHP: document.getElementById('shelterHP'),
+                    coverageStat: document.getElementById('coverageStat'),
+                    coverageDetail: document.getElementById('coverageDetail'),
+                    treats: document.getElementById('treats'),
+                    xpDisplay: document.getElementById('xpDisplay')
+                };
+            }
+            return _statEls;
+        }
+        // OPT: Cache previous stat values to skip unchanged DOM writes
+        var _prevStats = {};
 
-            const catHPEl = document.getElementById('catHP');
-            catHPEl.textContent = Math.max(0, gameState.catHP);
-            catHPEl.className = 'stat-value';
-            if (gameState.catHP <= 0) {
-                catHPEl.classList.add('critical');
-            } else if (gameState.catHP <= 9) {
-                catHPEl.classList.add('warning');
-            } else {
-                catHPEl.classList.add('healthy');
+        function updateStats() {
+            var els = _getStatEls();
+
+            if (_prevStats.lifeDays !== gameState.lifeDays) {
+                els.lifeDays.textContent = gameState.lifeDays;
+                _prevStats.lifeDays = gameState.lifeDays;
             }
 
-            const seasonInfo = getSeasonInfo();
-            document.getElementById('seasonInfo').textContent = seasonInfo.emoji + ' ' + gameState.seasonDay + '/' + SEASON_LENGTH;
+            var catHPVal = Math.max(0, gameState.catHP);
+            var catHPCls = gameState.catHP <= 0 ? 'stat-value critical' : gameState.catHP <= 9 ? 'stat-value warning' : 'stat-value healthy';
+            if (_prevStats.catHP !== catHPVal || _prevStats.catHPCls !== catHPCls) {
+                els.catHP.textContent = catHPVal;
+                els.catHP.className = catHPCls;
+                _prevStats.catHP = catHPVal;
+                _prevStats.catHPCls = catHPCls;
+            }
+
+            var seasonInfo = getSeasonInfo();
+            var seasonText = seasonInfo.emoji + ' ' + gameState.seasonDay + '/' + SEASON_LENGTH;
+            if (_prevStats.season !== seasonText) {
+                els.seasonInfo.textContent = seasonText;
+                _prevStats.season = seasonText;
+            }
 
             gameState.floodLevel = gameState.floorLetters.size;
-            document.getElementById('floodLevel').textContent = gameState.floodLevel;
+            if (_prevStats.flood !== gameState.floodLevel) {
+                els.floodLevel.textContent = gameState.floodLevel;
+                _prevStats.flood = gameState.floodLevel;
+            }
 
-            let totalHP = 0;
-            gameState.grid.forEach(row => {
-                row.forEach(cell => {
-                    if (cell && cell.type === 'brick') {
-                        totalHP += cell.hp;
-                    }
-                });
-            });
+            var totalHP = 0;
+            for (var gy = 0; gy < GRID_HEIGHT; gy++) {
+                var row = gameState.grid[gy];
+                for (var gx = 0; gx < GRID_WIDTH; gx++) {
+                    var gc = row[gx];
+                    if (gc && gc.type === 'brick') totalHP += gc.hp;
+                }
+            }
             gameState.shelterHP = Math.floor(totalHP);
-            document.getElementById('shelterHP').textContent = gameState.shelterHP.toLocaleString();
+            if (_prevStats.shelterHP !== gameState.shelterHP) {
+                els.shelterHP.textContent = gameState.shelterHP.toLocaleString();
+                _prevStats.shelterHP = gameState.shelterHP;
+            }
 
             // Coverage: count bricks with HP>0 in rows 2-17 (16 rows × 16 cols = 256)
             var coverageCount = 0;
             var COVERAGE_TOTAL = 256;
             for (var cy = 2; cy <= 17; cy++) {
+                var crow = gameState.grid[cy];
                 for (var cx = 0; cx < GRID_WIDTH; cx++) {
-                    var cc = gameState.grid[cy][cx];
+                    var cc = crow[cx];
                     if (cc && cc.type === 'brick' && cc.hp > 0) coverageCount++;
                 }
             }
@@ -3998,16 +4070,32 @@
             if (newPeakInt > prevPeakInt) {
                 showCoverageOverlay(newPeakInt);
             }
-            // Update coverage border trace to peak coverage
-            _updateCovBorder(gameState.peakCoverage || 0);
+            // OPT: Only update coverage border when peak or season changes
+            var _curPeak = gameState.peakCoverage || 0;
+            if (_prevStats.peakCov !== _curPeak || _prevStats.seasonIdx !== gameState.seasonIndex) {
+                _updateCovBorder(_curPeak);
+                _prevStats.peakCov = _curPeak;
+                _prevStats.seasonIdx = gameState.seasonIndex;
+            }
 
-            var covStatEl = document.getElementById('coverageStat');
-            if (covStatEl) covStatEl.textContent = coveragePct + '%';
-            var covDetailEl = document.getElementById('coverageDetail');
-            if (covDetailEl) covDetailEl.textContent = coverageCount + '/' + COVERAGE_TOTAL;
+            if (_prevStats.covPct !== coveragePct) {
+                if (els.coverageStat) els.coverageStat.textContent = coveragePct + '%';
+                _prevStats.covPct = coveragePct;
+            }
+            if (_prevStats.covCount !== coverageCount) {
+                if (els.coverageDetail) els.coverageDetail.textContent = coverageCount + '/' + COVERAGE_TOTAL;
+                _prevStats.covCount = coverageCount;
+            }
 
-            document.getElementById('treats').textContent = gameState.treats;
-            document.getElementById('xpDisplay').textContent = (gameState.xp || 0).toLocaleString();
+            if (_prevStats.treats !== gameState.treats) {
+                els.treats.textContent = gameState.treats;
+                _prevStats.treats = gameState.treats;
+            }
+            var xpVal = gameState.xp || 0;
+            if (_prevStats.xp !== xpVal) {
+                els.xpDisplay.textContent = xpVal.toLocaleString();
+                _prevStats.xp = xpVal;
+            }
             updateTreatButtons();
             updateDelayButton();
         }
@@ -4456,6 +4544,37 @@
                 // During season transition, skip spawning and time progression
                 if (gameState.seasonTransition) return;
 
+                // --- Victory clearing phase: letters still fall, no spawning, no day advance ---
+                if (gameState.victoryPhase === 'clearing' || gameState.victoryPhase === 'shielding') {
+                    // Keep letters descending during victory sequence
+                    gameState.letterDescentTimer += TICK_RATE;
+                    if (gameState.letterDescentTimer >= gameState.letterDescentInterval) {
+                        updateFallingLetters();
+                        moveCat();
+                        // Decay floor letters
+                        for (const [x, fl] of gameState.floorLetters) {
+                            fl.hp -= FLOOR_LETTER_DECAY;
+                            if (fl.hp <= 0) gameState.floorLetters.delete(x);
+                        }
+                        gameState.letterDescentTimer = 0;
+                    }
+                    renderGrid();
+                    updateStats();
+                    // During clearing: check if cat died
+                    if (gameState.catHP <= 0) {
+                        gameState.victoryPhase = null;
+                        gameOver();
+                        return;
+                    }
+                    // During clearing: all letters gone → victory!
+                    // Floor letters are harmless — only wait for falling letters
+                    if (gameState.victoryPhase === 'clearing' && gameState.fallingLetters.length === 0) {
+                        gameState.victoryPhase = 'done';
+                        showVictory();
+                    }
+                    return;
+                }
+
                 // Spawn letters at configurable interval (only during storm phase)
                 // Skip spawn and descent when delay is active
                 if (!gameState.isDelayed) {
@@ -4660,9 +4779,11 @@
                     gameState.grid[y][x] = null;
                 }
             }
-            // Poles always at fixed positions
-            gameState.grid[0][15] = { type: 'pole', letter: '|', hp: Infinity };
-            gameState.grid[1][15] = { type: 'pole', letter: '|', hp: Infinity };
+            // Poles and shield always at fixed positions
+            gameState.grid[0][15] = { type: 'pole', letter: '💈', hp: Infinity };
+            gameState.grid[1][15] = { type: 'pole', letter: '💈', hp: Infinity };
+            gameState.grid[18][15] = { type: 'shield', letter: '🛡️', hp: Infinity };
+            gameState.grid[19][15] = { type: 'shield', letter: '🛡️', hp: Infinity };
 
             // Restore saved cells
             for (const cell of data.gridData) {
@@ -4936,6 +5057,24 @@
             }
 
             return true; // no valid placement found — victory!
+        }
+
+        // --- Victory sequence: shield animation → clear letters → modal ---
+        function startVictorySequence() {
+            gameState.victoryPhase = 'shielding';
+            // Animate shields from right (col 15) to left (col 0) on rows 18-19
+            var shieldCol = GRID_WIDTH - 1; // start at 15
+            var shieldInterval = setInterval(function() {
+                // Place shields on both rows for current column
+                gameState.grid[18][shieldCol] = { type: 'shield', letter: '🛡️', hp: Infinity };
+                gameState.grid[19][shieldCol] = { type: 'shield', letter: '🛡️', hp: Infinity };
+                shieldCol--;
+                if (shieldCol < 0) {
+                    clearInterval(shieldInterval);
+                    // Animation done — move to clearing phase
+                    gameState.victoryPhase = 'clearing';
+                }
+            }, 125); // 16 columns × 125ms ≈ 2 seconds
         }
 
         // Show victory modal with session stats
