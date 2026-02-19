@@ -4367,6 +4367,7 @@
 
         // Advance to the next season (called by button click)
         function advanceToNextSeason() {
+            gameState.isPaused = false;
             gameState.seasonDay = 1;
             gameState.seasonIndex = (gameState.seasonIndex + 1) % 4;
             // New year when cycling back to Spring (index 0)
@@ -4387,6 +4388,8 @@
 
             const overlay = document.getElementById('nextSeasonOverlay');
             if (overlay) overlay.remove();
+            // Ensure game loop is running (may have been lost during reload)
+            if (!gameState.gameLoopId) startGameLoop();
             updateWeatherForecast();
             updateStats();
             autoSave();
