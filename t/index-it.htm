@@ -4201,6 +4201,7 @@
 
         // Move cat AI — priority: storm dodge > heal > idle wander
         function moveCat() {
+            if (!gameState.catPosition) gameState.catPosition = { x: 14, y: 0 };
             const currentX = gameState.catPosition.x;
             const floodLine = getFloodLine();
 
@@ -4378,6 +4379,9 @@
             gameState.weatherCycleTick = 0;
             gameState.isStorming = true;
             gameState.seasonTransition = false;
+            gameState.catPosition = { x: 14, y: 0 };
+            gameState.catHealTicks = 0;
+            gameState.victoryPhase = null;
             clearCatMood();
 
             // Pre-roll next season
@@ -4849,7 +4853,7 @@
             gameState.reservoirReserved = data.reservoirReserved || [];
             gameState.inputSlots = data.inputSlots || [];
             gameState.fallingLetters = data.fallingLetters;
-            gameState.catPosition = data.catPosition;
+            gameState.catPosition = data.catPosition || { x: 14, y: 0 };
             gameState.catHP = data.catHP;
             gameState.catHitTime = data.catHitTime;
             gameState.lifeDays = data.lifeDays;
@@ -4878,6 +4882,12 @@
             gameState.catXP = data.catXP || 0;
             gameState.catLevel = data.catLevel || 0;
             gameState.activeCatLook = data.activeCatLook != null ? data.activeCatLook : -1;
+            gameState.tutorial = { enabled: false, step: -1, _wordPlaced: false };
+            gameState.victoryPhase = data.victoryPhase || null;
+            gameState.catMood = null;
+            gameState.catIdleTicks = 0;
+            gameState.radarHasWords = false;
+            gameState.isDelayed = false;
 
             // Merge imported career with local career (take best of both)
             if (data.career) {
@@ -4944,9 +4954,9 @@
             if (shareBtn) shareBtn.style.display = gameState.gameSeed ? 'block' : 'none';
             document.getElementById('seedInput').value = gameState.gameSeed || '';
 
-            // Season transition prompt
+            // Season transition prompt — defer to allow layout before positioning
             if (gameState.seasonTransition) {
-                showNextSeasonPrompt();
+                requestAnimationFrame(function() { showNextSeasonPrompt(); });
             } else {
                 const o = document.getElementById('nextSeasonOverlay');
                 if (o) o.remove();
