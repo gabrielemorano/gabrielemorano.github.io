@@ -1455,8 +1455,8 @@
             msgInvalidSave: "File di salvataggio non valido",
             msgSaveReadFail: "Impossibile leggere il salvataggio",
             msgSaveExported: "Salvataggio esportato!",
-            msgGameRestored: "Partita ripristinata — tocca Riprendi per continuare",
-            msgSaveImported: "Salvataggio importato — tocca Riprendi per continuare",
+            msgGameRestored: "Partita ripristinata",
+            msgSaveImported: "Salvataggio importato",
             msgCloseCall: "Per un pelo! Continua a costruire il riparo! 🐱",
             msgNoWordsFound: "Nessuna parola trovata",
             msgNoWordsAvailable: "Nessuna parola disponibile",
@@ -4950,8 +4950,9 @@
             // Render word input (may show fixed slots if hintTargetWord active)
             renderWordInput();
 
-            // Start game loop (will be paused)
+            // Start game loop and auto-resume
             startGameLoop();
+            gameState.isPaused = false;
 
             showMessage(t('msgGameRestored'), 'success');
         }

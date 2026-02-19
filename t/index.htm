@@ -1455,8 +1455,8 @@
             msgInvalidSave: "Invalid save file",
             msgSaveReadFail: "Failed to read save file",
             msgSaveExported: "Save exported!",
-            msgGameRestored: "Game restored — tap Resume to continue",
-            msgSaveImported: "Save imported — tap Resume to continue",
+            msgGameRestored: "Game restored",
+            msgSaveImported: "Save imported",
             msgCloseCall: "Close call! Keep building shelter! 🐱",
             msgNoWordsFound: "No words found",
             msgNoWordsAvailable: "No words available",
@@ -4950,8 +4950,9 @@
             // Render word input (may show fixed slots if hintTargetWord active)
             renderWordInput();
 
-            // Start game loop (will be paused)
+            // Start game loop and auto-resume
             startGameLoop();
+            gameState.isPaused = false;
 
             showMessage(t('msgGameRestored'), 'success');
         }
