@@ -124,6 +124,14 @@
         .stat-delay.delay-active .stat-value {
             color: white;
         }
+        .stat-delay.delay-critical {
+            background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+            box-shadow: 0 2px 8px rgba(239, 68, 68, 0.4);
+        }
+        .stat-delay.delay-critical .stat-label,
+        .stat-delay.delay-critical .stat-value {
+            color: white;
+        }
 
         .stat-label {
             font-size: 0.75em;
@@ -380,7 +388,7 @@
 
         /* ── Word Workshop ── */
         .ws-header { display: flex; align-items: center; justify-content: space-between; padding: 0 2px; }
-        .ws-title { display: flex; align-items: center; gap: 5px; font-size: 0.85em; font-weight: 700; color: #444; }
+        .ws-title { display: flex; align-items: center; gap: 5px; font-size: 0.95em; font-weight: 700; color: #444; }
         .ws-count { font-weight: 600; color: #667eea; margin-left: 2px; }
         .ws-shuffle { background: none; border: none; font-size: 1.15em; cursor: pointer; padding: 4px 6px; border-radius: 6px; -webkit-tap-highlight-color: transparent; }
 
@@ -658,6 +666,21 @@
             margin-bottom: 20px;
         }
 
+        .modal-close-btn {
+            position: absolute;
+            top: 10px;
+            right: 12px;
+            background: none;
+            border: none;
+            font-size: 1.4em;
+            color: #999;
+            cursor: pointer;
+            padding: 4px 8px;
+            line-height: 1;
+        }
+        .modal-close-btn:hover {
+            color: #333;
+        }
 
         .loading-spinner {
             display: inline-block;
@@ -1307,7 +1330,7 @@
                 <div class="panel" id="panelGameMenu">
                     <h3 data-i18n="panelGameMenu">⚙️ Menu</h3>
                     <div class="controls">
-                        <button class="btn btn-secondary" id="pauseBtn" data-i18n="btnPause">⏸️ Pausa</button>
+                        <button class="btn btn-primary" id="newGameBtn" data-i18n="btnNewGame">🔄 Nuova Partita</button>
                         <button class="btn btn-danger" id="nukeBtn" data-i18n="btnNuke">💥 Cancella</button>
 
                     </div>
@@ -1323,7 +1346,9 @@
                                 style="flex: 1; padding: 4px 8px; border: 1px solid #ddd; border-radius: 6px; font-size: 0.9em;">
                             <button class="btn btn-primary" id="seedStartBtn" style="padding: 4px 10px; font-size: 0.85em;" data-i18n="btnPlay">Gioca</button>
                         </div>
-                        <button id="shareBtn" class="btn btn-secondary" style="font-size: 0.8em; margin-top: 6px; width: 100%; display: none;" data-i18n="btnShare">📋 Condividi il link per giocare la stessa sequenza di lettere</button>
+                        <div id="shareBtn" class="stat stat-primary" style="margin-top: 6px; cursor: pointer; display: none; text-align: center; padding: 8px 10px;">
+                            <div class="stat-label" data-i18n="btnShare">📋 Condividi il link per giocare la stessa sequenza di lettere</div>
+                        </div>
                     </div>
                 </div>
 
@@ -1343,23 +1368,19 @@
     <button class="fab" id="fab" aria-label="Navigate">📝 0/18</button>
 
     <div class="modal" id="gameOverModal">
-        <div class="modal-content">
+        <div class="modal-content" style="position:relative;">
+            <button class="modal-close-btn" id="closeGameOver" aria-label="Close">✕</button>
             <h2 data-i18n="gameOverTitle">💔 Fine Partita</h2>
             <p id="gameOverMessage"></p>
-            <div class="controls">
-                <button class="btn btn-primary" id="restartFromGameOver" data-i18n="btnRestart">🔄 Nuova Partita</button>
-            </div>
         </div>
     </div>
 
     <div class="modal" id="victoryModal">
-        <div class="modal-content">
+        <div class="modal-content" style="position:relative;">
+            <button class="modal-close-btn" id="closeVictory" aria-label="Close">✕</button>
             <h2 id="victoryTitle">🏆 Victory!</h2>
             <p id="victoryMessage"></p>
             <div id="victoryStats" style="text-align: left; margin: 12px 0; font-size: 0.9em; line-height: 1.8;"></div>
-            <div class="controls">
-                <button class="btn btn-primary" id="restartFromVictory" data-i18n="btnRestart">🔄 Nuova Partita</button>
-            </div>
         </div>
     </div>
 
@@ -1394,8 +1415,8 @@
             btnHint: "💡 Indizio",
             btnClue: "🔍 Aiuto",
             btnCheat: "🔨 Mostra",
-            btnPause: "⏸️ Pausa",
-            btnResume: "▶️ Riprendi",
+            btnNewGame: "🔄 Nuova Partita",
+            confirmNewGame: "Iniziare una nuova partita? Le statistiche di carriera saranno conservate.",
             btnNuke: "💥 Cancella",
             btnExport: "💾 Esporta",
             btnImport: "📂 Importa",
@@ -2030,7 +2051,7 @@
             gameState.cheatsActive = false;
             const existingOverlay = document.getElementById('nextSeasonOverlay');
             if (existingOverlay) existingOverlay.remove();
-            document.getElementById('pauseBtn').textContent = t('btnPause');
+            // pauseBtn removed — newGameBtn is static
 
             // Show share button and populate seed input
             var shareBtn = document.getElementById('shareBtn');
@@ -3946,8 +3967,9 @@
             if (!btn || !stat) return;
 
             if (_delayRemaining > 0) {
-                // Active countdown
-                btn.className = 'stat stat-delay stat-tall delay-active';
+                // Active countdown — red when ≤5s
+                var delayCls = _delayRemaining <= 5000 ? 'delay-critical' : 'delay-active';
+                btn.className = 'stat stat-delay stat-tall ' + delayCls;
                 stat.textContent = Math.ceil(_delayRemaining / 1000) + 's';
                 return;
             }
@@ -4370,11 +4392,10 @@
             autoSave();
         }
 
-        // Toggle pause
+        // Toggle pause (kept for keyboard shortcut / programmatic use)
         function togglePause() {
             if (gameState.tutorial.enabled && gameState.tutorial.step > 0 && gameState.tutorial.step < 6) return;
             gameState.isPaused = !gameState.isPaused;
-            document.getElementById('pauseBtn').textContent = gameState.isPaused ? t('btnResume') : t('btnPause');
         }
 
         // ================================================================
@@ -4537,6 +4558,20 @@
         });
 
         // Game loop
+        // Auto-pause when page goes to background (phone call, app switch, lock screen)
+        var _wasPausedBeforeHidden = false;
+        document.addEventListener('visibilitychange', function() {
+            if (document.hidden) {
+                _wasPausedBeforeHidden = gameState.isPaused;
+                gameState.isPaused = true;
+            } else {
+                // Only resume if the game wasn't already paused before hiding
+                if (!_wasPausedBeforeHidden) {
+                    gameState.isPaused = false;
+                }
+            }
+        });
+
         function startGameLoop() {
             gameState.gameLoopId = setInterval(() => {
                 if (gameState.isPaused) return;
@@ -4899,9 +4934,6 @@
             // Speed buttons
             updateSpeedButtons(gameState.letterSpawnInterval);
 
-            // Pause button text
-            document.getElementById('pauseBtn').textContent = t('btnResume');
-
             // Show share button and populate seed input
             var shareBtn = document.getElementById('shareBtn');
             if (shareBtn) shareBtn.style.display = gameState.gameSeed ? 'block' : 'none';
@@ -5062,6 +5094,9 @@
         // --- Victory sequence: shield animation → clear letters → modal ---
         function startVictorySequence() {
             gameState.victoryPhase = 'shielding';
+            // Scroll grid into view on mobile so user sees the shield animation
+            var gridArea = document.querySelector('.grid-container');
+            if (gridArea) gridArea.scrollIntoView({ behavior: 'smooth', block: 'start' });
             // Animate shields from right (col 15) to left (col 0) on rows 18-19
             var shieldCol = GRID_WIDTH - 1; // start at 15
             var shieldInterval = setInterval(function() {
@@ -5074,7 +5109,7 @@
                     // Animation done — move to clearing phase
                     gameState.victoryPhase = 'clearing';
                 }
-            }, 125); // 16 columns × 125ms ≈ 2 seconds
+            }, 375); // 16 columns × 375ms ≈ 6 seconds
         }
 
         // Show victory modal with session stats
@@ -5127,16 +5162,7 @@
             }
         }
 
-        // Restart from game over (no confirm)
-        function restartFromGameOver() {
-            if (gameState.gameLoopId) {
-                clearInterval(gameState.gameLoopId);
-                gameState.gameLoopId = null;
-            }
-            clearAutoSave();
-            initGame();
-            closeModal('gameOverModal');
-        }
+        // (restartFromGameOver removed — modals now just close)
 
         // Modal functions
         function openModal(id) {
@@ -5146,9 +5172,7 @@
 
         function closeModal(id) {
             document.getElementById(id).classList.remove('active');
-            if (id !== 'gameOverModal' && id !== 'victoryModal') {
-                gameState.isPaused = false;
-            }
+            gameState.isPaused = false;
         }
 
         // Event listeners
@@ -5186,7 +5210,16 @@
         document.getElementById('hintBtn').addEventListener('click', pressHint);
         document.getElementById('clueBtn').addEventListener('click', pressClue);
         // (hintResetBtn removed — trash button now handles full reset)
-        document.getElementById('pauseBtn').addEventListener('click', togglePause);
+        document.getElementById('newGameBtn').addEventListener('click', function() {
+            if (!confirm(t('confirmNewGame'))) return;
+            if (gameState.gameLoopId) {
+                clearInterval(gameState.gameLoopId);
+                gameState.gameLoopId = null;
+            }
+            clearAutoSave();
+            gameState.gameSeed = '';
+            initGame();
+        });
         document.getElementById('nukeBtn').addEventListener('click', () => {
             if (confirm(t('confirmNuke'))) {
                 localStorage.removeItem(SAVE_KEY);
@@ -5265,14 +5298,10 @@
             }
         });
 
-        document.getElementById('restartFromGameOver').addEventListener('click', restartFromGameOver);
-        document.getElementById('restartFromVictory').addEventListener('click', function() {
-            if (gameState.gameLoopId) {
-                clearInterval(gameState.gameLoopId);
-                gameState.gameLoopId = null;
-            }
-            clearAutoSave();
-            initGame();
+        document.getElementById('closeGameOver').addEventListener('click', function() {
+            closeModal('gameOverModal');
+        });
+        document.getElementById('closeVictory').addEventListener('click', function() {
             closeModal('victoryModal');
         });
         document.getElementById('speedSlowBtn').addEventListener('click', () => setSpeed(SPEED_SLOW));
