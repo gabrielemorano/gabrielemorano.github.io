@@ -1525,9 +1525,12 @@
         var _RW_VER_KEY = 'rw_build_version';
         var _RW_SCHEMA_KEY = 'rw_career_schema';
 
-        var _updatePending = false; // true when a background update was detected but deferred
+        var _updatePending = false; // true when background update was deferred by user
 
-        function _applyUpdate(isSchemaBreak) {
+        function _applyUpdate(serverVer, serverSchema, isSchemaBreak) {
+            // Commit version keys now (deferred until user accepts)
+            localStorage.setItem(_RW_VER_KEY, serverVer);
+            localStorage.setItem(_RW_SCHEMA_KEY, String(serverSchema));
             localStorage.removeItem('raining-words-save');
             localStorage.removeItem('raining-words-tutorial-done');
             if (isSchemaBreak) {
@@ -1553,7 +1556,12 @@
         // mode: 'boot' = reload immediately; 'background' = show choice modal
         function checkForUpdate(mode) {
             if (location.protocol === 'file:') return Promise.resolve();
-            if (_updatePending) return Promise.resolve(); // already showing modal
+            if (_updatePending) {
+                // Already detected — re-show the modal
+                document.getElementById('updateChoiceModal').classList.add('active');
+                gameState.isPaused = true;
+                return Promise.resolve();
+            }
             return fetch('version.json', { cache: 'no-store' })
                 .then(function(r) { return r.ok ? r.json() : null; })
                 .then(function(data) {
@@ -1575,32 +1583,29 @@
 
                     // New version detected!
                     var isSchemaBreak = prevSchema !== serverSchema;
-                    localStorage.setItem(_RW_VER_KEY, serverVer);
-                    localStorage.setItem(_RW_SCHEMA_KEY, String(serverSchema));
 
                     if (mode === 'background') {
-                        // Mid-game: pause and ask the user
+                        // Mid-game: pause and ask the user (don't update keys yet)
                         _updatePending = true;
                         gameState.isPaused = true;
                         var modal = document.getElementById('updateChoiceModal');
-                        var title = document.getElementById('updateChoiceTitle');
-                        var msg = document.getElementById('updateChoiceMsg');
-                        title.textContent = isSchemaBreak ? t('bannerFreshTitle') : t('bannerNewTitle');
-                        msg.textContent = t('updateChoiceMsg');
+                        document.getElementById('updateChoiceTitle').textContent =
+                            isSchemaBreak ? t('bannerFreshTitle') : t('bannerNewTitle');
+                        document.getElementById('updateChoiceMsg').textContent = t('updateChoiceMsg');
                         modal.classList.add('active');
                         document.getElementById('updateNowBtn').onclick = function() {
-                            _applyUpdate(isSchemaBreak);
+                            _applyUpdate(serverVer, serverSchema, isSchemaBreak);
                         };
                         document.getElementById('updateLaterBtn').onclick = function() {
                             modal.classList.remove('active');
                             gameState.isPaused = false;
-                            // Will reload on next page load or next background return
+                            // Modal will re-appear on next background return
                         };
                         return;
                     }
 
-                    // Boot mode — reload immediately
-                    _applyUpdate(isSchemaBreak);
+                    // Boot mode — apply immediately
+                    _applyUpdate(serverVer, serverSchema, isSchemaBreak);
                     return new Promise(function() {});
                 })
                 .catch(function() { /* version.json not found — skip */ });
