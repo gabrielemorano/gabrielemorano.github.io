@@ -697,6 +697,83 @@
             100% { transform: rotate(360deg); }
         }
 
+        /* --- Weather intro overlay --- */
+        .weather-intro {
+            position: absolute;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 50;
+            background: rgba(10, 10, 30, 0.92);
+            border: 2px solid rgba(255,255,255,0.15);
+            border-radius: 12px;
+            padding: 14px 22px;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            -webkit-animation: weatherIntroIn 0.4s ease-out;
+            animation: weatherIntroIn 0.4s ease-out;
+            white-space: nowrap;
+        }
+        .weather-intro.pos-hail { top: 28px; }
+        .weather-intro.pos-lightning { top: 160px; }
+        @-webkit-keyframes weatherIntroIn {
+            0% { opacity: 0; -webkit-transform: translateX(-50%) translateY(-10px); }
+            100% { opacity: 1; -webkit-transform: translateX(-50%) translateY(0); }
+        }
+        @keyframes weatherIntroIn {
+            0% { opacity: 0; transform: translateX(-50%) translateY(-10px); }
+            100% { opacity: 1; transform: translateX(-50%) translateY(0); }
+        }
+        .weather-intro-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 15px;
+            font-weight: 600;
+            color: rgba(255,255,255,0.9);
+        }
+        .weather-tile {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 3px;
+            flex-shrink: 0;
+        }
+        .weather-tile-label {
+            font-size: 14px;
+            font-weight: 700;
+            color: rgba(255,255,255,0.9);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .weather-letter {
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 16px;
+            border-radius: 4px;
+            flex-shrink: 0;
+        }
+        .weather-letter.rain { background: #4A90D9; color: #FFFFFF; }
+        .weather-letter.hail { background: #FFFFFF; color: #4A90D9; }
+        .weather-letter.lightning { background: #F0FB3E; color: #4A90D9; }
+        .weather-intro-footer {
+            text-align: center;
+            color: #ef4444;
+            font-size: 16px;
+            font-weight: 800;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+            border-top: 1px solid rgba(255,255,255,0.1);
+            padding-top: 8px;
+            margin-top: 2px;
+        }
+
         /* --- Tablet: 2 columns (grid + 1 panel col) --- */
         @media (max-width: 1100px) {
             .game-area {
@@ -1531,7 +1608,12 @@
             tutSkipped: "Tutorial skipped. Good luck! 🐱",
             tutComplete: "You're ready! Protect your cat! 🐱",
             catLookNames: ["Cool Mono","Malware","Silver","Lightning Strike","Vermilion Dusty","Heartbeat","X-Ray","Heartbeat Gold","Berry Jam","Fade In Out","Sky Blue","CRT","Honey","Pulse Ice","Emerald","Solar Eclipse","Inverted","Bioluminescent","Ice","Pulse Crimson","Charcoal","Pulse Red","Ash","Hack","Shadow","Bounce","Purple","Strobe","Tangerine","Inferno","Classic","Pulse Purple","Spin Cat","Corrupt","Pulse Invert","Pulse Spring","Emergency","Static","Blizzard","Pendulum","Throb","Bonfire","Neutron Star","Heartbeat Blue","Float","Sway","Jitter","Glitch","Ribbon","Campfire"],
-            msgCompleteWord: "Fill all slots to complete the word!"
+            msgCompleteWord: "Fill all slots to complete the word!",
+            weatherRainLabel: "🌧 rain",
+            weatherHailLabel: "🧊 hail",
+            weatherLightningLabel: "⚡ lightning",
+            weatherDamageOf: "damage of",
+            weatherCantGrab: "can't be grabbed"
         };
 
         function t(key) {
@@ -2026,6 +2108,7 @@
             gameState.isStorming = true;          // start in storm phase
             gameState.seasonTransition = false;   // true = between seasons, waiting for player
             gameState.victoryPhase = null;         // null | 'shielding' | 'clearing' | 'done'
+            gameState.weatherIntroShown = gameState.weatherIntroShown || { hail: 0, lightning: 0 };
             gameState.catMood = null;
             gameState.catIdleTicks = 0;
             gameState.catHealTicks = 0;
@@ -2124,6 +2207,15 @@
                     zigzagStep: 0             // current step in zigzag path
                 };
                 gameState.fallingLetters.push(fallingLetter);
+
+                // Weather intro overlay — first 3 times per type, after tutorial
+                if (pre.type !== 'rain' && !gameState.tutorial.enabled) {
+                    var shown = gameState.weatherIntroShown[pre.type] || 0;
+                    if (shown < 3) {
+                        gameState.weatherIntroShown[pre.type] = shown + 1;
+                        showWeatherIntro(pre.type);
+                    }
+                }
             }
         }
 
@@ -3779,6 +3871,58 @@
             requestAnimationFrame(animateBanner);
         }
 
+        // --- Weather intro overlays (first 3 times per type) ---
+        var _weatherOverlays = {};
+        var _weatherTimers = {};
+
+        function showWeatherIntro(type) {
+            // Remove existing of same type
+            if (_weatherOverlays[type]) { _weatherOverlays[type].remove(); delete _weatherOverlays[type]; }
+            if (_weatherTimers[type]) { clearTimeout(_weatherTimers[type]); delete _weatherTimers[type]; }
+
+            var gridContainer = document.querySelector('.grid-container');
+            if (!gridContainer) return;
+
+            var typeLabels = {
+                hail: t('weatherHailLabel'),
+                lightning: t('weatherLightningLabel'),
+                rain: t('weatherRainLabel')
+            };
+            var mult = type === 'hail' ? '3×' : '7×';
+            var letter = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'[Math.floor(Math.random() * 26)];
+
+            var div = document.createElement('div');
+            div.className = 'weather-intro pos-' + type;
+            div.innerHTML =
+                '<div class="weather-intro-row">' +
+                    '<span class="weather-tile">' +
+                        '<span class="weather-letter ' + type + '">' + letter + '</span>' +
+                        '<span class="weather-tile-label">' + typeLabels[type] + '</span>' +
+                    '</span>' +
+                    '<span>' + mult + ' ' + t('weatherDamageOf') + '</span>' +
+                    '<span class="weather-tile">' +
+                        '<span class="weather-letter rain">' + letter + '</span>' +
+                        '<span class="weather-tile-label">' + typeLabels.rain + '</span>' +
+                    '</span>' +
+                '</div>' +
+                '<div class="weather-intro-footer">' + t('weatherCantGrab') + '</div>';
+
+            gridContainer.appendChild(div);
+            _weatherOverlays[type] = div;
+
+            _weatherTimers[type] = setTimeout(function() {
+                var el = _weatherOverlays[type];
+                if (el) {
+                    el.style.transition = 'opacity 0.5s';
+                    el.style.webkitTransition = 'opacity 0.5s';
+                    el.style.opacity = '0';
+                    setTimeout(function() {
+                        if (_weatherOverlays[type]) { _weatherOverlays[type].remove(); delete _weatherOverlays[type]; }
+                    }, 500);
+                }
+            }, 4000);
+        }
+
         var _msgTimer = null;
         function showMessage(text, type) {
             const messageEl = document.getElementById('message');
@@ -4811,6 +4955,7 @@
                 catXP: gameState.catXP || 0,
                 catLevel: gameState.catLevel || 0,
                 activeCatLook: gameState.activeCatLook != null ? gameState.activeCatLook : -1,
+                weatherIntroShown: gameState.weatherIntroShown,
                 career: loadCareer()
             };
         }
@@ -4891,6 +5036,7 @@
             gameState.activeCatLook = data.activeCatLook != null ? data.activeCatLook : -1;
             gameState.tutorial = { enabled: false, step: -1, _wordPlaced: false };
             gameState.victoryPhase = data.victoryPhase || null;
+            gameState.weatherIntroShown = data.weatherIntroShown || { hail: 0, lightning: 0 };
             gameState.catMood = null;
             gameState.catIdleTicks = 0;
             gameState.radarHasWords = false;
@@ -5402,74 +5548,6 @@
                     header.classList.remove('collapsed');
                 }
                 lastScrollTop = st;
-            }, { passive: true });
-        })();
-
-        // Mobile: scroll snap — waits for scroll to fully stop, then
-        // smoothly aligns to the nearest panel boundary.
-        (function() {
-            var gameArea = document.querySelector('.game-area');
-            if (!gameArea) return;
-            var isMobile = function() { return window.innerWidth <= 500; };
-            var snapSelectors = ['.grid-container', '#panelWorkshop', '#panelAchievements',
-                                 '#panelCatLooks', '#panelWeather', '#panelGameMenu'];
-            var snapTimer = null;
-            var isSnapping = false;
-            var lastScrollTop = -1;
-            var pollTimer = null;
-
-            function getSnapPositions() {
-                var positions = [];
-                var areaRect = gameArea.getBoundingClientRect();
-                var scrollTop = gameArea.scrollTop;
-                for (var i = 0; i < snapSelectors.length; i++) {
-                    var el = document.querySelector(snapSelectors[i]);
-                    if (!el) continue;
-                    positions.push(Math.round(scrollTop + el.getBoundingClientRect().top - areaRect.top));
-                }
-                return positions;
-            }
-
-            function snapToNearest() {
-                if (isSnapping) return;
-                var positions = getSnapPositions();
-                if (positions.length === 0) return;
-                var scrollTop = gameArea.scrollTop;
-                var closest = positions[0];
-                var closestDist = Math.abs(scrollTop - closest);
-                for (var i = 1; i < positions.length; i++) {
-                    var dist = Math.abs(scrollTop - positions[i]);
-                    if (dist < closestDist) { closest = positions[i]; closestDist = dist; }
-                }
-                if (closestDist < 3) return; // already aligned
-                isSnapping = true;
-                gameArea.scrollTo({ top: closest, behavior: 'smooth' });
-                setTimeout(function() { isSnapping = false; }, 700);
-            }
-
-            // Poll-based idle detection: check every 80ms if scroll has stopped moving
-            function startPolling() {
-                stopPolling();
-                lastScrollTop = gameArea.scrollTop;
-                pollTimer = setInterval(function() {
-                    var current = gameArea.scrollTop;
-                    if (current === lastScrollTop) {
-                        // Scroll has stopped — snap
-                        stopPolling();
-                        snapToNearest();
-                    }
-                    lastScrollTop = current;
-                }, 20);
-            }
-
-            function stopPolling() {
-                if (pollTimer) { clearInterval(pollTimer); pollTimer = null; }
-            }
-
-            // On any scroll activity, (re)start the idle poller
-            gameArea.addEventListener('scroll', function() {
-                if (!isMobile() || isSnapping) return;
-                startPolling();
             }, { passive: true });
         })();
 
