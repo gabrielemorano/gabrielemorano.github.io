@@ -1492,7 +1492,7 @@
         //  CACHE BUSTING — auto-reload when a new version is deployed
         // ================================================================
         (function() {
-            var BUILD_VERSION = '20260220191852';
+            var BUILD_VERSION = '20260220192220';
             if (BUILD_VERSION.indexOf('__') === 0) return;          // dev/base file, skip
             var KEY = 'rw_build_version';
             var prev = localStorage.getItem(KEY);
@@ -2142,6 +2142,7 @@
                 gameState.catXP = career.catXP || 0;
                 gameState.catLevel = career.catLevel || 0;
                 gameState.activeCatLook = career.activeCatLook != null ? career.activeCatLook : -1;
+                gameState.weatherIntroShown = career.weatherIntroShown || { hail: 0, lightning: 0 };
             } else {
                 gameState.wordsPlacedByLength = {};
                 gameState.verticalWordsByLength = {};
@@ -5024,7 +5025,11 @@
                 catLevel: Math.max(prev.catLevel || 0, gameState.catLevel || 0),
                 activeCatLook: gameState.activeCatLook != null ? gameState.activeCatLook : (prev.activeCatLook != null ? prev.activeCatLook : -1),
                 wordsPlacedByLength: {},
-                verticalWordsByLength: {}
+                verticalWordsByLength: {},
+                weatherIntroShown: {
+                    hail: Math.max((prev.weatherIntroShown || {}).hail || 0, (gameState.weatherIntroShown || {}).hail || 0),
+                    lightning: Math.max((prev.weatherIntroShown || {}).lightning || 0, (gameState.weatherIntroShown || {}).lightning || 0)
+                }
             };
             // Merge word counts: take max per length
             const prevWords = prev.wordsPlacedByLength || {};
