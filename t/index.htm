@@ -447,11 +447,23 @@
         .ws-word {
             flex: 1;
             display: flex; gap: 3px; min-height: 40px;
-            padding: 5px 6px; background: #f8f9fa;
+            padding: 5px 32px 5px 6px; background: #f8f9fa;
             border: 2px solid #667eea; border-radius: 6px;
             align-items: center; flex-wrap: wrap;
             transition: border-color 0.2s;
+            position: relative;
         }
+        .ws-clear-x {
+            position: absolute; right: 6px; top: 50%; transform: translateY(-50%);
+            width: 22px; height: 22px; border-radius: 50%;
+            background: #94a3b8; border: none; color: #fff;
+            font-size: 13px; font-weight: 700; line-height: 1;
+            display: none; align-items: center; justify-content: center;
+            cursor: pointer; -webkit-tap-highlight-color: transparent;
+            transition: background 0.15s;
+        }
+        .ws-clear-x:active { background: #64748b; }
+        .ws-word.has-letters .ws-clear-x { display: flex; }
         .ws-inline-submit {
             width: 44px; min-width: 44px; flex-shrink: 0;
             border: none; border-radius: 6px;
@@ -495,16 +507,7 @@
             transition: all 0.12s; touch-action: manipulation;
         }
         .ws-btn-row button:active { transform: scale(0.97); }
-        .ws-submit { flex: 3; font-size: 0.9em; color: white; background: linear-gradient(135deg, #10b981, #059669); box-shadow: 0 2px 6px rgba(16,185,129,0.3); }
-        .ws-submit:disabled { background: #d1d5db; color: #999; cursor: default; box-shadow: none; }
-        .ws-backspace { flex: 1; font-size: 2em; color: white; background: linear-gradient(135deg, #f59e0b, #d97706); box-shadow: 0 2px 6px rgba(245,158,11,0.3); line-height: 1; }
-        .ws-backspace:disabled { background: #d1d5db; color: #999; cursor: default; box-shadow: none; }
-        .ws-clearall { flex: 1; font-size: 1.15em; color: white; background: linear-gradient(135deg, #ef4444, #dc2626); box-shadow: 0 2px 6px rgba(239,68,68,0.3); }
-        .ws-clearall:disabled { background: #d1d5db; color: #999; cursor: default; box-shadow: none; }
-        .ws-clearall:disabled .icon-white { filter: grayscale(1) brightness(1); }
-        .ws-clearall:not(:disabled) .icon-white { filter: grayscale(1) brightness(100); }
-        .ws-backspace:not(:disabled):active { background: linear-gradient(135deg, #d97706, #b45309) !important; }
-        .ws-clearall:not(:disabled):active { background: linear-gradient(135deg, #dc2626, #b91c1c) !important; }
+        /* Old .ws-submit/.ws-backspace/.ws-clearall removed — replaced by inline ↵ and × */
         .ws-tool-btn { flex: 1; gap: 4px; font-size: 0.82em; font-weight: 600; color: white; }
         .ws-tool-btn .tool-cost { font-size: 0.85em; opacity: 0.85; }
         .ws-tool-btn.affordable { background: linear-gradient(135deg, #10b981, #059669); box-shadow: 0 1px 4px rgba(16,185,129,0.25); }
@@ -517,7 +520,7 @@
             0%, 100% { border-color: #facc15; box-shadow: 0 0 10px 2px rgba(250,204,21,0.4); }
             50%      { border-color: #1a1a1a; box-shadow: 0 0 10px 2px rgba(0,0,0,0.2); }
         }
-        .btn.tut-alert, .ws-submit.tut-alert, .ws-inline-submit.tut-alert {
+        .btn.tut-alert, .ws-inline-submit.tut-alert {
             animation: btnBlink 0.6s step-end infinite;
         }
         @keyframes btnBlink {
@@ -1362,12 +1365,7 @@
                     <!-- Reservoir grid -->
                     <div class="ws-reservoir" id="reservoir"></div>
 
-                    <!-- Submit 60% | ⟲ 20% | 🗑 20% -->
-                    <div class="ws-btn-row">
-                        <button class="ws-submit" id="submitBtn" disabled data-i18n="btnSubmitWord">Submit Word</button>
-                        <button class="ws-backspace" id="clearBtn">⟲</button>
-                        <button class="ws-clearall" id="clearAllBtn" data-i18n-title="tipClearAll" title="Clear all tiles"><span class="icon-white">🗑</span></button>
-                    </div>
+                    <!-- Old Submit/Undo/Trash row removed — replaced by inline ↵ and × -->
                 </div>
 
                 <div class="panel" id="panelAchievements">
@@ -1510,7 +1508,6 @@
             panelWeather: "🌩️",
             panelGameMenu: "⚙️ Game Menu",
             panelRainSpeed: "⏱️ Speed",
-            btnSubmitWord: "Submit Word",
             btnClear: "⌫",
             btnHint: "💡 Hint",
             btnClue: "🔍 Clue",
@@ -1526,7 +1523,6 @@
             btnFast: "⚡ Fast",
             btnRestart: "🔄 Start New Game",
             btnNextSeason: "Next Season ▶",
-            tipClearAll: "Clear all tiles",
             tipShuffle: "Shuffle tiles",
             tipResetHint: "Reset hint",
             phPassword: "any word or number",
@@ -1804,7 +1800,7 @@
               title: t('tutSpellTitle'),
               text: t('tutSpellText'),
               trigger: () => gameState.inputSlots.filter(function(s){return s !== null;}).length >= 2 },
-            { id: 4, name: 'submit',    type: 'tooltip', target: '#submitBtn', arrow: 'left',
+            { id: 4, name: 'submit',    type: 'tooltip', target: '#inlineSubmitBtn', arrow: 'left',
               title: t('tutSubmitTitle'),
               text: t('tutSubmitText'),
               trigger: () => gameState.tutorial._wordPlaced },
@@ -2379,15 +2375,13 @@
         function updateTutorialBlinks() {
             const gridEl = document.getElementById('gameGrid');
             const resEl = document.getElementById('reservoir');
-            const subEl = document.getElementById('submitBtn');
-            const inlineSubEl = document.getElementById('inlineSubmitBtn');
+            const subEl = document.getElementById('inlineSubmitBtn');
             if (!gridEl) return;
 
             if (!gameState.tutorial || !gameState.tutorial.enabled) {
                 gridEl.classList.remove('grid-alert');
                 if (resEl) resEl.classList.remove('tut-alert');
                 if (subEl) subEl.classList.remove('tut-alert');
-                if (inlineSubEl) inlineSubEl.classList.remove('tut-alert');
                 _tutScrolledToReservoir = false;
                 _tutScrolledToSubmit = false;
                 return;
@@ -2408,7 +2402,6 @@
             // Phase 3: submit blinks once 4+ selected, until word placed
             const subBlink = spelled && !placed;
             if (subEl) subEl.classList.toggle('tut-alert', subBlink);
-            if (inlineSubEl) inlineSubEl.classList.toggle('tut-alert', subBlink);
 
             // Mobile auto-scroll: only on narrow viewports, once per phase
             if (window.innerWidth <= 750) {
@@ -2812,13 +2805,32 @@
                 }
             }
 
+            // Re-append the × clear button (survives innerHTML wipe)
+            var clearX = document.getElementById('clearXBtn');
+            if (!clearX) {
+                clearX = document.createElement('button');
+                clearX.className = 'ws-clear-x';
+                clearX.id = 'clearXBtn';
+                clearX.setAttribute('aria-label', 'Clear all');
+                clearX.textContent = '✕';
+                clearX.addEventListener('click', function() {
+                    for (var i = 0; i < gameState.inputSlots.length; i++) {
+                        if (gameState.inputSlots[i]) {
+                            var slotData = gameState.inputSlots[i];
+                            reservoirReturnToSlot(slotData.letter, slotData.reservoirIndex);
+                        }
+                    }
+                    gameState.inputSlots = [];
+                    clearHintHighlights();
+                    renderReservoir();
+                });
+            }
+            el.appendChild(clearX);
+
             var filledCount = gameState.inputSlots.filter(function(s) { return s !== null; }).length;
-            var hasUserTile = gameState.inputSlots.some(function(s) { return s !== null && s.source === 'user'; });
             var submitDisabled = filledCount < 3;
-            document.getElementById('submitBtn').disabled = submitDisabled;
             document.getElementById('inlineSubmitBtn').disabled = submitDisabled;
-            document.getElementById('clearBtn').disabled = !hasUserTile;
-            document.getElementById('clearAllBtn').disabled = filledCount === 0;
+            el.classList.toggle('has-letters', filledCount > 0);
         }
 
         // Select letter: splice from reservoir, place in input
@@ -5330,22 +5342,8 @@
         }
 
         // Event listeners
-        document.getElementById('submitBtn').addEventListener('click', submitWord);
         document.getElementById('inlineSubmitBtn').addEventListener('click', submitWord);
-        document.getElementById('clearBtn').addEventListener('click', backspaceLetter);
         document.getElementById('shuffleBtn').addEventListener('click', shuffleReservoir);
-        document.getElementById('clearAllBtn').addEventListener('click', () => {
-            // Return all letters (user + clue) to their reserved reservoir slots
-            for (var i = 0; i < gameState.inputSlots.length; i++) {
-                if (gameState.inputSlots[i]) {
-                    var slotData = gameState.inputSlots[i];
-                    reservoirReturnToSlot(slotData.letter, slotData.reservoirIndex);
-                }
-            }
-            gameState.inputSlots = [];
-            clearHintHighlights();
-            renderReservoir();
-        });
         // Cat look gallery — delegated listener (survives re-renders)
         document.getElementById('achCatGallery').addEventListener('click', (e) => {
             const btn = e.target.closest('.cat-look-btn');
