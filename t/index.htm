@@ -64,6 +64,18 @@
         }
 
         .fab { display: none !important; } /* FAB hidden for now — remove !important to re-enable */
+
+        /* Stat color states for reservoir and season */
+        .stat.stat-warn {
+            background: linear-gradient(135deg, #f59e0b, #d97706);
+            box-shadow: 0 2px 6px rgba(245,158,11,0.4);
+        }
+        .stat.stat-warn .stat-label, .stat.stat-warn .stat-value { color: white; }
+        .stat.stat-danger {
+            background: linear-gradient(135deg, #ef4444, #dc2626);
+            box-shadow: 0 2px 6px rgba(239,68,68,0.4);
+        }
+        .stat.stat-danger .stat-label, .stat.stat-danger .stat-value { color: white; }
         .stat-flow-row { display: contents; }
 
         .stats-bar {
@@ -904,16 +916,15 @@
             .stat .stat-value {
                 font-size: 0.72em;
             }
-            /* Hide Reservoir and Season on mobile */
-            .stat-mobile-hide-reservoir { display: none !important; }
-            .stat-mobile-hide-season { display: none !important; }
             /* Emoji prefixes for label-less stats on mobile */
+            #reservoirStat::before { content: "🔤 "; }
             #catHP::before { content: "❤️ "; }
             #treats::before { content: "🍬 "; }
             #floodLevel::before { content: "🌊 "; }
             #shelterHP::before { content: "🏠 "; }
             #lifeDays::before { content: "📅 "; }
             #xpDisplay::before { content: "⭐ "; }
+            #seasonInfo::before { content: ""; }
             /* Hide coverage sub-detail on mobile */
             #coverageDetail { display: none; }
             /* Tap-to-reveal stat label hint */
@@ -4334,6 +4345,24 @@
             }
             updateTreatButtons();
             updateDelayButton();
+
+            // Reservoir stat color states
+            var resBox = document.getElementById('statReservoirBox');
+            if (resBox) {
+                var rCount = reservoirCount();
+                var resCls = 'stat stat-mobile-hide-reservoir';
+                if (rCount >= RESERVOIR_CAPACITY) resCls += ' stat-danger';
+                else if (rCount >= 14) resCls += ' stat-warn';
+                if (resBox.className !== resCls) resBox.className = resCls;
+            }
+            // Season stat color state
+            var seaBox = document.querySelector('.stat-mobile-hide-season');
+            if (seaBox) {
+                var dLeft = SEASON_LENGTH - gameState.seasonDay;
+                var seaCls = 'stat stat-mobile-hide-season';
+                if (dLeft <= 0) seaCls += ' stat-danger';
+                if (seaBox.className !== seaCls) seaBox.className = seaCls;
+            }
         }
 
         // Update weather forecast
