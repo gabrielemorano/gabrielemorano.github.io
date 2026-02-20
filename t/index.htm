@@ -1490,14 +1490,34 @@
     <script>
         // ================================================================
         //  CACHE BUSTING — auto-reload when a new version is deployed
+        //  CAREER_SCHEMA: bump this integer when career data format changes
         // ================================================================
         (function() {
-            var BUILD_VERSION = '20260220192220';
+            var BUILD_VERSION = '20260220193406';
+            var CAREER_SCHEMA = 1; // bump when career fields change incompatibly
             if (BUILD_VERSION.indexOf('__') === 0) return;          // dev/base file, skip
-            var KEY = 'rw_build_version';
-            var prev = localStorage.getItem(KEY);
-            if (prev && prev !== BUILD_VERSION) {
-                localStorage.setItem(KEY, BUILD_VERSION);
+
+            var VER_KEY = 'rw_build_version';
+            var SCHEMA_KEY = 'rw_career_schema';
+            var prevVer = localStorage.getItem(VER_KEY);
+            var prevSchema = parseInt(localStorage.getItem(SCHEMA_KEY) || '0', 10);
+            var isNewBuild = prevVer && prevVer !== BUILD_VERSION;
+            var isSchemaBreak = prevSchema > 0 && prevSchema !== CAREER_SCHEMA;
+
+            if (isNewBuild) {
+                localStorage.setItem(VER_KEY, BUILD_VERSION);
+                localStorage.setItem(SCHEMA_KEY, String(CAREER_SCHEMA));
+                // Always clear autosave + tutorial
+                localStorage.removeItem('raining-words-save');
+                localStorage.removeItem('raining-words-tutorial-done');
+                if (isSchemaBreak) {
+                    // Incompatible career data — wipe everything
+                    localStorage.removeItem('raining-words-career');
+                    sessionStorage.setItem('rw_update_banner', 'fresh');
+                } else {
+                    // Compatible — keep career
+                    sessionStorage.setItem('rw_update_banner', 'update');
+                }
                 // Clear all Cache-API caches
                 if ('caches' in window) {
                     caches.keys().then(function(names) {
@@ -1514,7 +1534,9 @@
                 location.reload(true);
                 return;
             }
-            localStorage.setItem(KEY, BUILD_VERSION);
+            // First visit or same build — just store keys
+            localStorage.setItem(VER_KEY, BUILD_VERSION);
+            localStorage.setItem(SCHEMA_KEY, String(CAREER_SCHEMA));
         })();
 
         // ================================================================
@@ -1600,6 +1622,8 @@
             confirmResetHint: "Reset current hint? You can then pick a different word length.",
             confirmRestart: "Restart game? Progress will be lost.",
             confirmNuke: "Delete ALL local storage (save + career)? This cannot be undone.",
+            bannerNewVersion: "✨ New version loaded!",
+            bannerFreshStart: "🌱 Sometimes a fresh start is what you need!",
             gameOverTitle: "💔 Game Over",
             gameOverMsg: "Your cat survived {0} days with {1} shelter HP.",
             victoryTitle: "🏆 Victory!",
@@ -5879,6 +5903,19 @@
                 initGame();
             }
             _gameReady = true;
+
+            // Show update banner after reload (if cache-busting triggered)
+            var _ub = sessionStorage.getItem('rw_update_banner');
+            if (_ub) {
+                sessionStorage.removeItem('rw_update_banner');
+                setTimeout(function() {
+                    if (_ub === 'fresh') {
+                        showMessage(t('bannerFreshStart'), 'info');
+                    } else {
+                        showMessage(t('bannerNewVersion'), 'info');
+                    }
+                }, 600);
+            }
         });
     </script>
 </body>
