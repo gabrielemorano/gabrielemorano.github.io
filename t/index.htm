@@ -1516,7 +1516,7 @@
             var VER_KEY = 'rw_build_version';
             var SCHEMA_KEY = 'rw_career_schema';
 
-            return fetch('version.json', { cache: 'no-store' })
+            return fetch('version.json?_t=' + Date.now(), { cache: 'no-store' })
                 .then(function(r) { return r.ok ? r.json() : null; })
                 .then(function(data) {
                     if (!data || !data.v) return;
