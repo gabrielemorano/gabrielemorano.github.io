@@ -5197,10 +5197,13 @@
         });
         document.getElementById('nukeBtn').addEventListener('click', () => {
             if (confirm(t('confirmNuke'))) {
-                localStorage.removeItem(SAVE_KEY);
-                localStorage.removeItem(CAREER_KEY);
-                localStorage.removeItem(TUTORIAL_KEY);
-                location.reload();
+                localStorage.clear();
+                if ('caches' in window) {
+                    caches.keys().then(function(names) {
+                        names.forEach(function(name) { caches.delete(name); });
+                    });
+                }
+                location.reload(true);
             }
         });
         // Seed play button: start new game with entered seed
