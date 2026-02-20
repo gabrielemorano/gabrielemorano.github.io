@@ -63,7 +63,19 @@
             border-radius: 6px;
         }
 
-        .fab { display: none; }
+        .fab { display: none !important; } /* FAB hidden for now — remove !important to re-enable */
+
+        /* Stat color states for reservoir and season */
+        .stat.stat-warn {
+            background: linear-gradient(135deg, #f59e0b, #d97706);
+            box-shadow: 0 2px 6px rgba(245,158,11,0.4);
+        }
+        .stat.stat-warn .stat-label, .stat.stat-warn .stat-value { color: white; }
+        .stat.stat-danger {
+            background: linear-gradient(135deg, #ef4444, #dc2626);
+            box-shadow: 0 2px 6px rgba(239,68,68,0.4);
+        }
+        .stat.stat-danger .stat-label, .stat.stat-danger .stat-value { color: white; }
         .stat-flow-row { display: contents; }
 
         .stats-bar {
@@ -122,6 +134,14 @@
         }
         .stat-delay.delay-active .stat-label,
         .stat-delay.delay-active .stat-value {
+            color: white;
+        }
+        .stat-delay.delay-critical {
+            background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+            box-shadow: 0 2px 8px rgba(239, 68, 68, 0.4);
+        }
+        .stat-delay.delay-critical .stat-label,
+        .stat-delay.delay-critical .stat-value {
             color: white;
         }
 
@@ -273,8 +293,8 @@
             font-size: 20px;
             border-radius: 3px;
             position: relative;
-            -webkit-transition: background 0.2s, background-color 1.2s ease;
-            transition: background 0.2s, background-color 1.2s ease;
+            /* OPT: transitions removed — retained DOM means cells persist across frames,
+               so transitions would cause visual trails on falling letters */
             user-select: none;
             -webkit-user-select: none;
             cursor: default;
@@ -284,6 +304,10 @@
             background: linear-gradient(135deg, #10b981 0%, #059669 100%);
             color: white;
             text-shadow: 1px 1px 2px rgba(0,0,0,0.3);
+        }
+
+        .cell.brick.worn {
+            background: linear-gradient(135deg, #7a9e8a 0%, #5c8a72 100%);
         }
 
         .cell.brick.yellow {
@@ -312,8 +336,7 @@
         }
 
         .cell.pole {
-            background: linear-gradient(135deg, #64748b 0%, #475569 100%);
-            color: white;
+            background: transparent;
             font-size: 1.2em;
         }
 
@@ -381,7 +404,7 @@
 
         /* ── Word Workshop ── */
         .ws-header { display: flex; align-items: center; justify-content: space-between; padding: 0 2px; }
-        .ws-title { display: flex; align-items: center; gap: 5px; font-size: 0.85em; font-weight: 700; color: #444; }
+        .ws-title { display: flex; align-items: center; gap: 5px; font-size: 0.95em; font-weight: 700; color: #444; }
         .ws-count { font-weight: 600; color: #667eea; margin-left: 2px; }
         .ws-shuffle { background: none; border: none; font-size: 1.15em; cursor: pointer; padding: 4px 6px; border-radius: 6px; -webkit-tap-highlight-color: transparent; }
 
@@ -430,12 +453,42 @@
         }
         .ws-cheat-chip:active { transform: scale(0.95); }
 
+        .ws-input-row {
+            display: flex; gap: 5px; align-items: stretch;
+        }
         .ws-word {
+            flex: 1;
             display: flex; gap: 3px; min-height: 40px;
-            padding: 5px 6px; background: #f8f9fa;
+            padding: 5px 32px 5px 6px; background: #f8f9fa;
             border: 2px solid #667eea; border-radius: 6px;
             align-items: center; flex-wrap: wrap;
             transition: border-color 0.2s;
+            position: relative;
+        }
+        .ws-clear-x {
+            position: absolute; right: 6px; top: 50%; transform: translateY(-50%);
+            width: 22px; height: 22px; border-radius: 50%;
+            background: #94a3b8; border: none; color: #fff;
+            font-size: 13px; font-weight: 700; line-height: 1;
+            display: none; align-items: center; justify-content: center;
+            cursor: pointer; -webkit-tap-highlight-color: transparent;
+            transition: background 0.15s;
+        }
+        .ws-clear-x:active { background: #64748b; }
+        .ws-word.has-letters .ws-clear-x { display: flex; }
+        .ws-inline-submit {
+            width: 44px; min-width: 44px; flex-shrink: 0;
+            border: none; border-radius: 6px;
+            background: linear-gradient(135deg, #10b981, #059669);
+            color: white; font-size: 1.4em; font-weight: 700;
+            cursor: pointer; display: flex; align-items: center; justify-content: center;
+            box-shadow: 0 2px 6px rgba(16,185,129,0.3);
+            -webkit-tap-highlight-color: transparent;
+            transition: all 0.12s; touch-action: manipulation;
+        }
+        .ws-inline-submit:active { transform: scale(0.95); }
+        .ws-inline-submit:disabled {
+            background: #d1d5db; color: #999; cursor: default; box-shadow: none;
         }
         .ws-word:empty::after { content: "Tap letters..."; color: #bbb; font-size: 0.8em; font-style: italic; }
         .input-slot {
@@ -466,16 +519,7 @@
             transition: all 0.12s; touch-action: manipulation;
         }
         .ws-btn-row button:active { transform: scale(0.97); }
-        .ws-submit { flex: 3; font-size: 0.9em; color: white; background: linear-gradient(135deg, #10b981, #059669); box-shadow: 0 2px 6px rgba(16,185,129,0.3); }
-        .ws-submit:disabled { background: #d1d5db; color: #999; cursor: default; box-shadow: none; }
-        .ws-backspace { flex: 1; font-size: 2em; color: white; background: linear-gradient(135deg, #f59e0b, #d97706); box-shadow: 0 2px 6px rgba(245,158,11,0.3); line-height: 1; }
-        .ws-backspace:disabled { background: #d1d5db; color: #999; cursor: default; box-shadow: none; }
-        .ws-clearall { flex: 1; font-size: 1.15em; color: white; background: linear-gradient(135deg, #ef4444, #dc2626); box-shadow: 0 2px 6px rgba(239,68,68,0.3); }
-        .ws-clearall:disabled { background: #d1d5db; color: #999; cursor: default; box-shadow: none; }
-        .ws-clearall:disabled .icon-white { filter: grayscale(1) brightness(1); }
-        .ws-clearall:not(:disabled) .icon-white { filter: grayscale(1) brightness(100); }
-        .ws-backspace:not(:disabled):active { background: linear-gradient(135deg, #d97706, #b45309) !important; }
-        .ws-clearall:not(:disabled):active { background: linear-gradient(135deg, #dc2626, #b91c1c) !important; }
+        /* Old .ws-submit/.ws-backspace/.ws-clearall removed — replaced by inline ↵ and × */
         .ws-tool-btn { flex: 1; gap: 4px; font-size: 0.82em; font-weight: 600; color: white; }
         .ws-tool-btn .tool-cost { font-size: 0.85em; opacity: 0.85; }
         .ws-tool-btn.affordable { background: linear-gradient(135deg, #10b981, #059669); box-shadow: 0 1px 4px rgba(16,185,129,0.25); }
@@ -488,7 +532,7 @@
             0%, 100% { border-color: #facc15; box-shadow: 0 0 10px 2px rgba(250,204,21,0.4); }
             50%      { border-color: #1a1a1a; box-shadow: 0 0 10px 2px rgba(0,0,0,0.2); }
         }
-        .btn.tut-alert, .ws-submit.tut-alert {
+        .btn.tut-alert, .ws-inline-submit.tut-alert {
             animation: btnBlink 0.6s step-end infinite;
         }
         @keyframes btnBlink {
@@ -659,6 +703,21 @@
             margin-bottom: 20px;
         }
 
+        .modal-close-btn {
+            position: absolute;
+            top: 10px;
+            right: 12px;
+            background: none;
+            border: none;
+            font-size: 1.4em;
+            color: #999;
+            cursor: pointer;
+            padding: 4px 8px;
+            line-height: 1;
+        }
+        .modal-close-btn:hover {
+            color: #333;
+        }
 
         .loading-spinner {
             display: inline-block;
@@ -673,6 +732,83 @@
         @keyframes spin {
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
+        }
+
+        /* --- Weather intro overlay --- */
+        .weather-intro {
+            position: absolute;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 50;
+            background: rgba(10, 10, 30, 0.92);
+            border: 2px solid rgba(255,255,255,0.15);
+            border-radius: 12px;
+            padding: 14px 22px;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            -webkit-animation: weatherIntroIn 0.4s ease-out;
+            animation: weatherIntroIn 0.4s ease-out;
+            white-space: nowrap;
+        }
+        .weather-intro.pos-hail { top: 80px; }
+        .weather-intro.pos-lightning { top: 210px; }
+        @-webkit-keyframes weatherIntroIn {
+            0% { opacity: 0; -webkit-transform: translateX(-50%) translateY(-10px); }
+            100% { opacity: 1; -webkit-transform: translateX(-50%) translateY(0); }
+        }
+        @keyframes weatherIntroIn {
+            0% { opacity: 0; transform: translateX(-50%) translateY(-10px); }
+            100% { opacity: 1; transform: translateX(-50%) translateY(0); }
+        }
+        .weather-intro-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 15px;
+            font-weight: 600;
+            color: rgba(255,255,255,0.9);
+        }
+        .weather-tile {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 3px;
+            flex-shrink: 0;
+        }
+        .weather-tile-label {
+            font-size: 14px;
+            font-weight: 700;
+            color: rgba(255,255,255,0.9);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .weather-letter {
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 16px;
+            border-radius: 4px;
+            flex-shrink: 0;
+        }
+        .weather-letter.rain { background: #4A90D9; color: #FFFFFF; }
+        .weather-letter.hail { background: #FFFFFF; color: #4A90D9; }
+        .weather-letter.lightning { background: #F0FB3E; color: #4A90D9; }
+        .weather-intro-footer {
+            text-align: center;
+            color: #ef4444;
+            font-size: 16px;
+            font-weight: 800;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+            border-top: 1px solid rgba(255,255,255,0.1);
+            padding-top: 8px;
+            margin-top: 2px;
         }
 
         /* --- Tablet: 2 columns (grid + 1 panel col) --- */
@@ -696,6 +832,9 @@
                 grid-column: 1;
                 display: flex;
                 justify-content: center;
+            }
+            .fab {
+                display: flex;
             }
         }
 
@@ -777,16 +916,15 @@
             .stat .stat-value {
                 font-size: 0.72em;
             }
-            /* Hide Reservoir and Season on mobile */
-            .stat-mobile-hide-reservoir { display: none !important; }
-            .stat-mobile-hide-season { display: none !important; }
             /* Emoji prefixes for label-less stats on mobile */
+            #reservoirStat::before { content: "🔤 "; }
             #catHP::before { content: "❤️ "; }
             #treats::before { content: "🍬 "; }
             #floodLevel::before { content: "🌊 "; }
             #shelterHP::before { content: "🏠 "; }
             #lifeDays::before { content: "📅 "; }
             #xpDisplay::before { content: "⭐ "; }
+            #seasonInfo::before { content: ""; }
             /* Hide coverage sub-detail on mobile */
             #coverageDetail { display: none; }
             /* Tap-to-reveal stat label hint */
@@ -836,11 +974,11 @@
                 padding: 0 16px;
                 border: 2px solid rgba(255,255,255,0.25);
                 border-radius: 24px;
-                background: linear-gradient(135deg, #374151 0%, #1f2937 100%);
+                background: linear-gradient(135deg, #10b981 0%, #059669 100%);
                 color: white;
                 font-size: 1em;
                 font-weight: 700;
-                box-shadow: 0 4px 14px rgba(55, 65, 81, 0.5);
+                box-shadow: 0 4px 14px rgba(16, 185, 129, 0.5);
                 -webkit-transition: transform 0.15s ease, box-shadow 0.15s ease, background 0.3s ease, border-color 0.3s ease;
                 transition: transform 0.15s ease, box-shadow 0.15s ease, background 0.3s ease, border-color 0.3s ease;
                 cursor: pointer;
@@ -1011,24 +1149,23 @@
             left: 0;
             right: 0;
             z-index: 9500;
-            background: rgba(30, 41, 59, 0.95);
-            -webkit-backdrop-filter: blur(8px);
-            backdrop-filter: blur(8px);
-            border-top: 2px solid #667eea;
-            padding: 10px 16px;
+            background: #fbbf24;
+            border-top: 3px solid #f59e0b;
+            padding: 12px 16px;
             display: flex;
             align-items: center;
             gap: 12px;
-            animation: tutBarSlideUp 0.3s ease-out;
-            box-shadow: 0 -4px 20px rgba(0,0,0,0.3);
+            -webkit-animation: tutBarSlideUp 0.3s ease-out, tutBarPulse 1.5s ease-in-out 0.3s 3;
+            animation: tutBarSlideUp 0.3s ease-out, tutBarPulse 1.5s ease-in-out 0.3s 3;
+            box-shadow: 0 -4px 24px rgba(251, 191, 36, 0.5);
         }
         .tutorial-bar .tut-step-num {
-            background: #667eea;
-            color: white;
+            background: #1e293b;
+            color: #fbbf24;
             font-weight: 700;
-            font-size: 0.75em;
-            min-width: 28px;
-            height: 28px;
+            font-size: 0.85em;
+            min-width: 30px;
+            height: 30px;
             border-radius: 50%;
             display: flex;
             align-items: center;
@@ -1037,25 +1174,21 @@
         }
         .tutorial-bar .tut-bar-text {
             flex: 1;
-            color: #e2e8f0;
-            font-size: 0.88em;
+            color: #1e293b;
+            font-size: 0.92em;
+            font-weight: 600;
             line-height: 1.4;
         }
-        .tutorial-bar .tut-bar-text strong { color: #a5b4fc; }
-        .tutorial-bar .tut-bar-skip {
-            background: none;
-            border: 1px solid #475569;
-            color: #94a3b8;
-            padding: 5px 12px;
-            border-radius: 6px;
-            font-size: 0.75em;
-            cursor: pointer;
-            flex-shrink: 0;
-            -webkit-transition: all 0.2s;
-            transition: all 0.2s;
-        }
-        .tutorial-bar .tut-bar-skip:hover { border-color: #94a3b8; color: #e2e8f0; }
+        .tutorial-bar .tut-bar-text strong { color: #92400e; }
         @keyframes tutBarSlideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+        @-webkit-keyframes tutBarPulse {
+            0%, 100% { box-shadow: 0 -4px 24px rgba(251, 191, 36, 0.5); }
+            50% { box-shadow: 0 -4px 36px rgba(251, 191, 36, 0.9), 0 0 0 4px rgba(251, 191, 36, 0.3); }
+        }
+        @keyframes tutBarPulse {
+            0%, 100% { box-shadow: 0 -4px 24px rgba(251, 191, 36, 0.5); }
+            50% { box-shadow: 0 -4px 36px rgba(251, 191, 36, 0.9), 0 0 0 4px rgba(251, 191, 36, 0.3); }
+        }
 
         /* Blinking highlight ring — yellow/black */
         .tutorial-highlight {
@@ -1225,7 +1358,13 @@
                     </div>
 
                     <!-- Word input area -->
-                    <div class="ws-word" id="wordInput"></div>
+                    <div class="ws-input-row">
+                        <div class="ws-word" id="wordInput"></div>
+                        <button class="ws-inline-submit" id="inlineSubmitBtn" disabled aria-label="Submit">↵</button>
+                    </div>
+
+                    <!-- Reservoir grid -->
+                    <div class="ws-reservoir" id="reservoir"></div>
 
                     <!-- Radar chips (longest → shortest) OR cheat word chips -->
                     <div class="ws-radar" id="wordRadar"></div>
@@ -1237,15 +1376,7 @@
                         <button class="ws-tool-btn too-expensive" id="cheatBtn"><span data-i18n="btnCheat">🔨 Cheat</span> <span class="tool-cost">0×</span></button>
                     </div>
 
-                    <!-- Reservoir grid -->
-                    <div class="ws-reservoir" id="reservoir"></div>
-
-                    <!-- Submit 60% | ⟲ 20% | 🗑 20% -->
-                    <div class="ws-btn-row">
-                        <button class="ws-submit" id="submitBtn" disabled data-i18n="btnSubmitWord">Submit Word</button>
-                        <button class="ws-backspace" id="clearBtn">⟲</button>
-                        <button class="ws-clearall" id="clearAllBtn" data-i18n-title="tipClearAll" title="Clear all tiles"><span class="icon-white">🗑</span></button>
-                    </div>
+                    <!-- Old Submit/Undo/Trash row removed — replaced by inline ↵ and × -->
                 </div>
 
                 <div class="panel" id="panelAchievements">
@@ -1308,7 +1439,7 @@
                 <div class="panel" id="panelGameMenu">
                     <h3 data-i18n="panelGameMenu">⚙️ Game Menu</h3>
                     <div class="controls">
-                        <button class="btn btn-secondary" id="pauseBtn" data-i18n="btnPause">⏸️ Pause</button>
+                        <button class="btn btn-primary" id="newGameBtn" data-i18n="btnNewGame">🔄 New Game</button>
                         <button class="btn btn-danger" id="nukeBtn" data-i18n="btnNuke">💥 Nuke</button>
 
                     </div>
@@ -1324,7 +1455,9 @@
                                 style="flex: 1; padding: 4px 8px; border: 1px solid #ddd; border-radius: 6px; font-size: 0.9em;">
                             <button class="btn btn-primary" id="seedStartBtn" style="padding: 4px 10px; font-size: 0.85em;" data-i18n="btnPlay">Play</button>
                         </div>
-                        <button id="shareBtn" class="btn btn-secondary" style="font-size: 0.8em; margin-top: 6px; width: 100%; display: none;" data-i18n="btnShare">📋 Share this link to play the same sequence of letters</button>
+                        <div id="shareBtn" class="stat stat-primary" style="margin-top: 6px; cursor: pointer; display: none; text-align: center; padding: 8px 10px;">
+                            <div class="stat-label" data-i18n="btnShare">📋 Share this link to play the same sequence of letters</div>
+                        </div>
                     </div>
                 </div>
 
@@ -1336,31 +1469,21 @@
                         <button class="btn btn-secondary" id="speedFastBtn" data-i18n="btnFast">⚡ Fast</button>
                     </div>
                 </div>
-            <div class="game-footer">A creation of Gabriele Morano</div>
+            <div class="game-footer">A creation of <a href="https://morano.it" target="_blank" style="color:inherit;text-decoration:underline">Gabriele Morano</a></div>
         </div>
     </div>
 
     <!-- Mobile FAB -->
     <button class="fab" id="fab" aria-label="Navigate">📝 0/18</button>
 
-    <div class="modal" id="gameOverModal">
-        <div class="modal-content">
-            <h2 data-i18n="gameOverTitle">💔 Game Over</h2>
-            <p id="gameOverMessage"></p>
-            <div class="controls">
-                <button class="btn btn-primary" id="restartFromGameOver" data-i18n="btnRestart">🔄 Start New Game</button>
-            </div>
-        </div>
-    </div>
+    <!-- Game Over modal removed — reuses victoryModal -->
 
     <div class="modal" id="victoryModal">
-        <div class="modal-content">
+        <div class="modal-content" style="position:relative;">
+            <button class="modal-close-btn" id="closeVictory" aria-label="Close">✕</button>
             <h2 id="victoryTitle">🏆 Victory!</h2>
             <p id="victoryMessage"></p>
             <div id="victoryStats" style="text-align: left; margin: 12px 0; font-size: 0.9em; line-height: 1.8;"></div>
-            <div class="controls">
-                <button class="btn btn-primary" id="restartFromVictory" data-i18n="btnRestart">🔄 Start New Game</button>
-            </div>
         </div>
     </div>
 
@@ -1390,13 +1513,12 @@
             panelWeather: "🌩️",
             panelGameMenu: "⚙️ Game Menu",
             panelRainSpeed: "⏱️ Speed",
-            btnSubmitWord: "Submit Word",
             btnClear: "⌫",
             btnHint: "💡 Hint",
             btnClue: "🔍 Clue",
             btnCheat: "🔨 Cheat",
-            btnPause: "⏸️ Pause",
-            btnResume: "▶️ Resume",
+            btnNewGame: "🔄 New Game",
+            confirmNewGame: "Start a new game? Your career stats will be preserved.",
             btnNuke: "💥 Nuke",
             btnExport: "💾 Export",
             btnImport: "📂 Import",
@@ -1406,7 +1528,6 @@
             btnFast: "⚡ Fast",
             btnRestart: "🔄 Start New Game",
             btnNextSeason: "Next Season ▶",
-            tipClearAll: "Clear all tiles",
             tipShuffle: "Shuffle tiles",
             tipResetHint: "Reset hint",
             phPassword: "any word or number",
@@ -1435,8 +1556,8 @@
             msgInvalidSave: "Invalid save file",
             msgSaveReadFail: "Failed to read save file",
             msgSaveExported: "Save exported!",
-            msgGameRestored: "Game restored — tap Resume to continue",
-            msgSaveImported: "Save imported — tap Resume to continue",
+            msgGameRestored: "Game restored",
+            msgSaveImported: "Save imported",
             msgCloseCall: "Close call! Keep building shelter! 🐱",
             msgNoWordsFound: "No words found",
             msgNoWordsAvailable: "No words available",
@@ -1454,11 +1575,12 @@
             gameOverMsg: "Your cat survived {0} days with {1} shelter HP.",
             victoryTitle: "🏆 Victory!",
             victoryMsg: "You've built the shelter to the top! No more room for words — your cat is fully protected!",
-            victoryStatDays: "🗓️ Days survived: {0}",
-            victoryStatCoverage: "🏗️ Coverage: {0}%",
-            victoryStatWords: "📝 Words placed: {0}",
-            victoryStatCatHP: "❤️ Cat HP: {0}",
-            victoryStatShelterHP: "🛡️ Shelter HP: {0}",
+            victoryStatDays: "🗓️ Days survived",
+            victoryStatCoverage: "🏗️ Peak coverage",
+            victoryStatWords: "📝 Words placed",
+            victoryStatLongestH: "↔️ Longest word",
+            victoryStatLongestV: "↕️ Longest vertical",
+            victoryStatNew: "NEW BEST!",
             achXP: "⭐ {0} XP",
             achWordCount: "{0} × {1}-letter {2}",
             achWordSingular: "word",
@@ -1508,7 +1630,12 @@
             tutSkipped: "Tutorial skipped. Good luck! 🐱",
             tutComplete: "You're ready! Protect your cat! 🐱",
             catLookNames: ["Cool Mono","Malware","Silver","Lightning Strike","Vermilion Dusty","Heartbeat","X-Ray","Heartbeat Gold","Berry Jam","Fade In Out","Sky Blue","CRT","Honey","Pulse Ice","Emerald","Solar Eclipse","Inverted","Bioluminescent","Ice","Pulse Crimson","Charcoal","Pulse Red","Ash","Hack","Shadow","Bounce","Purple","Strobe","Tangerine","Inferno","Classic","Pulse Purple","Spin Cat","Corrupt","Pulse Invert","Pulse Spring","Emergency","Static","Blizzard","Pendulum","Throb","Bonfire","Neutron Star","Heartbeat Blue","Float","Sway","Jitter","Glitch","Ribbon","Campfire"],
-            msgCompleteWord: "Fill all slots to complete the word!"
+            msgCompleteWord: "Fill all slots to complete the word!",
+            weatherRainLabel: "🌧 rain",
+            weatherHailLabel: "🧊 hail",
+            weatherLightningLabel: "⚡ lightning",
+            weatherDamageOf: "damage of",
+            weatherCantGrab: "can't be grabbed"
         };
 
         function t(key) {
@@ -1679,7 +1806,7 @@
               title: t('tutSpellTitle'),
               text: t('tutSpellText'),
               trigger: () => gameState.inputSlots.filter(function(s){return s !== null;}).length >= 2 },
-            { id: 4, name: 'submit',    type: 'tooltip', target: '#submitBtn', arrow: 'left',
+            { id: 4, name: 'submit',    type: 'tooltip', target: '#inlineSubmitBtn', arrow: 'left',
               title: t('tutSubmitTitle'),
               text: t('tutSubmitText'),
               trigger: () => gameState.tutorial._wordPlaced },
@@ -1829,7 +1956,9 @@
                         }
                         return 'E';
                     })();
-                    const column = gameRng.nextBelow(GRID_WIDTH);
+                    let column = gameRng.nextBelow(GRID_WIDTH);
+                    // OPT: avoid pole column (15) — shift to 14
+                    if (column === 15) column = 14;
 
                     // 3. Pre-roll zigzag path for lightning (full grid height)
                     let zigzag = null;
@@ -1908,6 +2037,14 @@
 
         // Initialize game
         function initGame() {
+            // OPT: Reset retained grid DOM so it rebuilds on first renderGrid()
+            _gridCells = null;
+            _gridPrev = null;
+            _gridEl = null;
+            _statEls = null;
+            _prevStats = {};
+            _reservoirEl = null;
+            _reservoirCountEl = null;
             // Reset cat overlay state so it picks up fresh look on first render
             var oldWrap = document.getElementById('catOverlayWrap');
             if (oldWrap) oldWrap.remove();
@@ -1924,8 +2061,11 @@
             }
 
             // Place pole at column 15, rows 0 and 1
-            gameState.grid[0][15] = { type: 'pole', letter: '|', hp: Infinity };
-            gameState.grid[1][15] = { type: 'pole', letter: '|', hp: Infinity };
+            gameState.grid[0][15] = { type: 'pole', letter: '💈', hp: Infinity };
+            gameState.grid[1][15] = { type: 'pole', letter: '💈', hp: Infinity };
+            // Place shields at column 15, rows 18-19
+            gameState.grid[18][15] = { type: 'shield', letter: '🛡️', hp: Infinity };
+            gameState.grid[19][15] = { type: 'shield', letter: '🛡️', hp: Infinity };
 
             console.log('Game initialized:', GRID_WIDTH, 'x', GRID_HEIGHT);
 
@@ -1964,6 +2104,9 @@
                 gameState.fullShelterCount = career.fullShelterCount || 0;
                 gameState.stacksMax = career.stacksMax || 0;
                 gameState.peakCoverage = career.peakCoverage || 0;
+                gameState.careerMaxSessionWords = career.careerMaxSessionWords || 0;
+                gameState.careerLongestH = career.careerLongestH || 0;
+                gameState.careerLongestV = career.careerLongestV || 0;
                 gameState.treats = career.treats || 0;
                 gameState.maxLifeDays = career.maxLifeDays || 0;
                 gameState.xp = career.xp || 0;
@@ -1977,6 +2120,9 @@
                 gameState.fullShelterCount = 0;
                 gameState.stacksMax = 0;
                 gameState.peakCoverage = 0;
+                gameState.careerMaxSessionWords = 0;
+                gameState.careerLongestH = 0;
+                gameState.careerLongestV = 0;
                 gameState.treats = 0;
                 gameState.maxLifeDays = 0;
                 gameState.xp = 0;
@@ -1989,6 +2135,19 @@
             gameState.weatherCycleTick = 0;      // current tick within storm/calm cycle
             gameState.isStorming = true;          // start in storm phase
             gameState.seasonTransition = false;   // true = between seasons, waiting for player
+            gameState.victoryPhase = null;         // null | 'shielding' | 'clearing' | 'done'
+            gameState.weatherIntroShown = gameState.weatherIntroShown || { hail: 0, lightning: 0 };
+            // Session-specific counters (reset each game)
+            gameState.sessionPeakCoverage = 0;
+            gameState.sessionWordsPlaced = 0;
+            gameState.sessionLongestH = 0;
+            gameState.sessionLongestV = 0;
+            // Snapshot career bests at session start (for NEW BEST detection at victory)
+            gameState._startCareerDays = gameState.maxLifeDays || 0;
+            gameState._startCareerCov = gameState.peakCoverage || 0;
+            gameState._startCareerWords = gameState.careerMaxSessionWords || 0;
+            gameState._startCareerLH = gameState.careerLongestH || 0;
+            gameState._startCareerLV = gameState.careerLongestV || 0;
             gameState.catMood = null;
             gameState.catIdleTicks = 0;
             gameState.catHealTicks = 0;
@@ -2017,7 +2176,7 @@
             gameState.cheatsActive = false;
             const existingOverlay = document.getElementById('nextSeasonOverlay');
             if (existingOverlay) existingOverlay.remove();
-            document.getElementById('pauseBtn').textContent = t('btnPause');
+            // pauseBtn removed — newGameBtn is static
 
             // Show share button and populate seed input
             var shareBtn = document.getElementById('shareBtn');
@@ -2087,6 +2246,15 @@
                     zigzagStep: 0             // current step in zigzag path
                 };
                 gameState.fallingLetters.push(fallingLetter);
+
+                // Weather intro overlay — first 3 times per type, after tutorial
+                if (pre.type !== 'rain' && !gameState.tutorial.enabled) {
+                    var shown = gameState.weatherIntroShown[pre.type] || 0;
+                    if (shown < 3) {
+                        gameState.weatherIntroShown[pre.type] = shown + 1;
+                        showWeatherIntro(pre.type);
+                    }
+                }
             }
         }
 
@@ -2230,7 +2398,7 @@
         function updateTutorialBlinks() {
             const gridEl = document.getElementById('gameGrid');
             const resEl = document.getElementById('reservoir');
-            const subEl = document.getElementById('submitBtn');
+            const subEl = document.getElementById('inlineSubmitBtn');
             if (!gridEl) return;
 
             if (!gameState.tutorial || !gameState.tutorial.enabled) {
@@ -2363,93 +2531,107 @@
             }
         }
 
-        function renderGrid() {
-            const gridEl = document.getElementById('gameGrid');
-            applySeasonTheme();
-            gridEl.innerHTML = '';
+        // --- OPT: Retained grid DOM — create cells once, update only diffs ---
+        var _gridCells = null;   // [y][x] → DOM element
+        var _gridPrev = null;    // [y][x] → {cls, text, style} cached state
+        var _gridEl = null;      // cached #gameGrid reference
 
-            // Render from top to bottom (rows 0-19 visible; row 20 is hidden spawn buffer)
-            for (let y = GRID_HEIGHT - 2; y >= 0; y--) {
-                for (let x = 0; x < GRID_WIDTH; x++) {
-                    const cell = document.createElement('div');
+        function _initGridDOM() {
+            _gridEl = document.getElementById('gameGrid');
+            _gridEl.innerHTML = '';
+            _gridCells = [];
+            _gridPrev = [];
+            for (var y = GRID_HEIGHT - 2; y >= 0; y--) {
+                _gridCells[y] = [];
+                _gridPrev[y] = [];
+                for (var x = 0; x < GRID_WIDTH; x++) {
+                    var cell = document.createElement('div');
                     cell.className = 'cell';
                     cell.dataset.x = x;
                     cell.dataset.y = y;
+                    _gridEl.appendChild(cell);
+                    _gridCells[y][x] = cell;
+                    _gridPrev[y][x] = { cls: 'cell', text: '', style: '' };
+                }
+            }
+        }
+
+        function renderGrid() {
+            if (!_gridCells) _initGridDOM();
+            applySeasonTheme();
+
+            // OPT: Build falling-letter position map for O(1) lookup
+            var flMap = new Map();
+            for (var fi = 0; fi < gameState.fallingLetters.length; fi++) {
+                var fl = gameState.fallingLetters[fi];
+                flMap.set(fl.y * GRID_WIDTH + fl.x, fl);
+            }
+
+            var resBelow = reservoirCount() < RESERVOIR_CAPACITY;
+
+            for (var y = GRID_HEIGHT - 2; y >= 0; y--) {
+                for (var x = 0; x < GRID_WIDTH; x++) {
+                    var cls = 'cell';
+                    var text = '';
+                    var style = '';
 
                     if (x === gameState.catPosition.x && y === gameState.catPosition.y) {
-                        // Placeholder cell — actual cat is rendered by the persistent overlay
-                        cell.classList.add('cat');
+                        cls = 'cell cat';
+                    } else if (x === HEALTH_STATION_X && y === 0 && !gameState.floorLetters.has(x)) {
+                        cls = 'cell health-station';
+                        text = '🏥';
+                    } else if (y === 0 && gameState.floorLetters.has(x)) {
+                        var flr = gameState.floorLetters.get(x);
+                        cls = 'cell falling-letter';
+                        text = flr.letter;
+                        style = 'opacity:' + Math.max(0.2, flr.hp / FLOOR_LETTER_MAX_HP).toFixed(2);
                     } else {
-
-                    // Health station at x=0 y=0 (when cat is not here and no floor letter)
-                    if (x === HEALTH_STATION_X && y === 0 && !gameState.floorLetters.has(x)) {
-                        cell.textContent = '🏥';
-                        cell.classList.add('health-station');
-                    }
-                    // Check for floor letters
-                    else if (y === 0 && gameState.floorLetters.has(x)) {
-                        const fl = gameState.floorLetters.get(x);
-                        cell.classList.add('falling-letter');
-                        cell.textContent = fl.letter;
-                        cell.style.opacity = Math.max(0.2, fl.hp / FLOOR_LETTER_MAX_HP).toFixed(2);
-                    }
-                    // Check for falling letters
-                    else {
-                        const fallingLetter = gameState.fallingLetters.find(fl => fl.x === x && fl.y === y);
-
+                        var fallingLetter = flMap.get(y * GRID_WIDTH + x);
                         if (fallingLetter) {
-                            cell.classList.add('falling-letter');
-                            cell.textContent = fallingLetter.letter;
-                            const lt = LETTER_TYPES[fallingLetter.type] || LETTER_TYPES.rain;
-                            cell.style.cssText += `background: ${lt.bg} !important; background-image: none !important; color: ${lt.color} !important;`;
-                            if (fallingLetter.type === 'rain' && reservoirCount() < RESERVOIR_CAPACITY) {
-                                cell.style.cursor = 'pointer';
+                            cls = 'cell falling-letter';
+                            text = fallingLetter.letter;
+                            var lt = LETTER_TYPES[fallingLetter.type] || LETTER_TYPES.rain;
+                            style = 'background:' + lt.bg + ' !important;background-image:none !important;color:' + lt.color + ' !important;';
+                            if (fallingLetter.type === 'rain' && resBelow) {
+                                style += 'cursor:pointer;';
                             }
                         } else {
-                            // Check grid content
-                            const gridCell = gameState.grid[y][x];
-
+                            var gridCell = gameState.grid[y][x];
                             if (gridCell) {
                                 if (gridCell.type === 'brick') {
-                                    cell.classList.add('brick');
-                                    cell.textContent = gridCell.letter;
-
-                                    // Bonus color revert: if HP dropped to normal max, clear bonus
+                                    text = gridCell.letter;
                                     if (gridCell.bonus && gridCell.hp <= HP_PER_LETTER) {
                                         gridCell.bonus = null;
                                         gridCell.maxHP = HP_PER_LETTER;
                                     }
-
-                                    // HP percent for bar and color thresholds
-                                    const hpPercent = gridCell.hp / (gridCell.maxHP || HP_PER_LETTER);
-
-                                    // Apply bonus visual or standard HP colors
-                                    if (gridCell.bonus === 'both') {
-                                        cell.classList.add('both-bonus');
-                                    } else if (gridCell.bonus === 'row') {
-                                        cell.classList.add('row-bonus');
-                                    } else if (gridCell.bonus === 'col') {
-                                        cell.classList.add('col-bonus');
-                                    } else {
-                                        if (hpPercent < 0.33) cell.classList.add('red');
-                                        else if (hpPercent < 0.66) cell.classList.add('yellow');
-                                    }
-
-                                    // HP bar removed — brick color already indicates health
-                                } else if (gridCell.type === 'pole') {
-                                    cell.classList.add('pole');
-                                    cell.textContent = '|';
+                                    var hpPercent = gridCell.hp / (gridCell.maxHP || HP_PER_LETTER);
+                                    if (gridCell.bonus === 'both') cls = 'cell brick both-bonus';
+                                    else if (gridCell.bonus === 'row') cls = 'cell brick row-bonus';
+                                    else if (gridCell.bonus === 'col') cls = 'cell brick col-bonus';
+                                    else if (hpPercent < 0.33) cls = 'cell brick red';
+                                    else if (hpPercent < 0.66) cls = 'cell brick yellow';
+                                    else if (hpPercent < 1.0) cls = 'cell brick worn';
+                                    else cls = 'cell brick';
+                                } else if (gridCell.type === 'pole' || gridCell.type === 'shield') {
+                                    cls = 'cell pole';
+                                    text = gridCell.letter;
                                 }
                             }
                         }
                     }
-                    } // end non-cat else
 
-                    gridEl.appendChild(cell);
+                    // OPT: Only touch DOM when state actually changed
+                    var prev = _gridPrev[y][x];
+                    if (prev.cls !== cls || prev.text !== text || prev.style !== style) {
+                        var cell = _gridCells[y][x];
+                        if (prev.cls !== cls) { cell.className = cls; prev.cls = cls; }
+                        if (prev.text !== text) { cell.textContent = text; prev.text = text; }
+                        if (prev.style !== style) { cell.style.cssText = style; prev.style = style; }
+                    }
                 }
             }
 
-            _updateCatOverlay(gridEl);
+            _updateCatOverlay(_gridEl);
             updateTutorialBlinks();
 
             // Create coverage border SVG once grid has dimensions
@@ -2529,19 +2711,33 @@
             gameState.reservoirReserved[index] = true;
         }
 
+        // OPT: Event delegation for reservoir — single listener instead of per-tile closures
+        var _reservoirDelegated = false;
+        var _reservoirEl = null;
+        var _reservoirCountEl = null;
+
         // Render reservoir
         function renderReservoir() {
-            const reservoirEl = document.getElementById('reservoir');
-            const countEl = document.getElementById('reservoirCount');
+            if (!_reservoirEl) {
+                _reservoirEl = document.getElementById('reservoir');
+                _reservoirCountEl = document.getElementById('reservoirCount');
+                // OPT: Single delegated click handler
+                if (!_reservoirDelegated) {
+                    _reservoirEl.addEventListener('click', function(e) {
+                        var tile = e.target.closest('.letter-tile[data-index]');
+                        if (tile) selectLetter(Number(tile.dataset.index));
+                    });
+                    _reservoirDelegated = true;
+                }
+            }
 
-            reservoirEl.innerHTML = '';
+            _reservoirEl.innerHTML = '';
 
             // Compute which reservoir letters should glow (hinted positions whose letter is still in reservoir)
             var hintGlowNeeded = {};
             if (gameState.hintTargetWord && gameState.hintedPositions) {
                 for (var hp = 0; hp < gameState.hintedPositions.length; hp++) {
                     var pos = gameState.hintedPositions[hp];
-                    // Only glow if position not already filled by Clue or user in inputSlots
                     if (gameState.inputSlots[pos]) continue;
                     var ch = gameState.hintTargetWord[pos].toUpperCase();
                     hintGlowNeeded[ch] = (hintGlowNeeded[ch] || 0) + 1;
@@ -2549,7 +2745,6 @@
             }
 
             // Render tiles: letters at their positions, nulls as empty gaps
-            var maxIdx = Math.max(gameState.reservoir.length, RESERVOIR_CAPACITY);
             for (var ri = 0; ri < RESERVOIR_CAPACITY; ri++) {
                 var letter = ri < gameState.reservoir.length ? gameState.reservoir[ri] : null;
                 if (letter !== null) {
@@ -2557,23 +2752,21 @@
                     tile.className = 'letter-tile';
                     tile.textContent = letter;
                     tile.dataset.index = ri;
-                    // Apply hint glow by letter matching
                     var upper = letter.toUpperCase();
                     if (hintGlowNeeded[upper] && hintGlowNeeded[upper] > 0) {
                         tile.classList.add('hinted');
                         hintGlowNeeded[upper]--;
                     }
-                    tile.addEventListener('click', (function(idx) { return function() { selectLetter(idx); }; })(ri));
-                    reservoirEl.appendChild(tile);
+                    _reservoirEl.appendChild(tile);
                 } else {
                     var empty = document.createElement('div');
                     empty.className = 'letter-tile empty-slot';
-                    reservoirEl.appendChild(empty);
+                    _reservoirEl.appendChild(empty);
                 }
             }
 
             var rCount = reservoirCount();
-            countEl.textContent = rCount + '/' + RESERVOIR_CAPACITY;
+            _reservoirCountEl.textContent = rCount + '/' + RESERVOIR_CAPACITY;
             var rStatEl = document.getElementById('reservoirStat');
             var rStatBox = document.getElementById('statReservoirBox');
             if (rStatEl) {
@@ -2620,6 +2813,19 @@
                     if (data) {
                         slot.textContent = data.letter;
                         slot.classList.add('filled', data.source);
+                        if (data.source === 'user') {
+                            slot.dataset.idx = i;
+                            slot.style.cursor = 'pointer';
+                            slot.addEventListener('click', function() {
+                                var idx = parseInt(this.dataset.idx);
+                                var sd = gameState.inputSlots[idx];
+                                if (!sd) return;
+                                reservoirReturnToSlot(sd.letter, sd.reservoirIndex);
+                                gameState.inputSlots[idx] = null;
+                                renderReservoir();
+                                renderWordInput();
+                            });
+                        }
                     }
                     el.appendChild(slot);
                 }
@@ -2631,15 +2837,47 @@
                     var slot = document.createElement('div');
                     slot.className = 'input-slot filled user';
                     slot.textContent = data.letter;
+                    slot.dataset.idx = i;
+                    slot.style.cursor = 'pointer';
+                    slot.addEventListener('click', function() {
+                        var idx = parseInt(this.dataset.idx);
+                        var sd = gameState.inputSlots[idx];
+                        if (!sd) return;
+                        reservoirReturnToSlot(sd.letter, sd.reservoirIndex);
+                        gameState.inputSlots.splice(idx, 1);
+                        renderReservoir();
+                        renderWordInput();
+                    });
                     el.appendChild(slot);
                 }
             }
 
+            // Re-append the × clear button (survives innerHTML wipe)
+            var clearX = document.getElementById('clearXBtn');
+            if (!clearX) {
+                clearX = document.createElement('button');
+                clearX.className = 'ws-clear-x';
+                clearX.id = 'clearXBtn';
+                clearX.setAttribute('aria-label', 'Clear all');
+                clearX.textContent = '✕';
+                clearX.addEventListener('click', function() {
+                    for (var i = 0; i < gameState.inputSlots.length; i++) {
+                        if (gameState.inputSlots[i]) {
+                            var slotData = gameState.inputSlots[i];
+                            reservoirReturnToSlot(slotData.letter, slotData.reservoirIndex);
+                        }
+                    }
+                    gameState.inputSlots = [];
+                    clearHintHighlights();
+                    renderReservoir();
+                });
+            }
+            el.appendChild(clearX);
+
             var filledCount = gameState.inputSlots.filter(function(s) { return s !== null; }).length;
-            var hasUserTile = gameState.inputSlots.some(function(s) { return s !== null && s.source === 'user'; });
-            document.getElementById('submitBtn').disabled = filledCount < 3;
-            document.getElementById('clearBtn').disabled = !hasUserTile;
-            document.getElementById('clearAllBtn').disabled = filledCount === 0;
+            var submitDisabled = filledCount < 3;
+            document.getElementById('inlineSubmitBtn').disabled = submitDisabled;
+            el.classList.toggle('has-letters', filledCount > 0);
         }
 
         // Select letter: splice from reservoir, place in input
@@ -3325,6 +3563,10 @@
             gameState.wordsPlacedByLength[wordLen] = prevCount + 1;
             const isFirstOfLength = prevCount === 0;
 
+            // Session tracking
+            gameState.sessionWordsPlaced = (gameState.sessionWordsPlaced || 0) + 1;
+            if (wordLen > (gameState.sessionLongestH || 0)) gameState.sessionLongestH = wordLen;
+
             // Treats: triangular formula for word length
             const wordTreats = wordLen * (wordLen - 1) * 10;
             gameState.treats += wordTreats;
@@ -3435,9 +3677,13 @@
                 checkTutorialTrigger();
             }
 
-            // Check victory condition (grid fully built)
-            if (!gameState.tutorial.enabled && checkVictory()) {
-                setTimeout(showVictory, 500); // slight delay for visual feedback
+            // Victory trigger: dry-run a 3-letter placement (smallest possible word).
+            // If it would land on row 18+ or has no placement at all, rows 2-17 are full.
+            if (!gameState.tutorial.enabled && !gameState.victoryPhase) {
+                var probe = findPlacement('AAA');
+                if (!probe || probe.y >= 18) {
+                    startVictorySequence();
+                }
             }
         }
 
@@ -3551,6 +3797,7 @@
                                 if (!gameState._verticalWordsFound.has(vKey)) {
                                     gameState._verticalWordsFound.add(vKey);
                                     gameState.verticalWordsByLength[wLen] = (gameState.verticalWordsByLength[wLen] || 0) + 1;
+                                    if (wLen > (gameState.sessionLongestV || 0)) gameState.sessionLongestV = wLen;
                                 }
                             }
                         }
@@ -3675,8 +3922,9 @@
                 border: 2px solid #fbbf24;
                 pointer-events: none;
                 z-index: 9999;
-                white-space: nowrap;
+                white-space: normal;
                 text-align: center;
+                max-width: 85vw;
                 opacity: 0;
             `;
 
@@ -3712,6 +3960,58 @@
                 requestAnimationFrame(animateBanner);
             }
             requestAnimationFrame(animateBanner);
+        }
+
+        // --- Weather intro overlays (first 3 times per type) ---
+        var _weatherOverlays = {};
+        var _weatherTimers = {};
+
+        function showWeatherIntro(type) {
+            // Remove existing of same type
+            if (_weatherOverlays[type]) { _weatherOverlays[type].remove(); delete _weatherOverlays[type]; }
+            if (_weatherTimers[type]) { clearTimeout(_weatherTimers[type]); delete _weatherTimers[type]; }
+
+            var gridContainer = document.querySelector('.grid-container');
+            if (!gridContainer) return;
+
+            var typeLabels = {
+                hail: t('weatherHailLabel'),
+                lightning: t('weatherLightningLabel'),
+                rain: t('weatherRainLabel')
+            };
+            var mult = type === 'hail' ? '3×' : '7×';
+            var letter = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'[Math.floor(Math.random() * 26)];
+
+            var div = document.createElement('div');
+            div.className = 'weather-intro pos-' + type;
+            div.innerHTML =
+                '<div class="weather-intro-row">' +
+                    '<span class="weather-tile">' +
+                        '<span class="weather-letter ' + type + '">' + letter + '</span>' +
+                        '<span class="weather-tile-label">' + typeLabels[type] + '</span>' +
+                    '</span>' +
+                    '<span>' + mult + ' ' + t('weatherDamageOf') + '</span>' +
+                    '<span class="weather-tile">' +
+                        '<span class="weather-letter rain">' + letter + '</span>' +
+                        '<span class="weather-tile-label">' + typeLabels.rain + '</span>' +
+                    '</span>' +
+                '</div>' +
+                '<div class="weather-intro-footer">' + t('weatherCantGrab') + '</div>';
+
+            gridContainer.appendChild(div);
+            _weatherOverlays[type] = div;
+
+            _weatherTimers[type] = setTimeout(function() {
+                var el = _weatherOverlays[type];
+                if (el) {
+                    el.style.transition = 'opacity 0.5s';
+                    el.style.webkitTransition = 'opacity 0.5s';
+                    el.style.opacity = '0';
+                    setTimeout(function() {
+                        if (_weatherOverlays[type]) { _weatherOverlays[type].remove(); delete _weatherOverlays[type]; }
+                    }, 500);
+                }
+            }, 4000);
         }
 
         var _msgTimer = null;
@@ -3909,8 +4209,9 @@
             if (!btn || !stat) return;
 
             if (_delayRemaining > 0) {
-                // Active countdown
-                btn.className = 'stat stat-delay stat-tall delay-active';
+                // Active countdown — red when ≤5s
+                var delayCls = _delayRemaining <= 5000 ? 'delay-critical' : 'delay-active';
+                btn.className = 'stat stat-delay stat-tall ' + delayCls;
                 stat.textContent = Math.ceil(_delayRemaining / 1000) + 's';
                 return;
             }
@@ -3949,48 +4250,86 @@
             }, 200);
         }
 
-        function updateStats() {
-            document.getElementById('lifeDays').textContent = gameState.lifeDays;
+        // OPT: Cache DOM element references for updateStats (called 40×/sec)
+        var _statEls = null;
+        function _getStatEls() {
+            if (!_statEls) {
+                _statEls = {
+                    lifeDays: document.getElementById('lifeDays'),
+                    catHP: document.getElementById('catHP'),
+                    seasonInfo: document.getElementById('seasonInfo'),
+                    floodLevel: document.getElementById('floodLevel'),
+                    shelterHP: document.getElementById('shelterHP'),
+                    coverageStat: document.getElementById('coverageStat'),
+                    coverageDetail: document.getElementById('coverageDetail'),
+                    treats: document.getElementById('treats'),
+                    xpDisplay: document.getElementById('xpDisplay')
+                };
+            }
+            return _statEls;
+        }
+        // OPT: Cache previous stat values to skip unchanged DOM writes
+        var _prevStats = {};
 
-            const catHPEl = document.getElementById('catHP');
-            catHPEl.textContent = Math.max(0, gameState.catHP);
-            catHPEl.className = 'stat-value';
-            if (gameState.catHP <= 0) {
-                catHPEl.classList.add('critical');
-            } else if (gameState.catHP <= 9) {
-                catHPEl.classList.add('warning');
-            } else {
-                catHPEl.classList.add('healthy');
+        function updateStats() {
+            var els = _getStatEls();
+
+            if (_prevStats.lifeDays !== gameState.lifeDays) {
+                els.lifeDays.textContent = gameState.lifeDays;
+                _prevStats.lifeDays = gameState.lifeDays;
             }
 
-            const seasonInfo = getSeasonInfo();
-            document.getElementById('seasonInfo').textContent = seasonInfo.emoji + ' ' + gameState.seasonDay + '/' + SEASON_LENGTH;
+            var catHPVal = Math.max(0, gameState.catHP);
+            var catHPCls = gameState.catHP <= 0 ? 'stat-value critical' : gameState.catHP <= 9 ? 'stat-value warning' : 'stat-value healthy';
+            if (_prevStats.catHP !== catHPVal || _prevStats.catHPCls !== catHPCls) {
+                els.catHP.textContent = catHPVal;
+                els.catHP.className = catHPCls;
+                _prevStats.catHP = catHPVal;
+                _prevStats.catHPCls = catHPCls;
+            }
+
+            var seasonInfo = getSeasonInfo();
+            var seasonText = seasonInfo.emoji + ' ' + gameState.seasonDay + '/' + SEASON_LENGTH;
+            if (_prevStats.season !== seasonText) {
+                els.seasonInfo.textContent = seasonText;
+                _prevStats.season = seasonText;
+            }
 
             gameState.floodLevel = gameState.floorLetters.size;
-            document.getElementById('floodLevel').textContent = gameState.floodLevel;
+            if (_prevStats.flood !== gameState.floodLevel) {
+                els.floodLevel.textContent = gameState.floodLevel;
+                _prevStats.flood = gameState.floodLevel;
+            }
 
-            let totalHP = 0;
-            gameState.grid.forEach(row => {
-                row.forEach(cell => {
-                    if (cell && cell.type === 'brick') {
-                        totalHP += cell.hp;
-                    }
-                });
-            });
+            var totalHP = 0;
+            for (var gy = 0; gy < GRID_HEIGHT; gy++) {
+                var row = gameState.grid[gy];
+                for (var gx = 0; gx < GRID_WIDTH; gx++) {
+                    var gc = row[gx];
+                    if (gc && gc.type === 'brick') totalHP += gc.hp;
+                }
+            }
             gameState.shelterHP = Math.floor(totalHP);
-            document.getElementById('shelterHP').textContent = gameState.shelterHP.toLocaleString();
+            if (_prevStats.shelterHP !== gameState.shelterHP) {
+                els.shelterHP.textContent = gameState.shelterHP.toLocaleString();
+                _prevStats.shelterHP = gameState.shelterHP;
+            }
 
             // Coverage: count bricks with HP>0 in rows 2-17 (16 rows × 16 cols = 256)
             var coverageCount = 0;
             var COVERAGE_TOTAL = 256;
             for (var cy = 2; cy <= 17; cy++) {
+                var crow = gameState.grid[cy];
                 for (var cx = 0; cx < GRID_WIDTH; cx++) {
-                    var cc = gameState.grid[cy][cx];
+                    var cc = crow[cx];
                     if (cc && cc.type === 'brick' && cc.hp > 0) coverageCount++;
                 }
             }
             var coveragePct = Math.round((coverageCount / COVERAGE_TOTAL) * 100);
             var prevPeakInt = Math.floor(gameState.peakCoverage || 0);
+            if (coveragePct > (gameState.sessionPeakCoverage || 0)) {
+                gameState.sessionPeakCoverage = coveragePct;
+            }
             if (coveragePct > (gameState.peakCoverage || 0)) {
                 gameState.peakCoverage = coveragePct;
             }
@@ -3998,18 +4337,52 @@
             if (newPeakInt > prevPeakInt) {
                 showCoverageOverlay(newPeakInt);
             }
-            // Update coverage border trace to peak coverage
-            _updateCovBorder(gameState.peakCoverage || 0);
+            // OPT: Only update coverage border when peak or season changes
+            var _curPeak = gameState.peakCoverage || 0;
+            if (_prevStats.peakCov !== _curPeak || _prevStats.seasonIdx !== gameState.seasonIndex) {
+                _updateCovBorder(_curPeak);
+                _prevStats.peakCov = _curPeak;
+                _prevStats.seasonIdx = gameState.seasonIndex;
+            }
 
-            var covStatEl = document.getElementById('coverageStat');
-            if (covStatEl) covStatEl.textContent = coveragePct + '%';
-            var covDetailEl = document.getElementById('coverageDetail');
-            if (covDetailEl) covDetailEl.textContent = coverageCount + '/' + COVERAGE_TOTAL;
+            if (_prevStats.covPct !== coveragePct) {
+                if (els.coverageStat) els.coverageStat.textContent = coveragePct + '%';
+                _prevStats.covPct = coveragePct;
+            }
+            if (_prevStats.covCount !== coverageCount) {
+                if (els.coverageDetail) els.coverageDetail.textContent = coverageCount + '/' + COVERAGE_TOTAL;
+                _prevStats.covCount = coverageCount;
+            }
 
-            document.getElementById('treats').textContent = gameState.treats;
-            document.getElementById('xpDisplay').textContent = (gameState.xp || 0).toLocaleString();
+            if (_prevStats.treats !== gameState.treats) {
+                els.treats.textContent = gameState.treats;
+                _prevStats.treats = gameState.treats;
+            }
+            var xpVal = gameState.xp || 0;
+            if (_prevStats.xp !== xpVal) {
+                els.xpDisplay.textContent = xpVal.toLocaleString();
+                _prevStats.xp = xpVal;
+            }
             updateTreatButtons();
             updateDelayButton();
+
+            // Reservoir stat color states
+            var resBox = document.getElementById('statReservoirBox');
+            if (resBox) {
+                var rCount = reservoirCount();
+                var resCls = 'stat stat-mobile-hide-reservoir';
+                if (rCount >= RESERVOIR_CAPACITY) resCls += ' stat-danger';
+                else if (rCount >= 14) resCls += ' stat-warn';
+                if (resBox.className !== resCls) resBox.className = resCls;
+            }
+            // Season stat color state
+            var seaBox = document.querySelector('.stat-mobile-hide-season');
+            if (seaBox) {
+                var dLeft = SEASON_LENGTH - gameState.seasonDay;
+                var seaCls = 'stat stat-mobile-hide-season';
+                if (dLeft <= 0) seaCls += ' stat-danger';
+                if (seaBox.className !== seaCls) seaBox.className = seaCls;
+            }
         }
 
         // Update weather forecast
@@ -4091,6 +4464,7 @@
 
         // Move cat AI — priority: storm dodge > heal > idle wander
         function moveCat() {
+            if (!gameState.catPosition) gameState.catPosition = { x: 14, y: 0 };
             const currentX = gameState.catPosition.x;
             const floodLine = getFloodLine();
 
@@ -4257,6 +4631,7 @@
 
         // Advance to the next season (called by button click)
         function advanceToNextSeason() {
+            gameState.isPaused = false;
             gameState.seasonDay = 1;
             gameState.seasonIndex = (gameState.seasonIndex + 1) % 4;
             // New year when cycling back to Spring (index 0)
@@ -4267,6 +4642,9 @@
             gameState.weatherCycleTick = 0;
             gameState.isStorming = true;
             gameState.seasonTransition = false;
+            gameState.catPosition = { x: 14, y: 0 };
+            gameState.catHealTicks = 0;
+            gameState.victoryPhase = null;
             clearCatMood();
 
             // Pre-roll next season
@@ -4277,16 +4655,17 @@
 
             const overlay = document.getElementById('nextSeasonOverlay');
             if (overlay) overlay.remove();
+            // Ensure game loop is running (may have been lost during reload)
+            if (!gameState.gameLoopId) startGameLoop();
             updateWeatherForecast();
             updateStats();
             autoSave();
         }
 
-        // Toggle pause
+        // Toggle pause (kept for keyboard shortcut / programmatic use)
         function togglePause() {
             if (gameState.tutorial.enabled && gameState.tutorial.step > 0 && gameState.tutorial.step < 6) return;
             gameState.isPaused = !gameState.isPaused;
-            document.getElementById('pauseBtn').textContent = gameState.isPaused ? t('btnResume') : t('btnPause');
         }
 
         // ================================================================
@@ -4384,10 +4763,13 @@
             bar.id = 'tutTooltipEl';
             bar.className = 'tutorial-bar';
             bar.innerHTML = `<span class="tut-step-num">${step.id}</span>` +
-                `<span class="tut-bar-text"><strong>${step.title}</strong> ${step.text}</span>` +
-                `<button class="tut-bar-skip" id="tutSkipBtnFloat">${t('tutBtnSkip')}</button>`;
+                `<span class="tut-bar-text"><strong>${step.title}</strong> ${step.text}</span>`;
             document.body.appendChild(bar);
-            bar.querySelector('#tutSkipBtnFloat').addEventListener('click', skipTutorial);
+            // Re-trigger pulse animation by forcing reflow
+            bar.style.animation = 'none';
+            bar.offsetHeight; // force reflow
+            bar.style.animation = '';
+            bar.style.webkitAnimation = '';
         }
 
         function checkTutorialTrigger() {
@@ -4416,6 +4798,7 @@
             gameState.letterDescentInterval = SPEED_NORMAL;
             updateSpeedButtons(SPEED_NORMAL);
             localStorage.setItem(TUTORIAL_KEY, '1');
+            gameState.weatherIntroShown = { hail: 3, lightning: 3 };
             showMessage(t('tutSkipped'), 'info');
             setTimeout(function() {
                 var ga = document.querySelector('.game-area');
@@ -4449,12 +4832,59 @@
         });
 
         // Game loop
+        // Auto-pause when page goes to background (phone call, app switch, lock screen)
+        var _wasPausedBeforeHidden = false;
+        var _gameReady = false; // gate: don't auto-pause until game is running
+        document.addEventListener('visibilitychange', function() {
+            if (!_gameReady) return;
+            if (!gameState.gameLoopId) return; // no game loop = nothing to pause
+            if (document.hidden) {
+                _wasPausedBeforeHidden = gameState.isPaused;
+                gameState.isPaused = true;
+            } else {
+                if (!_wasPausedBeforeHidden) {
+                    gameState.isPaused = false;
+                }
+            }
+        });
+
         function startGameLoop() {
             gameState.gameLoopId = setInterval(() => {
                 if (gameState.isPaused) return;
 
                 // During season transition, skip spawning and time progression
                 if (gameState.seasonTransition) return;
+
+                // --- Victory clearing phase: letters still fall, no spawning, no day advance ---
+                if (gameState.victoryPhase === 'clearing' || gameState.victoryPhase === 'shielding') {
+                    // Keep letters descending during victory sequence
+                    gameState.letterDescentTimer += TICK_RATE;
+                    if (gameState.letterDescentTimer >= gameState.letterDescentInterval) {
+                        updateFallingLetters();
+                        moveCat();
+                        // Decay floor letters
+                        for (const [x, fl] of gameState.floorLetters) {
+                            fl.hp -= FLOOR_LETTER_DECAY;
+                            if (fl.hp <= 0) gameState.floorLetters.delete(x);
+                        }
+                        gameState.letterDescentTimer = 0;
+                    }
+                    renderGrid();
+                    updateStats();
+                    // During clearing: check if cat died
+                    if (gameState.catHP <= 0) {
+                        gameState.victoryPhase = null;
+                        gameOver();
+                        return;
+                    }
+                    // During clearing: all letters gone → victory!
+                    // Floor letters are harmless — only wait for falling letters
+                    if (gameState.victoryPhase === 'clearing' && gameState.fallingLetters.length === 0) {
+                        gameState.victoryPhase = 'done';
+                        showVictory();
+                    }
+                    return;
+                }
 
                 // Spawn letters at configurable interval (only during storm phase)
                 // Skip spawn and descent when delay is active
@@ -4556,6 +4986,9 @@
                 maxLifeDays: Math.max(prev.maxLifeDays || 0, gameState.maxLifeDays || 0, gameState.lifeDays),
                 stacksMax: Math.max(prev.stacksMax || 0, gameState.stacksMax),
                 peakCoverage: Math.max(prev.peakCoverage || 0, gameState.peakCoverage || 0),
+                careerMaxSessionWords: Math.max(prev.careerMaxSessionWords || 0, gameState.careerMaxSessionWords || 0, gameState.sessionWordsPlaced || 0),
+                careerLongestH: Math.max(prev.careerLongestH || 0, gameState.careerLongestH || 0, gameState.sessionLongestH || 0),
+                careerLongestV: Math.max(prev.careerLongestV || 0, gameState.careerLongestV || 0, gameState.sessionLongestV || 0),
                 fullShelterCount: Math.max(prev.fullShelterCount || 0, gameState.fullShelterCount),
                 xp: Math.max(prev.xp || 0, gameState.xp || 0),
                 catXP: gameState.catXP || 0,
@@ -4641,6 +5074,19 @@
                 catXP: gameState.catXP || 0,
                 catLevel: gameState.catLevel || 0,
                 activeCatLook: gameState.activeCatLook != null ? gameState.activeCatLook : -1,
+                weatherIntroShown: gameState.weatherIntroShown,
+                sessionPeakCoverage: gameState.sessionPeakCoverage || 0,
+                sessionWordsPlaced: gameState.sessionWordsPlaced || 0,
+                sessionLongestH: gameState.sessionLongestH || 0,
+                sessionLongestV: gameState.sessionLongestV || 0,
+                careerMaxSessionWords: gameState.careerMaxSessionWords || 0,
+                careerLongestH: gameState.careerLongestH || 0,
+                careerLongestV: gameState.careerLongestV || 0,
+                _startCareerDays: gameState._startCareerDays || 0,
+                _startCareerCov: gameState._startCareerCov || 0,
+                _startCareerWords: gameState._startCareerWords || 0,
+                _startCareerLH: gameState._startCareerLH || 0,
+                _startCareerLV: gameState._startCareerLV || 0,
                 career: loadCareer()
             };
         }
@@ -4660,9 +5106,11 @@
                     gameState.grid[y][x] = null;
                 }
             }
-            // Poles always at fixed positions
-            gameState.grid[0][15] = { type: 'pole', letter: '|', hp: Infinity };
-            gameState.grid[1][15] = { type: 'pole', letter: '|', hp: Infinity };
+            // Poles and shield always at fixed positions
+            gameState.grid[0][15] = { type: 'pole', letter: '💈', hp: Infinity };
+            gameState.grid[1][15] = { type: 'pole', letter: '💈', hp: Infinity };
+            gameState.grid[18][15] = { type: 'shield', letter: '🛡️', hp: Infinity };
+            gameState.grid[19][15] = { type: 'shield', letter: '🛡️', hp: Infinity };
 
             // Restore saved cells
             for (const cell of data.gridData) {
@@ -4688,7 +5136,7 @@
             gameState.reservoirReserved = data.reservoirReserved || [];
             gameState.inputSlots = data.inputSlots || [];
             gameState.fallingLetters = data.fallingLetters;
-            gameState.catPosition = data.catPosition;
+            gameState.catPosition = data.catPosition || { x: 14, y: 0 };
             gameState.catHP = data.catHP;
             gameState.catHitTime = data.catHitTime;
             gameState.lifeDays = data.lifeDays;
@@ -4708,6 +5156,19 @@
             gameState.fullShelterCount = data.fullShelterCount;
             gameState.stacksMax = data.stacksMax;
             gameState.peakCoverage = data.peakCoverage || 0;
+            gameState.sessionPeakCoverage = data.sessionPeakCoverage || 0;
+            gameState.sessionWordsPlaced = data.sessionWordsPlaced || 0;
+            gameState.sessionLongestH = data.sessionLongestH || 0;
+            gameState.sessionLongestV = data.sessionLongestV || 0;
+            gameState.careerMaxSessionWords = data.careerMaxSessionWords || 0;
+            gameState.careerLongestH = data.careerLongestH || 0;
+            gameState.careerLongestV = data.careerLongestV || 0;
+            // Restore start-of-session snapshots (survive page refresh)
+            gameState._startCareerDays = data._startCareerDays || 0;
+            gameState._startCareerCov = data._startCareerCov || 0;
+            gameState._startCareerWords = data._startCareerWords || 0;
+            gameState._startCareerLH = data._startCareerLH || 0;
+            gameState._startCareerLV = data._startCareerLV || 0;
             gameState.hintTargetWord = data.hintTargetWord;
             gameState.hintRevealed = data.hintRevealed || [];
             gameState.hintedPositions = data.hintedPositions || [];
@@ -4717,6 +5178,13 @@
             gameState.catXP = data.catXP || 0;
             gameState.catLevel = data.catLevel || 0;
             gameState.activeCatLook = data.activeCatLook != null ? data.activeCatLook : -1;
+            gameState.tutorial = { enabled: false, step: -1, _wordPlaced: false };
+            gameState.victoryPhase = data.victoryPhase || null;
+            gameState.weatherIntroShown = data.weatherIntroShown || { hail: 0, lightning: 0 };
+            gameState.catMood = null;
+            gameState.catIdleTicks = 0;
+            gameState.radarHasWords = false;
+            gameState.isDelayed = false;
 
             // Merge imported career with local career (take best of both)
             if (data.career) {
@@ -4727,6 +5195,9 @@
                     maxLifeDays: Math.max(local.maxLifeDays || 0, imported.maxLifeDays || 0, gameState.maxLifeDays),
                     stacksMax: Math.max(local.stacksMax || 0, imported.stacksMax || 0, gameState.stacksMax),
                     peakCoverage: Math.max(local.peakCoverage || 0, imported.peakCoverage || 0, gameState.peakCoverage || 0),
+                    careerMaxSessionWords: Math.max(local.careerMaxSessionWords || 0, imported.careerMaxSessionWords || 0, gameState.careerMaxSessionWords || 0),
+                    careerLongestH: Math.max(local.careerLongestH || 0, imported.careerLongestH || 0, gameState.careerLongestH || 0),
+                    careerLongestV: Math.max(local.careerLongestV || 0, imported.careerLongestV || 0, gameState.careerLongestV || 0),
                     fullShelterCount: Math.max(local.fullShelterCount || 0, imported.fullShelterCount || 0, gameState.fullShelterCount),
                     xp: Math.max(local.xp || 0, imported.xp || 0, gameState.xp || 0),
                     catXP: gameState.catXP || 0,
@@ -4757,6 +5228,9 @@
                 gameState.fullShelterCount = merged.fullShelterCount;
                 gameState.stacksMax = merged.stacksMax;
                 gameState.peakCoverage = merged.peakCoverage || 0;
+                gameState.careerMaxSessionWords = merged.careerMaxSessionWords || 0;
+                gameState.careerLongestH = merged.careerLongestH || 0;
+                gameState.careerLongestV = merged.careerLongestV || 0;
                 gameState.maxLifeDays = merged.maxLifeDays;
                 gameState.xp = merged.xp;
                 gameState.catXP = merged.catXP || gameState.catXP || 0;
@@ -4778,17 +5252,14 @@
             // Speed buttons
             updateSpeedButtons(gameState.letterSpawnInterval);
 
-            // Pause button text
-            document.getElementById('pauseBtn').textContent = t('btnResume');
-
             // Show share button and populate seed input
             var shareBtn = document.getElementById('shareBtn');
             if (shareBtn) shareBtn.style.display = gameState.gameSeed ? 'block' : 'none';
             document.getElementById('seedInput').value = gameState.gameSeed || '';
 
-            // Season transition prompt
+            // Season transition prompt — defer to allow layout before positioning
             if (gameState.seasonTransition) {
-                showNextSeasonPrompt();
+                requestAnimationFrame(function() { showNextSeasonPrompt(); });
             } else {
                 const o = document.getElementById('nextSeasonOverlay');
                 if (o) o.remove();
@@ -4797,8 +5268,9 @@
             // Render word input (may show fixed slots if hintTargetWord active)
             renderWordInput();
 
-            // Start game loop (will be paused)
+            // Start game loop and auto-resume
             startGameLoop();
+            gameState.isPaused = false;
 
             showMessage(t('msgGameRestored'), 'success');
         }
@@ -4879,99 +5351,103 @@
                 showMessage(t('msgCloseCall'), 'info');
                 return;
             }
-            gameState.isPaused = true;
-            if (gameState.gameLoopId) {
-                clearInterval(gameState.gameLoopId);
-                gameState.gameLoopId = null;
-            }
-            // Update max life before saving career
-            gameState.maxLifeDays = Math.max(gameState.maxLifeDays || 0, gameState.lifeDays);
-            saveCareer();
-            document.getElementById('gameOverMessage').textContent =
-                t('gameOverMsg', gameState.lifeDays, gameState.shelterHP.toLocaleString());
-            clearAutoSave();
-            openModal('gameOverModal');
+            showEndScreen(false);
         }
 
-        // Check if the grid is fully built — no 3+ empty run with support anywhere in rows 2-17
-        function checkVictory() {
-            // Pre-check: any brick on row 17? If not, game definitely continues
-            var hasBrickOnRow17 = false;
-            for (var x = 0; x < GRID_WIDTH; x++) {
-                var cell = gameState.grid[17][x];
-                if (cell && cell.type === 'brick' && cell.hp > 0) {
-                    hasBrickOnRow17 = true;
-                    break;
+        // --- Victory sequence: shield animation → clear letters → modal ---
+        function startVictorySequence() {
+            gameState.victoryPhase = 'shielding';
+            // Speed up letter descent during victory sequence
+            gameState._preVictoryDescentInterval = gameState.letterDescentInterval;
+            gameState.letterDescentInterval = 200;
+            // Scroll grid into view on mobile so user sees the shield animation
+            var gridArea = document.querySelector('.grid-container');
+            if (gridArea) gridArea.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            // Animate shields from right (col 15) to left (col 0) on rows 18-19
+            var shieldCol = GRID_WIDTH - 1; // start at 15
+            var shieldInterval = setInterval(function() {
+                // Place shields on both rows for current column
+                gameState.grid[18][shieldCol] = { type: 'shield', letter: '🛡️', hp: Infinity };
+                gameState.grid[19][shieldCol] = { type: 'shield', letter: '🛡️', hp: Infinity };
+                shieldCol--;
+                if (shieldCol < 0) {
+                    clearInterval(shieldInterval);
+                    // Animation done — move to clearing phase
+                    gameState.victoryPhase = 'clearing';
                 }
-            }
-            if (!hasBrickOnRow17) return false;
-
-            // Scan rows 2-17 for any playable 3+ empty run with at least 1 supported cell
-            for (var y = 2; y <= 17; y++) {
-                var run = 0;
-                var supportedInRun = 0;
-                for (var x = 0; x < GRID_WIDTH; x++) {
-                    var cell = gameState.grid[y][x];
-                    if (!cell || cell.type !== 'brick' || cell.hp <= 0) {
-                        // Empty cell
-                        run++;
-                        // Check support: row below has a brick?
-                        var below = gameState.grid[y - 1][x];
-                        if (below && below.type === 'brick' && below.hp > 0) {
-                            supportedInRun++;
-                        }
-                        // Also count pole as support
-                        if (below && below.type === 'pole') {
-                            supportedInRun++;
-                        }
-                        if (run >= 3 && supportedInRun >= 1) {
-                            return false; // placement exists, game continues
-                        }
-                    } else {
-                        // Occupied cell — reset run
-                        run = 0;
-                        supportedInRun = 0;
-                    }
-                }
-            }
-
-            return true; // no valid placement found — victory!
+            }, 375); // 16 columns × 375ms ≈ 6 seconds
         }
 
-        // Show victory modal with session stats
         function showVictory() {
+            // Restore normal descent speed
+            if (gameState._preVictoryDescentInterval) {
+                gameState.letterDescentInterval = gameState._preVictoryDescentInterval;
+                delete gameState._preVictoryDescentInterval;
+            }
+            showEndScreen(true);
+        }
+
+        // Shared end-of-game screen (victory or game over)
+        function showEndScreen(isVictory) {
             gameState.isPaused = true;
             if (gameState.gameLoopId) {
                 clearInterval(gameState.gameLoopId);
                 gameState.gameLoopId = null;
             }
-            gameState.maxLifeDays = Math.max(gameState.maxLifeDays || 0, gameState.lifeDays);
+
+            // Use start-of-session snapshots for NEW BEST detection
+            var prevMaxDays = gameState._startCareerDays || 0;
+            var prevPeakCov = gameState._startCareerCov || 0;
+            var prevMaxWords = gameState._startCareerWords || 0;
+            var prevLongestH = gameState._startCareerLH || 0;
+            var prevLongestV = gameState._startCareerLV || 0;
+
+            // Update career bests from this session
+            gameState.maxLifeDays = Math.max(prevMaxDays, gameState.lifeDays);
+            gameState.careerMaxSessionWords = Math.max(prevMaxWords, gameState.sessionWordsPlaced || 0);
+            gameState.careerLongestH = Math.max(prevLongestH, gameState.sessionLongestH || 0);
+            gameState.careerLongestV = Math.max(prevLongestV, gameState.sessionLongestV || 0);
             saveCareer();
 
-            // Compute stats
-            var hData = gameState.wordsPlacedByLength || {};
-            var totalWords = 0;
-            for (var k in hData) totalWords += hData[k];
+            // Session values
+            var sDays = gameState.lifeDays;
+            var sCov = gameState.sessionPeakCoverage || 0;
+            var sWords = gameState.sessionWordsPlaced || 0;
+            var sLH = gameState.sessionLongestH || 0;
+            var sLV = gameState.sessionLongestV || 0;
 
-            var coverageCount = 0;
-            for (var cy = 2; cy <= 17; cy++) {
-                for (var cx = 0; cx < GRID_WIDTH; cx++) {
-                    var cc = gameState.grid[cy][cx];
-                    if (cc && cc.type === 'brick' && cc.hp > 0) coverageCount++;
-                }
+            // Career bests (after save)
+            var cDays = gameState.maxLifeDays;
+            var cCov = gameState.peakCoverage || 0;
+            var cWords = gameState.careerMaxSessionWords;
+            var cLH = gameState.careerLongestH;
+            var cLV = gameState.careerLongestV;
+
+            var newBest = t('victoryStatNew');
+
+            function statRow(label, sessionVal, bestVal, prevBestVal, suffix) {
+                suffix = suffix || '';
+                var isNew = sessionVal > 0 && sessionVal >= bestVal && sessionVal > prevBestVal;
+                return '<tr><td style="padding:4px 8px 4px 0;white-space:nowrap;">' + label + '</td>' +
+                    '<td style="padding:4px 8px;font-weight:bold;text-align:right;">' + sessionVal + suffix + '</td>' +
+                    '<td style="padding:4px 8px;color:#94a3b8;text-align:right;">' + bestVal + suffix + '</td>' +
+                    (isNew ? '<td style="padding:4px 0 4px 6px;color:#fbbf24;font-weight:bold;font-size:0.8em;">🏅 ' + newBest + '</td>' : '<td></td>') +
+                    '</tr>';
             }
-            var coveragePct = Math.round((coverageCount / 256) * 100);
 
-            document.getElementById('victoryTitle').textContent = t('victoryTitle');
-            document.getElementById('victoryMessage').textContent = t('victoryMsg');
+            document.getElementById('victoryTitle').textContent = isVictory ? t('victoryTitle') : t('gameOverTitle');
+            document.getElementById('victoryMessage').textContent = isVictory ? t('victoryMsg') : t('gameOverMsg', gameState.lifeDays, gameState.shelterHP.toLocaleString());
             document.getElementById('victoryStats').innerHTML =
-                t('victoryStatDays', gameState.lifeDays) + '<br>' +
-                t('victoryStatCoverage', coveragePct) + '<br>' +
-                t('victoryStatWords', totalWords.toLocaleString()) + '<br>' +
-                t('victoryStatCatHP', gameState.catHP) + '<br>' +
-                t('victoryStatShelterHP', gameState.shelterHP.toLocaleString());
+                '<table style="width:100%;border-collapse:collapse;font-size:0.9em;line-height:1.6;">' +
+                '<tr style="color:#94a3b8;font-size:0.8em;"><td></td><td style="padding:2px 8px;text-align:right;">Now</td><td style="padding:2px 8px;text-align:right;">Best</td><td></td></tr>' +
+                statRow(t('victoryStatDays'), sDays, cDays, prevMaxDays) +
+                statRow(t('victoryStatCoverage'), sCov, cCov, prevPeakCov, '%') +
+                statRow(t('victoryStatWords'), sWords, cWords, prevMaxWords) +
+                (sLH > 0 ? statRow(t('victoryStatLongestH'), sLH, cLH, prevLongestH) : '') +
+                (sLV > 0 ? statRow(t('victoryStatLongestV'), sLV, cLV, prevLongestV) : '') +
+                '</table>';
 
-            showConfetti('mega');
+            if (isVictory) showConfetti('mega');
             clearAutoSave();
             openModal('victoryModal');
         }
@@ -4984,20 +5460,11 @@
                     gameState.gameLoopId = null;
                 }
                 initGame();
-                closeModal('gameOverModal');
+                closeModal('victoryModal');
             }
         }
 
-        // Restart from game over (no confirm)
-        function restartFromGameOver() {
-            if (gameState.gameLoopId) {
-                clearInterval(gameState.gameLoopId);
-                gameState.gameLoopId = null;
-            }
-            clearAutoSave();
-            initGame();
-            closeModal('gameOverModal');
-        }
+        // (restartFromGameOver removed — modals now just close)
 
         // Modal functions
         function openModal(id) {
@@ -5007,27 +5474,12 @@
 
         function closeModal(id) {
             document.getElementById(id).classList.remove('active');
-            if (id !== 'gameOverModal' && id !== 'victoryModal') {
-                gameState.isPaused = false;
-            }
+            gameState.isPaused = false;
         }
 
         // Event listeners
-        document.getElementById('submitBtn').addEventListener('click', submitWord);
-        document.getElementById('clearBtn').addEventListener('click', backspaceLetter);
+        document.getElementById('inlineSubmitBtn').addEventListener('click', submitWord);
         document.getElementById('shuffleBtn').addEventListener('click', shuffleReservoir);
-        document.getElementById('clearAllBtn').addEventListener('click', () => {
-            // Return all letters (user + clue) to their reserved reservoir slots
-            for (var i = 0; i < gameState.inputSlots.length; i++) {
-                if (gameState.inputSlots[i]) {
-                    var slotData = gameState.inputSlots[i];
-                    reservoirReturnToSlot(slotData.letter, slotData.reservoirIndex);
-                }
-            }
-            gameState.inputSlots = [];
-            clearHintHighlights();
-            renderReservoir();
-        });
         // Cat look gallery — delegated listener (survives re-renders)
         document.getElementById('achCatGallery').addEventListener('click', (e) => {
             const btn = e.target.closest('.cat-look-btn');
@@ -5047,13 +5499,25 @@
         document.getElementById('hintBtn').addEventListener('click', pressHint);
         document.getElementById('clueBtn').addEventListener('click', pressClue);
         // (hintResetBtn removed — trash button now handles full reset)
-        document.getElementById('pauseBtn').addEventListener('click', togglePause);
+        document.getElementById('newGameBtn').addEventListener('click', function() {
+            if (!confirm(t('confirmNewGame'))) return;
+            if (gameState.gameLoopId) {
+                clearInterval(gameState.gameLoopId);
+                gameState.gameLoopId = null;
+            }
+            clearAutoSave();
+            gameState.gameSeed = '';
+            initGame();
+        });
         document.getElementById('nukeBtn').addEventListener('click', () => {
             if (confirm(t('confirmNuke'))) {
-                localStorage.removeItem(SAVE_KEY);
-                localStorage.removeItem(CAREER_KEY);
-                localStorage.removeItem(TUTORIAL_KEY);
-                location.reload();
+                localStorage.clear();
+                if ('caches' in window) {
+                    caches.keys().then(function(names) {
+                        names.forEach(function(name) { caches.delete(name); });
+                    });
+                }
+                location.reload(true);
             }
         });
         // Seed play button: start new game with entered seed
@@ -5126,14 +5590,7 @@
             }
         });
 
-        document.getElementById('restartFromGameOver').addEventListener('click', restartFromGameOver);
-        document.getElementById('restartFromVictory').addEventListener('click', function() {
-            if (gameState.gameLoopId) {
-                clearInterval(gameState.gameLoopId);
-                gameState.gameLoopId = null;
-            }
-            clearAutoSave();
-            initGame();
+        document.getElementById('closeVictory').addEventListener('click', function() {
             closeModal('victoryModal');
         });
         document.getElementById('speedSlowBtn').addEventListener('click', () => setSpeed(SPEED_SLOW));
@@ -5253,74 +5710,6 @@
                     header.classList.remove('collapsed');
                 }
                 lastScrollTop = st;
-            }, { passive: true });
-        })();
-
-        // Mobile: scroll snap — waits for scroll to fully stop, then
-        // smoothly aligns to the nearest panel boundary.
-        (function() {
-            var gameArea = document.querySelector('.game-area');
-            if (!gameArea) return;
-            var isMobile = function() { return window.innerWidth <= 500; };
-            var snapSelectors = ['.grid-container', '#panelWorkshop', '#panelAchievements',
-                                 '#panelCatLooks', '#panelWeather', '#panelGameMenu'];
-            var snapTimer = null;
-            var isSnapping = false;
-            var lastScrollTop = -1;
-            var pollTimer = null;
-
-            function getSnapPositions() {
-                var positions = [];
-                var areaRect = gameArea.getBoundingClientRect();
-                var scrollTop = gameArea.scrollTop;
-                for (var i = 0; i < snapSelectors.length; i++) {
-                    var el = document.querySelector(snapSelectors[i]);
-                    if (!el) continue;
-                    positions.push(Math.round(scrollTop + el.getBoundingClientRect().top - areaRect.top));
-                }
-                return positions;
-            }
-
-            function snapToNearest() {
-                if (isSnapping) return;
-                var positions = getSnapPositions();
-                if (positions.length === 0) return;
-                var scrollTop = gameArea.scrollTop;
-                var closest = positions[0];
-                var closestDist = Math.abs(scrollTop - closest);
-                for (var i = 1; i < positions.length; i++) {
-                    var dist = Math.abs(scrollTop - positions[i]);
-                    if (dist < closestDist) { closest = positions[i]; closestDist = dist; }
-                }
-                if (closestDist < 3) return; // already aligned
-                isSnapping = true;
-                gameArea.scrollTo({ top: closest, behavior: 'smooth' });
-                setTimeout(function() { isSnapping = false; }, 700);
-            }
-
-            // Poll-based idle detection: check every 80ms if scroll has stopped moving
-            function startPolling() {
-                stopPolling();
-                lastScrollTop = gameArea.scrollTop;
-                pollTimer = setInterval(function() {
-                    var current = gameArea.scrollTop;
-                    if (current === lastScrollTop) {
-                        // Scroll has stopped — snap
-                        stopPolling();
-                        snapToNearest();
-                    }
-                    lastScrollTop = current;
-                }, 20);
-            }
-
-            function stopPolling() {
-                if (pollTimer) { clearInterval(pollTimer); pollTimer = null; }
-            }
-
-            // On any scroll activity, (re)start the idle poller
-            gameArea.addEventListener('scroll', function() {
-                if (!isMobile() || isSnapping) return;
-                startPolling();
             }, { passive: true });
         })();
 
@@ -5455,6 +5844,7 @@
             if (!autoLoad()) {
                 initGame();
             }
+            _gameReady = true;
         });
     </script>
 </body>
