@@ -63,7 +63,7 @@
             border-radius: 6px;
         }
 
-        .fab { display: none; }
+        .fab { display: none !important; } /* FAB hidden for now — remove !important to re-enable */
         .stat-flow-row { display: contents; }
 
         .stats-bar {
@@ -2790,6 +2790,19 @@
                     if (data) {
                         slot.textContent = data.letter;
                         slot.classList.add('filled', data.source);
+                        if (data.source === 'user') {
+                            slot.dataset.idx = i;
+                            slot.style.cursor = 'pointer';
+                            slot.addEventListener('click', function() {
+                                var idx = parseInt(this.dataset.idx);
+                                var sd = gameState.inputSlots[idx];
+                                if (!sd) return;
+                                reservoirReturnToSlot(sd.letter, sd.reservoirIndex);
+                                gameState.inputSlots[idx] = null;
+                                renderReservoir();
+                                renderWordInput();
+                            });
+                        }
                     }
                     el.appendChild(slot);
                 }
@@ -2801,6 +2814,17 @@
                     var slot = document.createElement('div');
                     slot.className = 'input-slot filled user';
                     slot.textContent = data.letter;
+                    slot.dataset.idx = i;
+                    slot.style.cursor = 'pointer';
+                    slot.addEventListener('click', function() {
+                        var idx = parseInt(this.dataset.idx);
+                        var sd = gameState.inputSlots[idx];
+                        if (!sd) return;
+                        reservoirReturnToSlot(sd.letter, sd.reservoirIndex);
+                        gameState.inputSlots.splice(idx, 1);
+                        renderReservoir();
+                        renderWordInput();
+                    });
                     el.appendChild(slot);
                 }
             }
