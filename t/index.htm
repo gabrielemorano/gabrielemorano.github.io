@@ -1485,18 +1485,6 @@
         </div>
     </div>
 
-    <!-- Mid-game update choice modal -->
-    <div class="modal" id="updateChoiceModal">
-        <div class="modal-content" style="text-align:center; max-width:340px;">
-            <h2 id="updateChoiceTitle"></h2>
-            <p id="updateChoiceMsg" style="margin:12px 0 18px; line-height:1.5;"></p>
-            <div style="display:flex; gap:10px; justify-content:center;">
-                <button id="updateNowBtn" style="padding:10px 20px; font-size:0.95em; border:none; border-radius:8px; background:linear-gradient(135deg,#667eea,#764ba2); color:#fff; cursor:pointer;" data-i18n="updateNowBtn">Update Now</button>
-                <button id="updateLaterBtn" style="padding:10px 20px; font-size:0.95em; border:none; border-radius:8px; background:#e2e8f0; color:#475569; cursor:pointer;" data-i18n="updateLaterBtn">Finish Game</button>
-            </div>
-        </div>
-    </div>
-
     <!-- Game Over modal removed — reuses victoryModal -->
 
     <div class="modal" id="victoryModal">
@@ -1510,7 +1498,7 @@
 
     <script>
         // ================================================================
-        //  CACHE BUSTING — fetch version.json to detect new deploys
+        //  CACHE BUSTING — fetch version.json on load to detect new deploys
         //  CAREER_SCHEMA: bump this integer when career data format changes
         // ================================================================
         var CAREER_SCHEMA = 2; // bump when career fields change incompatibly
@@ -1521,98 +1509,67 @@
         }
 
         // Fetch version.json (cache: no-store bypasses all caches including iOS Safari)
-        // Returns a promise: resolves normally if no update, never resolves if reloading
-        var _RW_VER_KEY = 'rw_build_version';
-        var _RW_SCHEMA_KEY = 'rw_career_schema';
-
-        var _updatePending = false; // true when background update was deferred by user
-
-        function _applyUpdate(serverVer, serverSchema, isSchemaBreak) {
-            // Commit version keys now (deferred until user accepts)
-            localStorage.setItem(_RW_VER_KEY, serverVer);
-            localStorage.setItem(_RW_SCHEMA_KEY, String(serverSchema));
-            localStorage.removeItem('raining-words-save');
-            localStorage.removeItem('raining-words-tutorial-done');
-            if (isSchemaBreak) {
-                localStorage.removeItem('raining-words-career');
-                sessionStorage.setItem('rw_update_banner', 'fresh');
-            } else {
-                sessionStorage.setItem('rw_update_banner', 'update');
-            }
-            if ('caches' in window) {
-                caches.keys().then(function(names) {
-                    names.forEach(function(n) { caches.delete(n); });
-                });
-            }
-            if ('serviceWorker' in navigator) {
-                navigator.serviceWorker.getRegistrations().then(function(regs) {
-                    regs.forEach(function(r) { r.unregister(); });
-                });
-            }
-            var url = location.href.split('?')[0] + '?_v=' + Date.now();
-            location.replace(url);
-        }
-
-        // mode: 'boot' = reload immediately; 'background' = show choice modal
-        function checkForUpdate(mode) {
+        // _versionCheckDone resolves when check completes; game start awaits it
+        var _versionCheckDone = (function() {
             if (location.protocol === 'file:') return Promise.resolve();
-            if (_updatePending) {
-                // Already detected — re-show the modal
-                document.getElementById('updateChoiceModal').classList.add('active');
-                gameState.isPaused = true;
-                return Promise.resolve();
-            }
+
+            var VER_KEY = 'rw_build_version';
+            var SCHEMA_KEY = 'rw_career_schema';
+
             return fetch('version.json', { cache: 'no-store' })
                 .then(function(r) { return r.ok ? r.json() : null; })
                 .then(function(data) {
                     if (!data || !data.v) return;
                     var serverVer = data.v;
                     var serverSchema = data.s || 1;
-                    var prevVer = localStorage.getItem(_RW_VER_KEY);
-                    var prevSchema = parseInt(localStorage.getItem(_RW_SCHEMA_KEY) || '1', 10);
+                    var prevVer = localStorage.getItem(VER_KEY);
+                    var prevSchema = parseInt(localStorage.getItem(SCHEMA_KEY) || '1', 10);
 
                     // First visit — just store, no reload
                     if (!prevVer) {
-                        localStorage.setItem(_RW_VER_KEY, serverVer);
-                        localStorage.setItem(_RW_SCHEMA_KEY, String(serverSchema));
+                        localStorage.setItem(VER_KEY, serverVer);
+                        localStorage.setItem(SCHEMA_KEY, String(serverSchema));
                         return;
                     }
 
                     // Same version — nothing to do
                     if (prevVer === serverVer) return;
 
-                    // New version detected!
+                    // New version detected
                     var isSchemaBreak = prevSchema !== serverSchema;
+                    localStorage.setItem(VER_KEY, serverVer);
+                    localStorage.setItem(SCHEMA_KEY, String(serverSchema));
 
-                    if (mode === 'background') {
-                        // Mid-game: pause and ask the user (don't update keys yet)
-                        _updatePending = true;
-                        gameState.isPaused = true;
-                        var modal = document.getElementById('updateChoiceModal');
-                        document.getElementById('updateChoiceTitle').textContent =
-                            isSchemaBreak ? t('bannerFreshTitle') : t('bannerNewTitle');
-                        document.getElementById('updateChoiceMsg').textContent = t('updateChoiceMsg');
-                        modal.classList.add('active');
-                        document.getElementById('updateNowBtn').onclick = function() {
-                            _applyUpdate(serverVer, serverSchema, isSchemaBreak);
-                        };
-                        document.getElementById('updateLaterBtn').onclick = function() {
-                            modal.classList.remove('active');
-                            gameState.isPaused = false;
-                            // Modal will re-appear on next background return
-                        };
-                        return;
+                    // Always clear: autosave, tutorial
+                    localStorage.removeItem('raining-words-save');
+                    localStorage.removeItem('raining-words-tutorial-done');
+                    // Schema break: also clear career
+                    if (isSchemaBreak) {
+                        localStorage.removeItem('raining-words-career');
+                        sessionStorage.setItem('rw_update_banner', 'fresh');
+                    } else {
+                        sessionStorage.setItem('rw_update_banner', 'update');
                     }
 
-                    // Boot mode — apply immediately
-                    _applyUpdate(serverVer, serverSchema, isSchemaBreak);
-                    return new Promise(function() {});
+                    // Clear browser caches
+                    if ('caches' in window) {
+                        caches.keys().then(function(names) {
+                            names.forEach(function(n) { caches.delete(n); });
+                        });
+                    }
+                    if ('serviceWorker' in navigator) {
+                        navigator.serviceWorker.getRegistrations().then(function(regs) {
+                            regs.forEach(function(r) { r.unregister(); });
+                        });
+                    }
+
+                    // Force reload with cache-busting query param
+                    var url = location.href.split('?')[0] + '?_v=' + Date.now();
+                    location.replace(url);
+                    return new Promise(function() {}); // block game start
                 })
                 .catch(function() { /* version.json not found — skip */ });
-        }
-
-        // Initial check — game start awaits this
-        var _versionCheckDone = checkForUpdate('boot');
+        })();
 
         // ================================================================
         //  LOCALISATION — all user-facing strings
@@ -1701,9 +1658,6 @@
             bannerNewVersion: "A new version has been loaded. Your career stats have been preserved!",
             bannerFreshTitle: "🌱 Fresh Start!",
             bannerFreshStart: "Sometimes a fresh start is what you need! The game has been updated with changes that required a full reset.",
-            updateChoiceMsg: "A new version is available. Update now or finish your current game first?",
-            updateNowBtn: "Update Now",
-            updateLaterBtn: "Finish Game",
             gameOverTitle: "💔 Game Over",
             gameOverMsg: "Your cat survived {0} days with {1} shelter HP.",
             victoryTitle: "🏆 Victory!",
@@ -4972,15 +4926,12 @@
         var _gameReady = false; // gate: don't auto-pause until game is running
         document.addEventListener('visibilitychange', function() {
             if (!_gameReady) return;
+            if (!gameState.gameLoopId) return; // no game loop = nothing to pause
             if (document.hidden) {
-                if (gameState.gameLoopId) {
-                    _wasPausedBeforeHidden = gameState.isPaused;
-                    gameState.isPaused = true;
-                }
+                _wasPausedBeforeHidden = gameState.isPaused;
+                gameState.isPaused = true;
             } else {
-                // Check for updates when returning from background
-                checkForUpdate('background');
-                if (gameState.gameLoopId && !_wasPausedBeforeHidden) {
+                if (!_wasPausedBeforeHidden) {
                     gameState.isPaused = false;
                 }
             }
