@@ -3493,9 +3493,13 @@
                 checkTutorialTrigger();
             }
 
-            // Check victory condition (grid fully built) — start shield animation
-            if (!gameState.tutorial.enabled && !gameState.victoryPhase && checkVictory()) {
-                startVictorySequence();
+            // Victory trigger: dry-run a 3-letter placement (smallest possible word).
+            // If it would land on row 18+ or has no placement at all, rows 2-17 are full.
+            if (!gameState.tutorial.enabled && !gameState.victoryPhase) {
+                var probe = findPlacement('AAA');
+                if (!probe || probe.y >= 18) {
+                    startVictorySequence();
+                }
             }
         }
 
@@ -5060,51 +5064,6 @@
                 t('gameOverMsg', gameState.lifeDays, gameState.shelterHP.toLocaleString());
             clearAutoSave();
             openModal('gameOverModal');
-        }
-
-        // Check if the grid is fully built — no 3+ empty run with support anywhere in rows 2-17
-        function checkVictory() {
-            // Pre-check: any brick on row 17? If not, game definitely continues
-            var hasBrickOnRow17 = false;
-            for (var x = 0; x < GRID_WIDTH; x++) {
-                var cell = gameState.grid[17][x];
-                if (cell && cell.type === 'brick' && cell.hp > 0) {
-                    hasBrickOnRow17 = true;
-                    break;
-                }
-            }
-            if (!hasBrickOnRow17) return false;
-
-            // Scan rows 2-17 for any playable 3+ empty run with at least 1 supported cell
-            for (var y = 2; y <= 17; y++) {
-                var run = 0;
-                var supportedInRun = 0;
-                for (var x = 0; x < GRID_WIDTH; x++) {
-                    var cell = gameState.grid[y][x];
-                    if (!cell || cell.type !== 'brick' || cell.hp <= 0) {
-                        // Empty cell
-                        run++;
-                        // Check support: row below has a brick?
-                        var below = gameState.grid[y - 1][x];
-                        if (below && below.type === 'brick' && below.hp > 0) {
-                            supportedInRun++;
-                        }
-                        // Also count pole as support
-                        if (below && below.type === 'pole') {
-                            supportedInRun++;
-                        }
-                        if (run >= 3 && supportedInRun >= 1) {
-                            return false; // placement exists, game continues
-                        }
-                    } else {
-                        // Occupied cell — reset run
-                        run = 0;
-                        supportedInRun = 0;
-                    }
-                }
-            }
-
-            return true; // no valid placement found — victory!
         }
 
         // --- Victory sequence: shield animation → clear letters → modal ---
