@@ -1476,13 +1476,7 @@
     <!-- Mobile FAB -->
     <button class="fab" id="fab" aria-label="Navigate">📝 0/18</button>
 
-    <div class="modal" id="gameOverModal">
-        <div class="modal-content" style="position:relative;">
-            <button class="modal-close-btn" id="closeGameOver" aria-label="Close">✕</button>
-            <h2 data-i18n="gameOverTitle">💔 Game Over</h2>
-            <p id="gameOverMessage"></p>
-        </div>
-    </div>
+    <!-- Game Over modal removed — reuses victoryModal -->
 
     <div class="modal" id="victoryModal">
         <div class="modal-content" style="position:relative;">
@@ -1581,11 +1575,12 @@
             gameOverMsg: "Your cat survived {0} days with {1} shelter HP.",
             victoryTitle: "🏆 Victory!",
             victoryMsg: "You've built the shelter to the top! No more room for words — your cat is fully protected!",
-            victoryStatDays: "🗓️ Days survived: {0}",
-            victoryStatCoverage: "🏗️ Coverage: {0}%",
-            victoryStatWords: "📝 Words placed: {0}",
-            victoryStatCatHP: "❤️ Cat HP: {0}",
-            victoryStatShelterHP: "🛡️ Shelter HP: {0}",
+            victoryStatDays: "🗓️ Days survived",
+            victoryStatCoverage: "🏗️ Peak coverage",
+            victoryStatWords: "📝 Words placed",
+            victoryStatLongestH: "↔️ Longest word",
+            victoryStatLongestV: "↕️ Longest vertical",
+            victoryStatNew: "NEW BEST!",
             achXP: "⭐ {0} XP",
             achWordCount: "{0} × {1}-letter {2}",
             achWordSingular: "word",
@@ -2109,6 +2104,9 @@
                 gameState.fullShelterCount = career.fullShelterCount || 0;
                 gameState.stacksMax = career.stacksMax || 0;
                 gameState.peakCoverage = career.peakCoverage || 0;
+                gameState.careerMaxSessionWords = career.careerMaxSessionWords || 0;
+                gameState.careerLongestH = career.careerLongestH || 0;
+                gameState.careerLongestV = career.careerLongestV || 0;
                 gameState.treats = career.treats || 0;
                 gameState.maxLifeDays = career.maxLifeDays || 0;
                 gameState.xp = career.xp || 0;
@@ -2122,6 +2120,9 @@
                 gameState.fullShelterCount = 0;
                 gameState.stacksMax = 0;
                 gameState.peakCoverage = 0;
+                gameState.careerMaxSessionWords = 0;
+                gameState.careerLongestH = 0;
+                gameState.careerLongestV = 0;
                 gameState.treats = 0;
                 gameState.maxLifeDays = 0;
                 gameState.xp = 0;
@@ -2136,6 +2137,17 @@
             gameState.seasonTransition = false;   // true = between seasons, waiting for player
             gameState.victoryPhase = null;         // null | 'shielding' | 'clearing' | 'done'
             gameState.weatherIntroShown = gameState.weatherIntroShown || { hail: 0, lightning: 0 };
+            // Session-specific counters (reset each game)
+            gameState.sessionPeakCoverage = 0;
+            gameState.sessionWordsPlaced = 0;
+            gameState.sessionLongestH = 0;
+            gameState.sessionLongestV = 0;
+            // Snapshot career bests at session start (for NEW BEST detection at victory)
+            gameState._startCareerDays = gameState.maxLifeDays || 0;
+            gameState._startCareerCov = gameState.peakCoverage || 0;
+            gameState._startCareerWords = gameState.careerMaxSessionWords || 0;
+            gameState._startCareerLH = gameState.careerLongestH || 0;
+            gameState._startCareerLV = gameState.careerLongestV || 0;
             gameState.catMood = null;
             gameState.catIdleTicks = 0;
             gameState.catHealTicks = 0;
@@ -3551,6 +3563,10 @@
             gameState.wordsPlacedByLength[wordLen] = prevCount + 1;
             const isFirstOfLength = prevCount === 0;
 
+            // Session tracking
+            gameState.sessionWordsPlaced = (gameState.sessionWordsPlaced || 0) + 1;
+            if (wordLen > (gameState.sessionLongestH || 0)) gameState.sessionLongestH = wordLen;
+
             // Treats: triangular formula for word length
             const wordTreats = wordLen * (wordLen - 1) * 10;
             gameState.treats += wordTreats;
@@ -3781,6 +3797,7 @@
                                 if (!gameState._verticalWordsFound.has(vKey)) {
                                     gameState._verticalWordsFound.add(vKey);
                                     gameState.verticalWordsByLength[wLen] = (gameState.verticalWordsByLength[wLen] || 0) + 1;
+                                    if (wLen > (gameState.sessionLongestV || 0)) gameState.sessionLongestV = wLen;
                                 }
                             }
                         }
@@ -4310,6 +4327,9 @@
             }
             var coveragePct = Math.round((coverageCount / COVERAGE_TOTAL) * 100);
             var prevPeakInt = Math.floor(gameState.peakCoverage || 0);
+            if (coveragePct > (gameState.sessionPeakCoverage || 0)) {
+                gameState.sessionPeakCoverage = coveragePct;
+            }
             if (coveragePct > (gameState.peakCoverage || 0)) {
                 gameState.peakCoverage = coveragePct;
             }
@@ -4966,6 +4986,9 @@
                 maxLifeDays: Math.max(prev.maxLifeDays || 0, gameState.maxLifeDays || 0, gameState.lifeDays),
                 stacksMax: Math.max(prev.stacksMax || 0, gameState.stacksMax),
                 peakCoverage: Math.max(prev.peakCoverage || 0, gameState.peakCoverage || 0),
+                careerMaxSessionWords: Math.max(prev.careerMaxSessionWords || 0, gameState.careerMaxSessionWords || 0, gameState.sessionWordsPlaced || 0),
+                careerLongestH: Math.max(prev.careerLongestH || 0, gameState.careerLongestH || 0, gameState.sessionLongestH || 0),
+                careerLongestV: Math.max(prev.careerLongestV || 0, gameState.careerLongestV || 0, gameState.sessionLongestV || 0),
                 fullShelterCount: Math.max(prev.fullShelterCount || 0, gameState.fullShelterCount),
                 xp: Math.max(prev.xp || 0, gameState.xp || 0),
                 catXP: gameState.catXP || 0,
@@ -5052,6 +5075,18 @@
                 catLevel: gameState.catLevel || 0,
                 activeCatLook: gameState.activeCatLook != null ? gameState.activeCatLook : -1,
                 weatherIntroShown: gameState.weatherIntroShown,
+                sessionPeakCoverage: gameState.sessionPeakCoverage || 0,
+                sessionWordsPlaced: gameState.sessionWordsPlaced || 0,
+                sessionLongestH: gameState.sessionLongestH || 0,
+                sessionLongestV: gameState.sessionLongestV || 0,
+                careerMaxSessionWords: gameState.careerMaxSessionWords || 0,
+                careerLongestH: gameState.careerLongestH || 0,
+                careerLongestV: gameState.careerLongestV || 0,
+                _startCareerDays: gameState._startCareerDays || 0,
+                _startCareerCov: gameState._startCareerCov || 0,
+                _startCareerWords: gameState._startCareerWords || 0,
+                _startCareerLH: gameState._startCareerLH || 0,
+                _startCareerLV: gameState._startCareerLV || 0,
                 career: loadCareer()
             };
         }
@@ -5121,6 +5156,19 @@
             gameState.fullShelterCount = data.fullShelterCount;
             gameState.stacksMax = data.stacksMax;
             gameState.peakCoverage = data.peakCoverage || 0;
+            gameState.sessionPeakCoverage = data.sessionPeakCoverage || 0;
+            gameState.sessionWordsPlaced = data.sessionWordsPlaced || 0;
+            gameState.sessionLongestH = data.sessionLongestH || 0;
+            gameState.sessionLongestV = data.sessionLongestV || 0;
+            gameState.careerMaxSessionWords = data.careerMaxSessionWords || 0;
+            gameState.careerLongestH = data.careerLongestH || 0;
+            gameState.careerLongestV = data.careerLongestV || 0;
+            // Restore start-of-session snapshots (survive page refresh)
+            gameState._startCareerDays = data._startCareerDays || 0;
+            gameState._startCareerCov = data._startCareerCov || 0;
+            gameState._startCareerWords = data._startCareerWords || 0;
+            gameState._startCareerLH = data._startCareerLH || 0;
+            gameState._startCareerLV = data._startCareerLV || 0;
             gameState.hintTargetWord = data.hintTargetWord;
             gameState.hintRevealed = data.hintRevealed || [];
             gameState.hintedPositions = data.hintedPositions || [];
@@ -5147,6 +5195,9 @@
                     maxLifeDays: Math.max(local.maxLifeDays || 0, imported.maxLifeDays || 0, gameState.maxLifeDays),
                     stacksMax: Math.max(local.stacksMax || 0, imported.stacksMax || 0, gameState.stacksMax),
                     peakCoverage: Math.max(local.peakCoverage || 0, imported.peakCoverage || 0, gameState.peakCoverage || 0),
+                    careerMaxSessionWords: Math.max(local.careerMaxSessionWords || 0, imported.careerMaxSessionWords || 0, gameState.careerMaxSessionWords || 0),
+                    careerLongestH: Math.max(local.careerLongestH || 0, imported.careerLongestH || 0, gameState.careerLongestH || 0),
+                    careerLongestV: Math.max(local.careerLongestV || 0, imported.careerLongestV || 0, gameState.careerLongestV || 0),
                     fullShelterCount: Math.max(local.fullShelterCount || 0, imported.fullShelterCount || 0, gameState.fullShelterCount),
                     xp: Math.max(local.xp || 0, imported.xp || 0, gameState.xp || 0),
                     catXP: gameState.catXP || 0,
@@ -5177,6 +5228,9 @@
                 gameState.fullShelterCount = merged.fullShelterCount;
                 gameState.stacksMax = merged.stacksMax;
                 gameState.peakCoverage = merged.peakCoverage || 0;
+                gameState.careerMaxSessionWords = merged.careerMaxSessionWords || 0;
+                gameState.careerLongestH = merged.careerLongestH || 0;
+                gameState.careerLongestV = merged.careerLongestV || 0;
                 gameState.maxLifeDays = merged.maxLifeDays;
                 gameState.xp = merged.xp;
                 gameState.catXP = merged.catXP || gameState.catXP || 0;
@@ -5297,23 +5351,15 @@
                 showMessage(t('msgCloseCall'), 'info');
                 return;
             }
-            gameState.isPaused = true;
-            if (gameState.gameLoopId) {
-                clearInterval(gameState.gameLoopId);
-                gameState.gameLoopId = null;
-            }
-            // Update max life before saving career
-            gameState.maxLifeDays = Math.max(gameState.maxLifeDays || 0, gameState.lifeDays);
-            saveCareer();
-            document.getElementById('gameOverMessage').textContent =
-                t('gameOverMsg', gameState.lifeDays, gameState.shelterHP.toLocaleString());
-            clearAutoSave();
-            openModal('gameOverModal');
+            showEndScreen(false);
         }
 
         // --- Victory sequence: shield animation → clear letters → modal ---
         function startVictorySequence() {
             gameState.victoryPhase = 'shielding';
+            // Speed up letter descent during victory sequence
+            gameState._preVictoryDescentInterval = gameState.letterDescentInterval;
+            gameState.letterDescentInterval = 200;
             // Scroll grid into view on mobile so user sees the shield animation
             var gridArea = document.querySelector('.grid-container');
             if (gridArea) gridArea.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -5332,40 +5378,76 @@
             }, 375); // 16 columns × 375ms ≈ 6 seconds
         }
 
-        // Show victory modal with session stats
         function showVictory() {
+            // Restore normal descent speed
+            if (gameState._preVictoryDescentInterval) {
+                gameState.letterDescentInterval = gameState._preVictoryDescentInterval;
+                delete gameState._preVictoryDescentInterval;
+            }
+            showEndScreen(true);
+        }
+
+        // Shared end-of-game screen (victory or game over)
+        function showEndScreen(isVictory) {
             gameState.isPaused = true;
             if (gameState.gameLoopId) {
                 clearInterval(gameState.gameLoopId);
                 gameState.gameLoopId = null;
             }
-            gameState.maxLifeDays = Math.max(gameState.maxLifeDays || 0, gameState.lifeDays);
+
+            // Use start-of-session snapshots for NEW BEST detection
+            var prevMaxDays = gameState._startCareerDays || 0;
+            var prevPeakCov = gameState._startCareerCov || 0;
+            var prevMaxWords = gameState._startCareerWords || 0;
+            var prevLongestH = gameState._startCareerLH || 0;
+            var prevLongestV = gameState._startCareerLV || 0;
+
+            // Update career bests from this session
+            gameState.maxLifeDays = Math.max(prevMaxDays, gameState.lifeDays);
+            gameState.careerMaxSessionWords = Math.max(prevMaxWords, gameState.sessionWordsPlaced || 0);
+            gameState.careerLongestH = Math.max(prevLongestH, gameState.sessionLongestH || 0);
+            gameState.careerLongestV = Math.max(prevLongestV, gameState.sessionLongestV || 0);
             saveCareer();
 
-            // Compute stats
-            var hData = gameState.wordsPlacedByLength || {};
-            var totalWords = 0;
-            for (var k in hData) totalWords += hData[k];
+            // Session values
+            var sDays = gameState.lifeDays;
+            var sCov = gameState.sessionPeakCoverage || 0;
+            var sWords = gameState.sessionWordsPlaced || 0;
+            var sLH = gameState.sessionLongestH || 0;
+            var sLV = gameState.sessionLongestV || 0;
 
-            var coverageCount = 0;
-            for (var cy = 2; cy <= 17; cy++) {
-                for (var cx = 0; cx < GRID_WIDTH; cx++) {
-                    var cc = gameState.grid[cy][cx];
-                    if (cc && cc.type === 'brick' && cc.hp > 0) coverageCount++;
-                }
+            // Career bests (after save)
+            var cDays = gameState.maxLifeDays;
+            var cCov = gameState.peakCoverage || 0;
+            var cWords = gameState.careerMaxSessionWords;
+            var cLH = gameState.careerLongestH;
+            var cLV = gameState.careerLongestV;
+
+            var newBest = t('victoryStatNew');
+
+            function statRow(label, sessionVal, bestVal, prevBestVal, suffix) {
+                suffix = suffix || '';
+                var isNew = sessionVal > 0 && sessionVal >= bestVal && sessionVal > prevBestVal;
+                return '<tr><td style="padding:4px 8px 4px 0;white-space:nowrap;">' + label + '</td>' +
+                    '<td style="padding:4px 8px;font-weight:bold;text-align:right;">' + sessionVal + suffix + '</td>' +
+                    '<td style="padding:4px 8px;color:#94a3b8;text-align:right;">' + bestVal + suffix + '</td>' +
+                    (isNew ? '<td style="padding:4px 0 4px 6px;color:#fbbf24;font-weight:bold;font-size:0.8em;">🏅 ' + newBest + '</td>' : '<td></td>') +
+                    '</tr>';
             }
-            var coveragePct = Math.round((coverageCount / 256) * 100);
 
-            document.getElementById('victoryTitle').textContent = t('victoryTitle');
-            document.getElementById('victoryMessage').textContent = t('victoryMsg');
+            document.getElementById('victoryTitle').textContent = isVictory ? t('victoryTitle') : t('gameOverTitle');
+            document.getElementById('victoryMessage').textContent = isVictory ? t('victoryMsg') : t('gameOverMsg', gameState.lifeDays, gameState.shelterHP.toLocaleString());
             document.getElementById('victoryStats').innerHTML =
-                t('victoryStatDays', gameState.lifeDays) + '<br>' +
-                t('victoryStatCoverage', coveragePct) + '<br>' +
-                t('victoryStatWords', totalWords.toLocaleString()) + '<br>' +
-                t('victoryStatCatHP', gameState.catHP) + '<br>' +
-                t('victoryStatShelterHP', gameState.shelterHP.toLocaleString());
+                '<table style="width:100%;border-collapse:collapse;font-size:0.9em;line-height:1.6;">' +
+                '<tr style="color:#94a3b8;font-size:0.8em;"><td></td><td style="padding:2px 8px;text-align:right;">Now</td><td style="padding:2px 8px;text-align:right;">Best</td><td></td></tr>' +
+                statRow(t('victoryStatDays'), sDays, cDays, prevMaxDays) +
+                statRow(t('victoryStatCoverage'), sCov, cCov, prevPeakCov, '%') +
+                statRow(t('victoryStatWords'), sWords, cWords, prevMaxWords) +
+                (sLH > 0 ? statRow(t('victoryStatLongestH'), sLH, cLH, prevLongestH) : '') +
+                (sLV > 0 ? statRow(t('victoryStatLongestV'), sLV, cLV, prevLongestV) : '') +
+                '</table>';
 
-            showConfetti('mega');
+            if (isVictory) showConfetti('mega');
             clearAutoSave();
             openModal('victoryModal');
         }
@@ -5378,7 +5460,7 @@
                     gameState.gameLoopId = null;
                 }
                 initGame();
-                closeModal('gameOverModal');
+                closeModal('victoryModal');
             }
         }
 
@@ -5508,9 +5590,6 @@
             }
         });
 
-        document.getElementById('closeGameOver').addEventListener('click', function() {
-            closeModal('gameOverModal');
-        });
         document.getElementById('closeVictory').addEventListener('click', function() {
             closeModal('victoryModal');
         });
