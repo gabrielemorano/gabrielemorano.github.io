@@ -1498,60 +1498,77 @@
 
     <script>
         // ================================================================
-        //  CACHE BUSTING — auto-reload when a new version is deployed
+        //  CACHE BUSTING — fetch version.json to detect new deploys
         //  CAREER_SCHEMA: bump this integer when career data format changes
         // ================================================================
-        (function() {
-            var BUILD_VERSION = '20260220194538';
-            var CAREER_SCHEMA = 1; // bump when career fields change incompatibly
-            if (BUILD_VERSION.indexOf('__') === 0) return;          // dev/base file, skip
+        var CAREER_SCHEMA = 1; // bump when career fields change incompatibly
 
-            // Strip cache-busting query param from URL (left over from previous reload)
-            if (location.search.indexOf('_v=') !== -1) {
-                history.replaceState(null, '', location.pathname);
-            }
+        // Strip cache-busting query param from URL (left over from previous reload)
+        if (location.search.indexOf('_v=') !== -1) {
+            history.replaceState(null, '', location.pathname);
+        }
+
+        // Fetch version.json (cache: no-store bypasses all caches including iOS Safari)
+        // _versionCheckDone resolves when the check completes (or skips); game start awaits it
+        var _versionCheckDone = (function() {
+            if (location.protocol === 'file:') return Promise.resolve(); // local dev, skip
 
             var VER_KEY = 'rw_build_version';
             var SCHEMA_KEY = 'rw_career_schema';
-            var prevVer = localStorage.getItem(VER_KEY);
-            var prevSchema = parseInt(localStorage.getItem(SCHEMA_KEY) || '0', 10);
-            var isNewBuild = prevVer && prevVer !== BUILD_VERSION;
-            var isSchemaBreak = prevSchema > 0 && prevSchema !== CAREER_SCHEMA;
 
-            if (isNewBuild) {
-                localStorage.setItem(VER_KEY, BUILD_VERSION);
-                localStorage.setItem(SCHEMA_KEY, String(CAREER_SCHEMA));
-                // Always clear autosave + tutorial
-                localStorage.removeItem('raining-words-save');
-                localStorage.removeItem('raining-words-tutorial-done');
-                if (isSchemaBreak) {
-                    // Incompatible career data — wipe everything
-                    localStorage.removeItem('raining-words-career');
-                    sessionStorage.setItem('rw_update_banner', 'fresh');
-                } else {
-                    // Compatible — keep career
-                    sessionStorage.setItem('rw_update_banner', 'update');
-                }
-                // Clear all Cache-API caches
-                if ('caches' in window) {
-                    caches.keys().then(function(names) {
-                        names.forEach(function(n) { caches.delete(n); });
-                    });
-                }
-                // Unregister any stale service workers
-                if ('serviceWorker' in navigator) {
-                    navigator.serviceWorker.getRegistrations().then(function(regs) {
-                        regs.forEach(function(r) { r.unregister(); });
-                    });
-                }
-                // Force a no-cache reload (query-param trick for iOS Safari)
-                var url = location.href.split('?')[0] + '?_v=' + Date.now();
-                location.replace(url);
-                return;
-            }
-            // First visit or same build — just store keys
-            localStorage.setItem(VER_KEY, BUILD_VERSION);
-            localStorage.setItem(SCHEMA_KEY, String(CAREER_SCHEMA));
+            return fetch('version.json', { cache: 'no-store' })
+                .then(function(r) { return r.ok ? r.json() : null; })
+                .then(function(data) {
+                    if (!data || !data.v) return;
+                    var serverVer = data.v;
+                    var serverSchema = data.s || 1;
+                    var prevVer = localStorage.getItem(VER_KEY);
+                    var prevSchema = parseInt(localStorage.getItem(SCHEMA_KEY) || '0', 10);
+
+                    // First visit — just store, no reload
+                    if (!prevVer) {
+                        localStorage.setItem(VER_KEY, serverVer);
+                        localStorage.setItem(SCHEMA_KEY, String(serverSchema));
+                        return;
+                    }
+
+                    // Same version — nothing to do
+                    if (prevVer === serverVer) return;
+
+                    // New version detected!
+                    var isSchemaBreak = prevSchema > 0 && prevSchema !== serverSchema;
+                    localStorage.setItem(VER_KEY, serverVer);
+                    localStorage.setItem(SCHEMA_KEY, String(serverSchema));
+
+                    // Always clear autosave + tutorial
+                    localStorage.removeItem('raining-words-save');
+                    localStorage.removeItem('raining-words-tutorial-done');
+                    if (isSchemaBreak) {
+                        localStorage.removeItem('raining-words-career');
+                        sessionStorage.setItem('rw_update_banner', 'fresh');
+                    } else {
+                        sessionStorage.setItem('rw_update_banner', 'update');
+                    }
+
+                    // Clear Cache-API caches
+                    if ('caches' in window) {
+                        caches.keys().then(function(names) {
+                            names.forEach(function(n) { caches.delete(n); });
+                        });
+                    }
+                    // Unregister stale service workers
+                    if ('serviceWorker' in navigator) {
+                        navigator.serviceWorker.getRegistrations().then(function(regs) {
+                            regs.forEach(function(r) { r.unregister(); });
+                        });
+                    }
+                    // Force reload with cache-busting query param
+                    var url = location.href.split('?')[0] + '?_v=' + Date.now();
+                    location.replace(url);
+                    // Return a never-resolving promise to block game start
+                    return new Promise(function() {});
+                })
+                .catch(function() { /* version.json not found — skip */ });
         })();
 
         // ================================================================
@@ -5901,42 +5918,45 @@
         window.addEventListener('load', () => {
             console.log(`Dictionary loaded: ${DICTIONARY.size} words`);
 
-            // Check URL for ?password= parameter — start new game with that seed
-            var urlParams = new URLSearchParams(window.location.search);
-            var urlPassword = urlParams.get('password');
-            if (urlPassword) {
-                // Clean the URL so refreshing doesn't re-trigger
-                var cleanUrl = window.location.origin + window.location.pathname;
-                window.history.replaceState({}, '', cleanUrl);
-                // Start game with the shared password as seed
-                gameState.gameSeed = urlPassword;
-                clearAutoSave();
-                initGame();
-                return;
-            }
-
-            // Check if an update modal needs to show before starting the game
-            var _ub = sessionStorage.getItem('rw_update_banner');
-            if (_ub) {
-                sessionStorage.removeItem('rw_update_banner');
-                var isFresh = _ub === 'fresh';
-                document.getElementById('updateModalTitle').textContent =
-                    isFresh ? t('bannerFreshTitle') : t('bannerNewTitle');
-                document.getElementById('updateModalMsg').textContent =
-                    isFresh ? t('bannerFreshStart') : t('bannerNewVersion');
-                openModal('updateModal');
-                document.getElementById('updateModalOk').addEventListener('click', function() {
-                    closeModal('updateModal');
+            // Wait for version check to complete before starting
+            _versionCheckDone.then(function() {
+                // Check URL for ?password= parameter — start new game with that seed
+                var urlParams = new URLSearchParams(window.location.search);
+                var urlPassword = urlParams.get('password');
+                if (urlPassword) {
+                    // Clean the URL so refreshing doesn't re-trigger
+                    var cleanUrl = window.location.origin + window.location.pathname;
+                    window.history.replaceState({}, '', cleanUrl);
+                    // Start game with the shared password as seed
+                    gameState.gameSeed = urlPassword;
+                    clearAutoSave();
                     initGame();
-                    _gameReady = true;
-                });
-            } else {
-                // Normal start — restore from auto-save or start fresh
-                if (!autoLoad()) {
-                    initGame();
+                    return;
                 }
+
+                // Check if an update modal needs to show before starting the game
+                var _ub = sessionStorage.getItem('rw_update_banner');
+                if (_ub) {
+                    sessionStorage.removeItem('rw_update_banner');
+                    var isFresh = _ub === 'fresh';
+                    document.getElementById('updateModalTitle').textContent =
+                        isFresh ? t('bannerFreshTitle') : t('bannerNewTitle');
+                    document.getElementById('updateModalMsg').textContent =
+                        isFresh ? t('bannerFreshStart') : t('bannerNewVersion');
+                    openModal('updateModal');
+                    document.getElementById('updateModalOk').addEventListener('click', function() {
+                        closeModal('updateModal');
+                        initGame();
+                        _gameReady = true;
+                    });
+                } else {
+                    // Normal start — restore from auto-save or start fresh
+                    if (!autoLoad()) {
+                        initGame();
+                    }
                 _gameReady = true;
-            }
+                }
+            }); // end _versionCheckDone.then
         });
     </script>
 </body>
