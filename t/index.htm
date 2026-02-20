@@ -4766,6 +4766,7 @@
             gameState.tutorial._wordPlaced = false;
             _tutLetterIdx = 0;
             gameState.isPaused = true;
+            gameState.weatherIntroShown = { hail: 0, lightning: 0 };
             gameState.letterSpawnInterval = SPEED_NORMAL;
             gameState.letterDescentInterval = SPEED_NORMAL;
             updateSpeedButtons(SPEED_NORMAL);
