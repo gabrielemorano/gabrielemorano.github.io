@@ -1489,6 +1489,35 @@
 
     <script>
         // ================================================================
+        //  CACHE BUSTING — auto-reload when a new version is deployed
+        // ================================================================
+        (function() {
+            var BUILD_VERSION = '20260220191520';
+            if (BUILD_VERSION.indexOf('__') === 0) return;          // dev/base file, skip
+            var KEY = 'rw_build_version';
+            var prev = localStorage.getItem(KEY);
+            if (prev && prev !== BUILD_VERSION) {
+                localStorage.setItem(KEY, BUILD_VERSION);
+                // Clear all Cache-API caches
+                if ('caches' in window) {
+                    caches.keys().then(function(names) {
+                        names.forEach(function(n) { caches.delete(n); });
+                    });
+                }
+                // Unregister any stale service workers
+                if ('serviceWorker' in navigator) {
+                    navigator.serviceWorker.getRegistrations().then(function(regs) {
+                        regs.forEach(function(r) { r.unregister(); });
+                    });
+                }
+                // Force a no-cache reload
+                location.reload(true);
+                return;
+            }
+            localStorage.setItem(KEY, BUILD_VERSION);
+        })();
+
+        // ================================================================
         //  LOCALISATION — all user-facing strings
         // ================================================================
 
