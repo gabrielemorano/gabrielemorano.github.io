@@ -1501,7 +1501,7 @@
         //  CACHE BUSTING — fetch version.json to detect new deploys
         //  CAREER_SCHEMA: bump this integer when career data format changes
         // ================================================================
-        var CAREER_SCHEMA = 2; // bump when career fields change incompatibly
+        var CAREER_SCHEMA = 3; // bump when career fields change incompatibly
 
         // Strip cache-busting query param from URL (left over from previous reload)
         if (location.search.indexOf('_v=') !== -1) {
@@ -1523,7 +1523,7 @@
                     var serverVer = data.v;
                     var serverSchema = data.s || 1;
                     var prevVer = localStorage.getItem(VER_KEY);
-                    var prevSchema = parseInt(localStorage.getItem(SCHEMA_KEY) || String(serverSchema), 10);
+                    var prevSchema = parseInt(localStorage.getItem(SCHEMA_KEY) || '1', 10);
 
                     // First visit — just store, no reload
                     if (!prevVer) {
