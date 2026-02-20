@@ -4887,6 +4887,7 @@
             updateSpeedButtons(SPEED_NORMAL);
             localStorage.setItem(TUTORIAL_KEY, '1');
             gameState.weatherIntroShown = { hail: 3, lightning: 3 };
+            saveCareer();
             showMessage(t('tutSkipped'), 'info');
             setTimeout(function() {
                 var ga = document.querySelector('.game-area');
