@@ -1476,6 +1476,15 @@
     <!-- Mobile FAB -->
     <button class="fab" id="fab" aria-label="Navigate">📝 0/18</button>
 
+    <!-- Update notification modal — shown before tutorial on new builds -->
+    <div class="modal" id="updateModal">
+        <div class="modal-content" style="text-align:center; max-width:340px;">
+            <h2 id="updateModalTitle"></h2>
+            <p id="updateModalMsg" style="margin:12px 0 18px; line-height:1.5;"></p>
+            <button id="updateModalOk" style="padding:10px 32px; font-size:1em; border:none; border-radius:8px; background:linear-gradient(135deg,#667eea,#764ba2); color:#fff; cursor:pointer;">OK</button>
+        </div>
+    </div>
+
     <!-- Game Over modal removed — reuses victoryModal -->
 
     <div class="modal" id="victoryModal">
@@ -1493,9 +1502,14 @@
         //  CAREER_SCHEMA: bump this integer when career data format changes
         // ================================================================
         (function() {
-            var BUILD_VERSION = '20260220193417';
+            var BUILD_VERSION = '20260220194237';
             var CAREER_SCHEMA = 1; // bump when career fields change incompatibly
             if (BUILD_VERSION.indexOf('__') === 0) return;          // dev/base file, skip
+
+            // Strip cache-busting query param from URL (left over from previous reload)
+            if (location.search.indexOf('_v=') !== -1) {
+                history.replaceState(null, '', location.pathname);
+            }
 
             var VER_KEY = 'rw_build_version';
             var SCHEMA_KEY = 'rw_career_schema';
@@ -1530,8 +1544,9 @@
                         regs.forEach(function(r) { r.unregister(); });
                     });
                 }
-                // Force a no-cache reload
-                location.reload(true);
+                // Force a no-cache reload (query-param trick for iOS Safari)
+                var url = location.href.split('?')[0] + '?_v=' + Date.now();
+                location.replace(url);
                 return;
             }
             // First visit or same build — just store keys
@@ -1622,8 +1637,10 @@
             confirmResetHint: "Reset current hint? You can then pick a different word length.",
             confirmRestart: "Restart game? Progress will be lost.",
             confirmNuke: "Delete ALL local storage (save + career)? This cannot be undone.",
-            bannerNewVersion: "✨ New version loaded!",
-            bannerFreshStart: "🌱 Sometimes a fresh start is what you need!",
+            bannerNewTitle: "🎉 Update!",
+            bannerNewVersion: "A new version has been loaded. Your career stats have been preserved!",
+            bannerFreshTitle: "🌱 Fresh Start!",
+            bannerFreshStart: "Sometimes a fresh start is what you need! The game has been updated with changes that required a full reset.",
             gameOverTitle: "💔 Game Over",
             gameOverMsg: "Your cat survived {0} days with {1} shelter HP.",
             victoryTitle: "🏆 Victory!",
@@ -5898,23 +5915,27 @@
                 return;
             }
 
-            // Try to restore from auto-save, otherwise start fresh
-            if (!autoLoad()) {
-                initGame();
-            }
-            _gameReady = true;
-
-            // Show update banner after reload (if cache-busting triggered)
+            // Check if an update modal needs to show before starting the game
             var _ub = sessionStorage.getItem('rw_update_banner');
             if (_ub) {
                 sessionStorage.removeItem('rw_update_banner');
-                setTimeout(function() {
-                    if (_ub === 'fresh') {
-                        showMessage(t('bannerFreshStart'), 'info');
-                    } else {
-                        showMessage(t('bannerNewVersion'), 'info');
-                    }
-                }, 600);
+                var isFresh = _ub === 'fresh';
+                document.getElementById('updateModalTitle').textContent =
+                    isFresh ? t('bannerFreshTitle') : t('bannerNewTitle');
+                document.getElementById('updateModalMsg').textContent =
+                    isFresh ? t('bannerFreshStart') : t('bannerNewVersion');
+                openModal('updateModal');
+                document.getElementById('updateModalOk').addEventListener('click', function() {
+                    closeModal('updateModal');
+                    initGame();
+                    _gameReady = true;
+                });
+            } else {
+                // Normal start — restore from auto-save or start fresh
+                if (!autoLoad()) {
+                    initGame();
+                }
+                _gameReady = true;
             }
         });
     </script>
