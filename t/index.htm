@@ -294,6 +294,10 @@
             text-shadow: 1px 1px 2px rgba(0,0,0,0.3);
         }
 
+        .cell.brick.worn {
+            background: linear-gradient(135deg, #7a9e8a 0%, #5c8a72 100%);
+        }
+
         .cell.brick.yellow {
             background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
         }
@@ -437,12 +441,30 @@
         }
         .ws-cheat-chip:active { transform: scale(0.95); }
 
+        .ws-input-row {
+            display: flex; gap: 5px; align-items: stretch;
+        }
         .ws-word {
+            flex: 1;
             display: flex; gap: 3px; min-height: 40px;
             padding: 5px 6px; background: #f8f9fa;
             border: 2px solid #667eea; border-radius: 6px;
             align-items: center; flex-wrap: wrap;
             transition: border-color 0.2s;
+        }
+        .ws-inline-submit {
+            width: 44px; min-width: 44px; flex-shrink: 0;
+            border: none; border-radius: 6px;
+            background: linear-gradient(135deg, #10b981, #059669);
+            color: white; font-size: 1.4em; font-weight: 700;
+            cursor: pointer; display: flex; align-items: center; justify-content: center;
+            box-shadow: 0 2px 6px rgba(16,185,129,0.3);
+            -webkit-tap-highlight-color: transparent;
+            transition: all 0.12s; touch-action: manipulation;
+        }
+        .ws-inline-submit:active { transform: scale(0.95); }
+        .ws-inline-submit:disabled {
+            background: #d1d5db; color: #999; cursor: default; box-shadow: none;
         }
         .ws-word:empty::after { content: "Tap letters..."; color: #bbb; font-size: 0.8em; font-style: italic; }
         .input-slot {
@@ -495,7 +517,7 @@
             0%, 100% { border-color: #facc15; box-shadow: 0 0 10px 2px rgba(250,204,21,0.4); }
             50%      { border-color: #1a1a1a; box-shadow: 0 0 10px 2px rgba(0,0,0,0.2); }
         }
-        .btn.tut-alert, .ws-submit.tut-alert {
+        .btn.tut-alert, .ws-submit.tut-alert, .ws-inline-submit.tut-alert {
             animation: btnBlink 0.6s step-end infinite;
         }
         @keyframes btnBlink {
@@ -1113,24 +1135,23 @@
             left: 0;
             right: 0;
             z-index: 9500;
-            background: rgba(30, 41, 59, 0.95);
-            -webkit-backdrop-filter: blur(8px);
-            backdrop-filter: blur(8px);
-            border-top: 2px solid #667eea;
-            padding: 10px 16px;
+            background: #fbbf24;
+            border-top: 3px solid #f59e0b;
+            padding: 12px 16px;
             display: flex;
             align-items: center;
             gap: 12px;
-            animation: tutBarSlideUp 0.3s ease-out;
-            box-shadow: 0 -4px 20px rgba(0,0,0,0.3);
+            -webkit-animation: tutBarSlideUp 0.3s ease-out, tutBarPulse 1.5s ease-in-out 0.3s 3;
+            animation: tutBarSlideUp 0.3s ease-out, tutBarPulse 1.5s ease-in-out 0.3s 3;
+            box-shadow: 0 -4px 24px rgba(251, 191, 36, 0.5);
         }
         .tutorial-bar .tut-step-num {
-            background: #667eea;
-            color: white;
+            background: #1e293b;
+            color: #fbbf24;
             font-weight: 700;
-            font-size: 0.75em;
-            min-width: 28px;
-            height: 28px;
+            font-size: 0.85em;
+            min-width: 30px;
+            height: 30px;
             border-radius: 50%;
             display: flex;
             align-items: center;
@@ -1139,25 +1160,21 @@
         }
         .tutorial-bar .tut-bar-text {
             flex: 1;
-            color: #e2e8f0;
-            font-size: 0.88em;
+            color: #1e293b;
+            font-size: 0.92em;
+            font-weight: 600;
             line-height: 1.4;
         }
-        .tutorial-bar .tut-bar-text strong { color: #a5b4fc; }
-        .tutorial-bar .tut-bar-skip {
-            background: none;
-            border: 1px solid #475569;
-            color: #94a3b8;
-            padding: 5px 12px;
-            border-radius: 6px;
-            font-size: 0.75em;
-            cursor: pointer;
-            flex-shrink: 0;
-            -webkit-transition: all 0.2s;
-            transition: all 0.2s;
-        }
-        .tutorial-bar .tut-bar-skip:hover { border-color: #94a3b8; color: #e2e8f0; }
+        .tutorial-bar .tut-bar-text strong { color: #92400e; }
         @keyframes tutBarSlideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+        @-webkit-keyframes tutBarPulse {
+            0%, 100% { box-shadow: 0 -4px 24px rgba(251, 191, 36, 0.5); }
+            50% { box-shadow: 0 -4px 36px rgba(251, 191, 36, 0.9), 0 0 0 4px rgba(251, 191, 36, 0.3); }
+        }
+        @keyframes tutBarPulse {
+            0%, 100% { box-shadow: 0 -4px 24px rgba(251, 191, 36, 0.5); }
+            50% { box-shadow: 0 -4px 36px rgba(251, 191, 36, 0.9), 0 0 0 4px rgba(251, 191, 36, 0.3); }
+        }
 
         /* Blinking highlight ring — yellow/black */
         .tutorial-highlight {
@@ -1253,7 +1270,7 @@
 <div class="message" id="message"></div>
     <div class="game-container">
         <div class="game-header" style="position:relative;">
-            <h1 data-i18n="gameTitle">🌧️🌧️ Raining Words 🐱</h1>
+            <h1 data-i18n="gameTitle">🌧️ Raining Words 🐱</h1>
             <p data-i18n="gameSubtitle">Build a shelter from words to protect your precious cat from falling letters!</p>
             <a id="langSwitch" href="index-it.htm" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);font-size:1.4em;text-decoration:none;">🇮🇹</a>
         </div>
@@ -1327,7 +1344,10 @@
                     </div>
 
                     <!-- Word input area -->
-                    <div class="ws-word" id="wordInput"></div>
+                    <div class="ws-input-row">
+                        <div class="ws-word" id="wordInput"></div>
+                        <button class="ws-inline-submit" id="inlineSubmitBtn" disabled aria-label="Submit">↵</button>
+                    </div>
 
                     <!-- Radar chips (longest → shortest) OR cheat word chips -->
                     <div class="ws-radar" id="wordRadar"></div>
@@ -1471,7 +1491,7 @@
 
         const i18n = {
             pageTitle: "Raining Words - Protect the Cat!",
-            gameTitle: "🌧️🌧️ Raining Words 🐱",
+            gameTitle: "🌧️ Raining Words 🐱",
             gameSubtitle: "Build a shelter from words to protect your precious cat from falling letters!",
             statDaysAlive: "📅 Age",
             statXP: "⭐ XP",
@@ -2360,12 +2380,14 @@
             const gridEl = document.getElementById('gameGrid');
             const resEl = document.getElementById('reservoir');
             const subEl = document.getElementById('submitBtn');
+            const inlineSubEl = document.getElementById('inlineSubmitBtn');
             if (!gridEl) return;
 
             if (!gameState.tutorial || !gameState.tutorial.enabled) {
                 gridEl.classList.remove('grid-alert');
                 if (resEl) resEl.classList.remove('tut-alert');
                 if (subEl) subEl.classList.remove('tut-alert');
+                if (inlineSubEl) inlineSubEl.classList.remove('tut-alert');
                 _tutScrolledToReservoir = false;
                 _tutScrolledToSubmit = false;
                 return;
@@ -2386,6 +2408,7 @@
             // Phase 3: submit blinks once 4+ selected, until word placed
             const subBlink = spelled && !placed;
             if (subEl) subEl.classList.toggle('tut-alert', subBlink);
+            if (inlineSubEl) inlineSubEl.classList.toggle('tut-alert', subBlink);
 
             // Mobile auto-scroll: only on narrow viewports, once per phase
             if (window.innerWidth <= 750) {
@@ -2571,6 +2594,7 @@
                                     else if (gridCell.bonus === 'col') cls = 'cell brick col-bonus';
                                     else if (hpPercent < 0.33) cls = 'cell brick red';
                                     else if (hpPercent < 0.66) cls = 'cell brick yellow';
+                                    else if (hpPercent < 1.0) cls = 'cell brick worn';
                                     else cls = 'cell brick';
                                 } else if (gridCell.type === 'pole' || gridCell.type === 'shield') {
                                     cls = 'cell pole';
@@ -2790,7 +2814,9 @@
 
             var filledCount = gameState.inputSlots.filter(function(s) { return s !== null; }).length;
             var hasUserTile = gameState.inputSlots.some(function(s) { return s !== null && s.source === 'user'; });
-            document.getElementById('submitBtn').disabled = filledCount < 3;
+            var submitDisabled = filledCount < 3;
+            document.getElementById('submitBtn').disabled = submitDisabled;
+            document.getElementById('inlineSubmitBtn').disabled = submitDisabled;
             document.getElementById('clearBtn').disabled = !hasUserTile;
             document.getElementById('clearAllBtn').disabled = filledCount === 0;
         }
@@ -4651,10 +4677,13 @@
             bar.id = 'tutTooltipEl';
             bar.className = 'tutorial-bar';
             bar.innerHTML = `<span class="tut-step-num">${step.id}</span>` +
-                `<span class="tut-bar-text"><strong>${step.title}</strong> ${step.text}</span>` +
-                `<button class="tut-bar-skip" id="tutSkipBtnFloat">${t('tutBtnSkip')}</button>`;
+                `<span class="tut-bar-text"><strong>${step.title}</strong> ${step.text}</span>`;
             document.body.appendChild(bar);
-            bar.querySelector('#tutSkipBtnFloat').addEventListener('click', skipTutorial);
+            // Re-trigger pulse animation by forcing reflow
+            bar.style.animation = 'none';
+            bar.offsetHeight; // force reflow
+            bar.style.animation = '';
+            bar.style.webkitAnimation = '';
         }
 
         function checkTutorialTrigger() {
@@ -4683,6 +4712,7 @@
             gameState.letterDescentInterval = SPEED_NORMAL;
             updateSpeedButtons(SPEED_NORMAL);
             localStorage.setItem(TUTORIAL_KEY, '1');
+            gameState.weatherIntroShown = { hail: 3, lightning: 3 };
             showMessage(t('tutSkipped'), 'info');
             setTimeout(function() {
                 var ga = document.querySelector('.game-area');
@@ -5301,6 +5331,7 @@
 
         // Event listeners
         document.getElementById('submitBtn').addEventListener('click', submitWord);
+        document.getElementById('inlineSubmitBtn').addEventListener('click', submitWord);
         document.getElementById('clearBtn').addEventListener('click', backspaceLetter);
         document.getElementById('shuffleBtn').addEventListener('click', shuffleReservoir);
         document.getElementById('clearAllBtn').addEventListener('click', () => {
