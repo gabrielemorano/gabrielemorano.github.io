@@ -55,14 +55,14 @@
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: rgba(255,255,255,0.95);
             text-align: center;
-            font-size: 0.7em;
+            font-size: 0.6em;
             font-weight: 500;
             letter-spacing: 0.3px;
             padding: 8px 10px;
+            border-radius: 0;
             grid-column: 1 / -1;
             margin: 0 -10px -10px -10px;
             width: calc(100% + 20px);
-            border-radius: 0;
         }
 
         .fab { display: none !important; } /* FAB hidden for now — remove !important to re-enable */
@@ -214,7 +214,7 @@
         .game-area {
             flex: 1;
             display: grid;
-            grid-template-columns: auto repeat(2, minmax(200px, 1fr));
+            grid-template-columns: auto 1fr;
             gap: 10px;
             padding: 10px;
             overflow-y: auto;
@@ -224,9 +224,20 @@
         }
 
         .grid-container {
-            grid-row: 1 / span 5;
+            grid-row: 1 / -1;
             grid-column: 1;
             min-width: 0;
+        }
+
+        .panels-wrapper {
+            columns: 448px;
+            column-gap: 10px;
+            min-width: 0;
+        }
+        .panels-wrapper > .panel {
+            break-inside: avoid;
+            -webkit-column-break-inside: avoid;
+            margin-bottom: 10px;
         }
 
         .grid-wrap-inner {
@@ -443,6 +454,11 @@
             padding-bottom: 4px;
             font-size: 0.95em;
         }
+        .collapsible-header { display: -webkit-flex; display: flex; align-items: center; justify-content: space-between; cursor: pointer; -webkit-user-select: none; user-select: none; -webkit-tap-highlight-color: transparent; }
+        .collapse-arrow { font-size: 1.1em; -webkit-transition: -webkit-transform 0.25s ease; transition: transform 0.25s ease; display: inline-block; }
+        .collapsible-header.collapsed .collapse-arrow { -webkit-transform: rotate(-90deg); transform: rotate(-90deg); }
+        .collapsible-body { overflow: hidden; -webkit-transition: max-height 0.3s ease, opacity 0.25s ease; transition: max-height 0.3s ease, opacity 0.25s ease; max-height: 500px; opacity: 1; }
+        .collapsible-body.collapsed { max-height: 0; opacity: 0; padding: 0; }
 
         /* ── Word Workshop ── */
         .ws-header { display: flex; align-items: center; justify-content: space-between; padding: 0 2px; }
@@ -947,18 +963,16 @@
             margin-top: 2px;
         }
 
-        /* --- Tablet: 2 columns (grid + 1 panel col) --- */
+        /* --- Tablet: 2 columns (grid + 1 panel col), panels single column --- */
         @media (max-width: 1100px) {
-            .game-area {
-                grid-template-columns: auto minmax(200px, 1fr);
-            }
+            .panels-wrapper { columns: 1; }
             .grid-container {
                 grid-row: 1 / span 8;
             }
         }
 
         /* --- Narrow tablet / large phone: single column --- */
-        @media (max-width: 750px) {
+        @media (max-width: 850px) {
             .game-area {
                 grid-template-columns: 1fr;
                 align-content: start;
@@ -969,6 +983,7 @@
                 display: flex;
                 justify-content: center;
             }
+            .panels-wrapper { columns: 1; }
             .fab {
                 display: flex;
             }
@@ -1540,6 +1555,7 @@
                 </div>
             </div>
 
+                <div class="panels-wrapper">
                 <div class="panel" id="panelWorkshop">
                     <!-- Header -->
                     <div class="ws-header">
@@ -1590,8 +1606,93 @@
                     <!-- Old Submit/Undo/Trash row removed — replaced by inline ↵ and × -->
                 </div>
 
+                <div class="panel" id="panelGameMenu">
+                    <h3 class="collapsible-header" id="menuToggle">
+                        <span data-i18n="panelGameMenu">⚙️ Menu</span>
+                        <span class="collapse-arrow">▼</span>
+                    </h3>
+                    <div class="collapsible-body" id="menuBody">
+                    <div class="menu-btn-grid">
+                        <button class="menu-btn menu-primary" id="newGameBtn">
+                            <span class="menu-icon">🐾</span>
+                            <span class="menu-pill"><span class="menu-label" data-i18n="btnNewGameShort">New Game</span></span>
+                        </button>
+                        <button class="menu-btn menu-secondary" id="importBtn">
+                            <span class="menu-icon">📂</span>
+                            <span class="menu-pill"><span class="menu-label" data-i18n="btnImportShort">Open</span></span>
+                        </button>
+                        <button class="menu-btn menu-danger" id="nukeBtn">
+                            <span class="menu-icon">💥</span>
+                            <span class="menu-pill"><span class="menu-label" data-i18n="btnResetShort">Reset</span></span>
+                        </button>
+                        <button class="menu-btn menu-secondary" id="exportBtn">
+                            <span class="menu-icon">💾</span>
+                            <span class="menu-pill"><span class="menu-label" data-i18n="btnExportShort">Save</span></span>
+                        </button>
+                        <input type="file" id="importFile" accept=".json" style="display: none;">
+                    </div>
+                    <hr style="border: none; border-top: 1px solid #e0e0e0; margin: 14px 20px;">
+                    <div style="font-size: 0.85em; color: #666; line-height: 1.6;">
+                        <div style="font-weight: 600; color: #555; margin-bottom: 4px;" data-i18n="lblGameCode">Game Code</div>
+                        <div style="display: flex; gap: 6px; align-items: center; margin-bottom: 6px;">
+                            <input type="text" id="seedInput" placeholder="any word or number" data-i18n-placeholder="phPassword"
+                                style="flex: 1; padding: 5px 10px; border: 1px solid #ddd; border-radius: 8px; font-size: 0.95em;">
+                            <button class="menu-btn menu-primary" id="seedStartBtn" style="flex-shrink: 0;">
+                                <span class="menu-icon">🔑</span>
+                                <span class="menu-pill" style="min-width: auto;"><span class="menu-label" data-i18n="btnPlayCode">Play Game Code</span></span>
+                            </button>
+                        </div>
+                        <p style="margin: 0 0 4px 0; font-style: italic; color: #999;" data-i18n="lblGameCodeSame">Same code = same game</p>
+                        <button class="menu-btn menu-share" id="shareBtn" style="margin-top: 8px; cursor: pointer; justify-content: flex-start;">
+                            <span class="menu-icon">🔗</span>
+                            <span class="menu-pill" style="min-width: auto; white-space: normal; text-align: left; font-weight: 400; font-size: 0.9em;"><span class="menu-label" data-i18n="btnShare">Share to challenge your friends on the same game</span></span>
+                        </button>
+                    </div>
+                    <hr style="border: none; border-top: 1px solid #e0e0e0; margin: 14px 20px;">
+                    <div style="font-size: 0.85em; color: #666; line-height: 1.6;">
+                        <div style="font-weight: 600; color: #555; margin-bottom: 6px;" data-i18n="lblSpeed">Speed</div>
+                        <div class="speed-btn-row">
+                            <button class="speed-btn" id="speedSlowBtn">
+                                <span class="speed-icon">🐌</span>
+                                <span class="speed-pill">
+                                    <span class="speed-label" data-i18n="btnSlowShort">Slow</span>
+                                </span>
+                            </button>
+                            <button class="speed-btn speed-active" id="speedNormalBtn">
+                                <span class="speed-icon">🐈</span>
+                                <span class="speed-pill">
+                                    <span class="speed-label" data-i18n="btnNormalShort">Normal</span>
+                                </span>
+                            </button>
+                            <button class="speed-btn" id="speedFastBtn">
+                                <span class="speed-icon">💨</span>
+                                <span class="speed-pill">
+                                    <span class="speed-label" data-i18n="btnFastShort">Fast</span>
+                                </span>
+                            </button>
+                        </div>
+                    </div>
+                    </div>
+                </div>
+
+                <div class="panel" id="panelWeather">
+                    <h3 class="collapsible-header" id="weatherToggle">
+                        <span data-i18n="panelWeather">🌩️ Weather Forecast</span>
+                        <span class="collapse-arrow">▼</span>
+                    </h3>
+                    <div class="collapsible-body" id="weatherBody">
+                        <div class="weather-forecast" id="weatherForecast">
+                            <p style="color: #666;" data-i18n="lblLoadingForecast">Loading forecast...</p>
+                        </div>
+                    </div>
+                </div>
+
                 <div class="panel" id="panelAchievements">
-                    <h3 data-i18n="panelAchievements">🏆 Achievements</h3>
+                    <h3 class="collapsible-header" id="achToggle">
+                        <span data-i18n="panelAchievements">🏆 Achievements</span>
+                        <span class="collapse-arrow">▼</span>
+                    </h3>
+                    <div class="collapsible-body" id="achBody">
                     <div id="achievementBoard">
                         <div style="font-size: 0.7em; font-weight: 600; color: #888; text-align: center; margin-bottom: 4px;" data-i18n="achWordLengths">Words Lengths</div>
                         <div class="ach-grids-wrap">
@@ -1647,86 +1748,22 @@
                             </div>
                         </div>
                     </div>
+                    </div>
                 </div>
 
                 <div class="panel" id="panelCatLooks">
-                    <h3 data-i18n="panelUnlockables">🎁 Unlockables</h3>
-                    <div class="ach-cat-section">
-                        <div class="ach-cat-teaser" id="achCatTeaser"></div>
-                        <div class="cat-look-gallery" id="achCatGallery"></div>
-                        <div class="ach-cat-counter" id="achCatCounter"></div>
-                    </div>
-                </div>
-
-                <div class="panel" id="panelWeather">
-                    <h3 data-i18n="panelWeather">🌩️ Weather Forecast</h3>
-                    <div class="weather-forecast" id="weatherForecast">
-                        <p style="color: #666;" data-i18n="lblLoadingForecast">Loading forecast...</p>
-                    </div>
-                </div>
-
-                <div class="panel" id="panelGameMenu">
-                    <h3 data-i18n="panelGameMenu">⚙️ Menu</h3>
-                    <div class="menu-btn-grid">
-                        <button class="menu-btn menu-primary" id="newGameBtn">
-                            <span class="menu-icon">🐾</span>
-                            <span class="menu-pill"><span class="menu-label" data-i18n="btnNewGameShort">New Game</span></span>
-                        </button>
-                        <button class="menu-btn menu-secondary" id="importBtn">
-                            <span class="menu-icon">📂</span>
-                            <span class="menu-pill"><span class="menu-label" data-i18n="btnImportShort">Open</span></span>
-                        </button>
-                        <button class="menu-btn menu-danger" id="nukeBtn">
-                            <span class="menu-icon">💥</span>
-                            <span class="menu-pill"><span class="menu-label" data-i18n="btnResetShort">Reset</span></span>
-                        </button>
-                        <button class="menu-btn menu-secondary" id="exportBtn">
-                            <span class="menu-icon">💾</span>
-                            <span class="menu-pill"><span class="menu-label" data-i18n="btnExportShort">Save</span></span>
-                        </button>
-                        <input type="file" id="importFile" accept=".json" style="display: none;">
-                    </div>
-                    <hr style="border: none; border-top: 1px solid #e0e0e0; margin: 14px 20px;">
-                    <div style="font-size: 0.85em; color: #666; line-height: 1.6;">
-                        <div style="font-weight: 600; color: #555; margin-bottom: 4px;" data-i18n="lblGameCode">Game Code</div>
-                        <div style="display: flex; gap: 6px; align-items: center; margin-bottom: 6px;">
-                            <input type="text" id="seedInput" placeholder="any word or number" data-i18n-placeholder="phPassword"
-                                style="flex: 1; padding: 5px 10px; border: 1px solid #ddd; border-radius: 8px; font-size: 0.95em;">
-                            <button class="menu-btn menu-primary" id="seedStartBtn" style="flex-shrink: 0;">
-                                <span class="menu-icon">🔑</span>
-                                <span class="menu-pill" style="min-width: auto;"><span class="menu-label" data-i18n="btnPlayCode">Play Game Code</span></span>
-                            </button>
+                    <h3 class="collapsible-header" id="unlockToggle">
+                        <span data-i18n="panelUnlockables">🎁 Unlockables</span>
+                        <span class="collapse-arrow">▼</span>
+                    </h3>
+                    <div class="collapsible-body" id="unlockBody">
+                        <div class="ach-cat-section">
+                            <div class="ach-cat-teaser" id="achCatTeaser"></div>
+                            <div class="cat-look-gallery" id="achCatGallery"></div>
+                            <div class="ach-cat-counter" id="achCatCounter"></div>
                         </div>
-                        <p style="margin: 0 0 4px 0; font-style: italic; color: #999;" data-i18n="lblGameCodeSame">Same code = same game</p>
-                        <button class="menu-btn menu-share" id="shareBtn" style="margin-top: 8px; cursor: pointer; justify-content: flex-start;">
-                            <span class="menu-icon">🔗</span>
-                            <span class="menu-pill" style="min-width: auto; white-space: normal; text-align: left; font-weight: 400; font-size: 0.9em;"><span class="menu-label" data-i18n="btnShare">Share to challenge your friends on the same game</span></span>
-                        </button>
                     </div>
                 </div>
-
-                <div class="panel">
-                    <h3 data-i18n="panelRainSpeed">⏱️ Speed</h3>
-                    <div class="speed-btn-row">
-                        <button class="speed-btn" id="speedSlowBtn">
-                            <span class="speed-icon">🐌</span>
-                            <span class="speed-pill">
-                                <span class="speed-label" data-i18n="btnSlowShort">Slow</span>
-                            </span>
-                        </button>
-                        <button class="speed-btn speed-active" id="speedNormalBtn">
-                            <span class="speed-icon">🐈</span>
-                            <span class="speed-pill">
-                                <span class="speed-label" data-i18n="btnNormalShort">Normal</span>
-                            </span>
-                        </button>
-                        <button class="speed-btn" id="speedFastBtn">
-                            <span class="speed-icon">💨</span>
-                            <span class="speed-pill">
-                                <span class="speed-label" data-i18n="btnFastShort">Fast</span>
-                            </span>
-                        </button>
-                    </div>
                 </div>
             <div class="game-footer">A creation of <a href="https://morano.it" target="_blank" style="color:inherit;text-decoration:underline">Gabriele Morano</a></div>
         </div>
@@ -1855,7 +1892,7 @@
             panelUnlockables: "🎁 Unlockables",
             panelWeather: "🌩️ Weather Forecast",
             panelGameMenu: "⚙️ Menu",
-            panelRainSpeed: "⏱️ Speed",
+            lblSpeed: "Speed",
             btnClear: "⌫",
             btnHint: "💡 Hint",
             btnClue: "🔍 Clue",
@@ -5778,6 +5815,20 @@
         }
 
         // Shared end-of-game screen (victory or game over)
+        function openMenuPanel() {
+            var hdr = document.getElementById('menuToggle');
+            var body = document.getElementById('menuBody');
+            if (hdr && hdr.classList.contains('collapsed')) {
+                hdr.classList.remove('collapsed');
+                body.classList.remove('collapsed');
+                try { localStorage.setItem('rw_menuCollapsed', '0'); } catch(e) {}
+            }
+            setTimeout(function() {
+                var panel = document.getElementById('panelGameMenu');
+                if (panel) panel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }, 100);
+        }
+
         function showEndScreen(isVictory) {
             gameState.isPaused = true;
             if (gameState.gameLoopId) {
@@ -5870,6 +5921,23 @@
         // Event listeners
         document.getElementById('inlineSubmitBtn').addEventListener('click', submitWord);
         document.getElementById('shuffleBtn').addEventListener('click', shuffleReservoir);
+
+        // Collapsible panels (default: collapsed; localStorage '0' = open)
+        [['menuToggle','menuBody','rw_menuCollapsed'],
+         ['weatherToggle','weatherBody','rw_weatherCollapsed'],
+         ['achToggle','achBody','rw_achCollapsed'],
+         ['unlockToggle','unlockBody','rw_unlockCollapsed']].forEach(function(cfg) {
+            var hdr = document.getElementById(cfg[0]), body = document.getElementById(cfg[1]), key = cfg[2];
+            hdr.addEventListener('click', function() {
+                hdr.classList.toggle('collapsed');
+                body.classList.toggle('collapsed');
+                try { localStorage.setItem(key, hdr.classList.contains('collapsed') ? '1' : '0'); } catch(e) {}
+            });
+            if (localStorage.getItem(key) !== '0') {
+                hdr.classList.add('collapsed');
+                body.classList.add('collapsed');
+            }
+        });
         // Cat look gallery — delegated listener (survives re-renders)
         document.getElementById('achCatGallery').addEventListener('click', (e) => {
             const btn = e.target.closest('.cat-look-btn');
@@ -6003,6 +6071,7 @@
 
         document.getElementById('closeVictory').addEventListener('click', function() {
             closeModal('victoryModal');
+            openMenuPanel();
         });
         document.getElementById('speedSlowBtn').addEventListener('click', () => setSpeed(SPEED_SLOW));
         document.getElementById('speedNormalBtn').addEventListener('click', () => setSpeed(SPEED_NORMAL));
