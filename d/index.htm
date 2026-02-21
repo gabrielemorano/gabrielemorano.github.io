@@ -645,6 +645,18 @@
             background: rgba(102,126,234,0.06);
         }
 
+        /* Game menu badge buttons */
+        .menu-btn-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+        .menu-btn { display: flex; align-items: center; justify-content: center; background: none; border: none; cursor: pointer; padding: 0; }
+        .menu-icon { width: 40px; height: 40px; border-radius: 50%; font-size: 1.14em; display: flex; align-items: center; justify-content: center; flex-shrink: 0; z-index: 1; border: 2px solid #fff; }
+        .menu-pill { background: #EDEEF2; border-radius: 0 14px 14px 0; padding: 5px 14px 5px 18px; margin-left: -12px; font-weight: 700; font-size: 1.14em; min-width: 15ch; text-align: center; color: #888; white-space: nowrap; }
+        .menu-btn.menu-primary .menu-icon { background: rgba(16,185,129,0.12); }
+        .menu-btn.menu-primary .menu-pill { background: rgba(16,185,129,0.08); color: #059669; }
+        .menu-btn.menu-danger .menu-icon { background: linear-gradient(135deg, #ef4444, #dc2626); color: white; }
+        .menu-btn.menu-danger .menu-pill { background: rgba(239,68,68,0.08); color: #dc2626; }
+        .menu-btn.menu-secondary .menu-icon { background: #EDEEF2; }
+        .menu-btn.menu-secondary .menu-pill { background: #EDEEF2; color: #888; }
+
         .ws-reservoir.tut-alert {
             animation: reservoirBlink 0.6s step-end infinite;
         }
@@ -1632,15 +1644,24 @@
                 </div>
 
                 <div class="panel" id="panelGameMenu">
-                    <h3 data-i18n="panelGameMenu">⚙️ Game Menu</h3>
-                    <div class="controls">
-                        <button class="btn btn-primary" id="newGameBtn" data-i18n="btnNewGame">🔄 New Game</button>
-                        <button class="btn btn-danger" id="nukeBtn" data-i18n="btnNuke">💥 Nuke</button>
-
-                    </div>
-                    <div class="controls" style="margin-top: 8px;">
-                        <button class="btn btn-secondary" id="exportBtn" style="font-size: 0.85em;" data-i18n="btnExport">💾 Export</button>
-                        <button class="btn btn-secondary" id="importBtn" style="font-size: 0.85em;" data-i18n="btnImport">📂 Import</button>
+                    <h3 data-i18n="panelGameMenu">⚙️ Menu</h3>
+                    <div class="menu-btn-grid">
+                        <button class="menu-btn menu-primary" id="newGameBtn">
+                            <span class="menu-icon">🐾</span>
+                            <span class="menu-pill"><span class="menu-label" data-i18n="btnNewGameShort">New Game</span></span>
+                        </button>
+                        <button class="menu-btn menu-secondary" id="importBtn">
+                            <span class="menu-icon">📂</span>
+                            <span class="menu-pill"><span class="menu-label" data-i18n="btnImportShort">Open</span></span>
+                        </button>
+                        <button class="menu-btn menu-danger" id="nukeBtn">
+                            <span class="menu-icon">💥</span>
+                            <span class="menu-pill"><span class="menu-label" data-i18n="btnResetShort">Reset</span></span>
+                        </button>
+                        <button class="menu-btn menu-secondary" id="exportBtn">
+                            <span class="menu-icon">💾</span>
+                            <span class="menu-pill"><span class="menu-label" data-i18n="btnExportShort">Save</span></span>
+                        </button>
                         <input type="file" id="importFile" accept=".json" style="display: none;">
                     </div>
                     <div style="margin-top: 10px;">
@@ -1805,7 +1826,7 @@
             panelAchievements: "🏆 Achievements",
             panelUnlockables: "🎁 Unlockables",
             panelWeather: "🌩️ Weather Forecast",
-            panelGameMenu: "⚙️ Game Menu",
+            panelGameMenu: "⚙️ Menu",
             panelRainSpeed: "⏱️ Speed",
             btnClear: "⌫",
             btnHint: "💡 Hint",
@@ -1814,11 +1835,15 @@
             btnHintShort: "Hint",
             btnClueShort: "Clue",
             btnCheatShort: "Show",
-            btnNewGame: "🔄 New Game",
+            btnNewGame: "🐾 New Game",
+            btnNewGameShort: "New Game",
             confirmNewGame: "Start a new game? Your career stats will be preserved.",
-            btnNuke: "💥 Nuke",
-            btnExport: "💾 Export",
-            btnImport: "📂 Import",
+            btnNuke: "💥 Reset",
+            btnResetShort: "Reset",
+            btnExport: "💾 Save",
+            btnExportShort: "Save",
+            btnImport: "📂 Open",
+            btnImportShort: "Open",
             btnPlay: "Play",
             btnSlow: "🐌 Slow",
             btnNormal: "🐈 Normal",
