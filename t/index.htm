@@ -12,7 +12,7 @@
         }
 
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'SF Pro Display', system-ui, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
             background: #e8eaf0;
             margin: 0;
             padding: 0;
@@ -58,116 +58,158 @@
             font-size: 0.7em;
             font-weight: 500;
             letter-spacing: 0.3px;
-            padding: 5px 10px;
+            padding: 8px 10px;
             grid-column: 1 / -1;
-            border-radius: 6px;
+            margin: 0 -10px -10px -10px;
+            width: calc(100% + 20px);
+            border-radius: 0;
         }
 
         .fab { display: none !important; } /* FAB hidden for now — remove !important to re-enable */
 
-        /* Stat color states for reservoir and season */
-        .stat.stat-warn {
-            background: linear-gradient(135deg, #f59e0b, #d97706);
-            box-shadow: 0 2px 6px rgba(245,158,11,0.4);
-        }
-        .stat.stat-warn .stat-label, .stat.stat-warn .stat-value { color: white; }
-        .stat.stat-danger {
-            background: linear-gradient(135deg, #ef4444, #dc2626);
-            box-shadow: 0 2px 6px rgba(239,68,68,0.4);
-        }
-        .stat.stat-danger .stat-label, .stat.stat-danger .stat-value { color: white; }
-        .stat-flow-row { display: contents; }
-
+        /* ══════════════════════════════════════
+           BADGE STATS
+           ══════════════════════════════════════ */
         .stats-bar {
             display: flex;
-            justify-content: center;
+            align-items: center;
             padding: 6px 10px;
             background: #f8f9fa;
             border-bottom: 2px solid #e0e0e0;
-            flex-wrap: wrap;
-            gap: 6px;
+            gap: 5px;
             flex-shrink: 0;
         }
+        .stat-flow-row {
+            flex: 1 1 0;
+            min-width: 0;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 5px;
+            align-items: center;
+        }
+        .stat-flow-row .stat {
+            flex: 1 1 auto;
+        }
 
+        /* ── Base badge ── */
         .stat {
+            display: flex; align-items: center;
+            gap: 0; padding: 0;
+            background: none; min-width: 0;
+            box-shadow: none; border-radius: 0;
+        }
+        .stat-icon {
+            width: 30px; height: 30px;
+            background: #EDEEF2;
+            border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 0.85em;
+            flex-shrink: 0;
+            z-index: 1;
+            border: 2px solid #fff;
+        }
+        .stat-pill {
+            background: #EDEEF2;
+            border-radius: 0 10px 10px 0;
+            padding: 3px 10px 3px 14px;
+            margin-left: -8px;
+            font-weight: 700;
+            font-size: 0.88em;
+            color: #667eea;
+            line-height: 1.3;
+            min-width: 6ch;
             text-align: center;
-            padding: 4px 10px;
-            background: white;
-            border-radius: 8px;
-            min-width: 80px;
-            flex: 1 1 80px;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        .stat-val { display: block; text-align: center; }
+        .stat-desc {
+            display: none; /* shown on desktop only */
+            font-size: 0.65em; font-weight: 600; color: #999;
+            letter-spacing: 0.01em;
         }
 
-        .stat-primary {
+        /* ── Coverage hero badge ── */
+        .stat-primary .stat-icon {
+            width: 38px; height: 38px;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            box-shadow: 0 2px 8px rgba(102, 126, 234, 0.4);
-        }
-        .stat-primary .stat-label {
-            color: rgba(255,255,255,0.85);
-        }
-        .stat-primary .stat-value {
+            font-size: 0.85em; font-weight: 800;
             color: white;
-            font-size: 1.4em;
+            border: 2px solid rgba(102,126,234,0.3);
+            box-shadow: 0 2px 8px rgba(102,126,234,0.25);
         }
+        .stat-primary .stat-pill {
+            background: #EDEEF2;
+            color: #667eea;
+            font-size: 0.78em;
+        }
+        .stat-primary .stat-desc { color: #999; }
 
+        /* ── Delay badge ── */
         .stat-delay {
             cursor: pointer;
-            -webkit-transition: background 0.2s, opacity 0.2s;
-            transition: background 0.2s, opacity 0.2s;
+            -webkit-transition: opacity 0.2s;
+            transition: opacity 0.2s;
         }
-        .stat-delay.delay-available {
-            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
-            box-shadow: 0 2px 8px rgba(16, 185, 129, 0.4);
+        .stat-delay .stat-icon {
+            background: linear-gradient(135deg, #10b981, #059669);
+            border-color: rgba(16,185,129,0.3);
+            box-shadow: 0 2px 6px rgba(16,185,129,0.2);
         }
-        .stat-delay.delay-available .stat-label,
-        .stat-delay.delay-available .stat-value {
-            color: white;
+        .stat-delay .stat-pill {
+            background: rgba(16,185,129,0.1);
+            color: #059669;
         }
+        .stat-delay.delay-available .stat-icon {
+            background: linear-gradient(135deg, #10b981, #059669);
+            box-shadow: 0 2px 8px rgba(16,185,129,0.4);
+        }
+        .stat-delay.delay-available .stat-pill { color: #059669; }
         .stat-delay.delay-disabled {
             opacity: 0.5;
             cursor: default;
         }
-        .stat-delay.delay-active {
-            background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
-            box-shadow: 0 2px 8px rgba(245, 158, 11, 0.4);
+        .stat-delay.delay-active .stat-icon {
+            background: linear-gradient(135deg, #f59e0b, #d97706);
+            border-color: rgba(245,158,11,0.3);
+            box-shadow: 0 2px 8px rgba(245,158,11,0.4);
         }
-        .stat-delay.delay-active .stat-label,
-        .stat-delay.delay-active .stat-value {
-            color: white;
+        .stat-delay.delay-active .stat-pill {
+            background: rgba(245,158,11,0.1);
+            color: #b45309;
         }
-        .stat-delay.delay-critical {
-            background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
-            box-shadow: 0 2px 8px rgba(239, 68, 68, 0.4);
+        .stat-delay.delay-critical .stat-icon {
+            background: linear-gradient(135deg, #ef4444, #dc2626);
+            border-color: rgba(239,68,68,0.3);
+            box-shadow: 0 2px 8px rgba(239,68,68,0.4);
         }
-        .stat-delay.delay-critical .stat-label,
-        .stat-delay.delay-critical .stat-value {
-            color: white;
-        }
-
-        .stat-label {
-            font-size: 0.75em;
-            color: #666;
-            margin-bottom: 2px;
+        .stat-delay.delay-critical .stat-pill {
+            background: rgba(239,68,68,0.1);
+            color: #b91c1c;
         }
 
-        .stat-value {
-            font-size: 1.1em;
-            font-weight: bold;
-            color: #667eea;
+        /* ── State colors (warn/danger) ── */
+        .stat.stat-warn .stat-icon {
+            background: linear-gradient(135deg, #f59e0b, #d97706);
+            border-color: rgba(245,158,11,0.3);
+            box-shadow: 0 2px 6px rgba(245,158,11,0.2);
+        }
+        .stat.stat-warn .stat-pill {
+            background: rgba(245,158,11,0.1);
+            color: #b45309;
+        }
+        .stat.stat-danger .stat-icon {
+            background: linear-gradient(135deg, #ef4444, #dc2626);
+            border-color: rgba(239,68,68,0.3);
+            box-shadow: 0 2px 6px rgba(239,68,68,0.2);
+        }
+        .stat.stat-danger .stat-pill {
+            background: rgba(239,68,68,0.1);
+            color: #b91c1c;
         }
 
-        .stat-value.critical {
-            color: #ef4444;
-        }
-
-        .stat-value.warning {
-            color: #f59e0b;
-        }
-
-        .stat-value.healthy {
-            color: #10b981;
-        }
+        /* Value color states on pill */
+        .stat-val.critical { color: #ef4444; }
+        .stat-val.warning { color: #f59e0b; }
+        .stat-val.healthy { color: #10b981; }
 
         .game-area {
             flex: 1;
@@ -404,7 +446,7 @@
 
         /* ── Word Workshop ── */
         .ws-header { display: flex; align-items: center; justify-content: space-between; padding: 0 2px; }
-        .ws-title { display: flex; align-items: center; gap: 5px; font-size: 0.95em; font-weight: 700; color: #444; }
+        .ws-header h3 { display: flex; align-items: center; gap: 5px; }
         .ws-count { font-weight: 600; color: #667eea; margin-left: 2px; }
         .ws-shuffle { background: none; border: none; font-size: 1.15em; cursor: pointer; padding: 4px 6px; border-radius: 6px; -webkit-tap-highlight-color: transparent; }
 
@@ -511,19 +553,113 @@
             background: linear-gradient(135deg, #10b981 0%, #059669 100%);
         }
 
-        .ws-btn-row { display: flex; gap: 5px; margin-top: 8px; }
-        .ws-btn-row button {
-            border: none; border-radius: 6px; font-weight: 700; cursor: pointer;
-            display: flex; align-items: center; justify-content: center;
-            padding: 10px 0; -webkit-tap-highlight-color: transparent;
-            transition: all 0.12s; touch-action: manipulation;
-        }
+        .ws-btn-row { display: flex; gap: 8px; margin-top: 8px; justify-content: space-evenly; }
         .ws-btn-row button:active { transform: scale(0.97); }
-        /* Old .ws-submit/.ws-backspace/.ws-clearall removed — replaced by inline ↵ and × */
-        .ws-tool-btn { flex: 1; gap: 4px; font-size: 0.82em; font-weight: 600; color: white; }
-        .ws-tool-btn .tool-cost { font-size: 0.85em; opacity: 0.85; }
-        .ws-tool-btn.affordable { background: linear-gradient(135deg, #10b981, #059669); box-shadow: 0 1px 4px rgba(16,185,129,0.25); }
-        .ws-tool-btn.too-expensive { background: #d1d5db; color: #999; cursor: default; box-shadow: none; }
+        .ws-tool-btn {
+            flex: 1; display: flex; align-items: center; justify-content: center;
+            background: none !important; box-shadow: none !important;
+            padding: 0 !important; border: none !important;
+            cursor: pointer; -webkit-tap-highlight-color: transparent;
+        }
+        .tool-icon {
+            width: 40px; height: 40px;
+            border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1.14em;
+            flex-shrink: 0;
+            z-index: 1;
+            border: 2px solid #fff;
+        }
+        .tool-pill {
+            background: #EDEEF2;
+            border-radius: 0 14px 14px 0;
+            padding: 5px 14px 5px 18px;
+            margin-left: -12px;
+            font-weight: 700;
+            font-size: 1.14em;
+            line-height: 1.3;
+            min-width: 9ch;
+            text-align: center;
+        }
+        .tool-cost { display: block; }
+        .tool-label { display: block; font-size: 0.65em; font-weight: 600; color: #999; }
+        /* Affordable state */
+        .ws-tool-btn.affordable .tool-icon {
+            background: linear-gradient(135deg, #10b981, #059669);
+            border-color: rgba(16,185,129,0.3);
+            box-shadow: 0 2px 6px rgba(16,185,129,0.2);
+        }
+        .ws-tool-btn.affordable .tool-pill {
+            background: rgba(16,185,129,0.1);
+            color: #059669;
+        }
+        /* Too expensive state */
+        .ws-tool-btn.too-expensive .tool-icon {
+            background: #EDEEF2;
+        }
+        .ws-tool-btn.too-expensive .tool-pill {
+            background: #EDEEF2;
+            color: #bbb;
+        }
+        .ws-tool-btn.too-expensive .tool-label { color: #ccc; }
+        .ws-tool-btn.too-expensive { cursor: default; }
+
+        /* ── Speed badge buttons ── */
+        .speed-btn-row { display: flex; gap: 8px; margin-top: 8px; justify-content: space-evenly; }
+        .speed-btn {
+            flex: 1; display: flex; align-items: center; justify-content: center;
+            background: none; border: none; padding: 0;
+            cursor: pointer; -webkit-tap-highlight-color: transparent;
+            transition: all 0.15s;
+        }
+        .speed-btn:active { transform: scale(0.97); }
+        .speed-icon {
+            width: 40px; height: 40px;
+            border-radius: 50%;
+            background: #EDEEF2;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1.14em;
+            flex-shrink: 0;
+            z-index: 1;
+            border: 2px solid #fff;
+        }
+        .speed-pill {
+            background: #EDEEF2;
+            border-radius: 0 14px 14px 0;
+            padding: 5px 14px 5px 18px;
+            margin-left: -12px;
+            font-weight: 700;
+            font-size: 1.14em;
+            line-height: 1.3;
+            min-width: 9ch;
+            text-align: center;
+            color: #888;
+        }
+        .speed-label { display: block; }
+        /* Active speed */
+        .speed-btn.speed-active .speed-icon {
+            border: 3px solid #667eea;
+            box-shadow: 0 0 0 2px rgba(102,126,234,0.2), 0 2px 8px rgba(102,126,234,0.25);
+        }
+        .speed-btn.speed-active .speed-pill {
+            border: 2px solid #667eea;
+            color: #667eea;
+            background: rgba(102,126,234,0.06);
+        }
+
+        /* Game menu badge buttons */
+        .menu-btn-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+        .menu-btn { display: flex; align-items: center; justify-content: center; background: none; border: none; cursor: pointer; padding: 0; }
+        .menu-icon { width: 40px; height: 40px; border-radius: 50%; font-size: 1.14em; display: flex; align-items: center; justify-content: center; flex-shrink: 0; z-index: 1; border: 2px solid #fff; }
+        .menu-pill { background: #EDEEF2; border-radius: 0 14px 14px 0; padding: 5px 14px 5px 18px; margin-left: -12px; font-weight: 700; font-size: 1.14em; min-width: 15ch; text-align: center; color: #888; white-space: nowrap; }
+        .menu-btn.menu-primary .menu-icon { background: rgba(16,185,129,0.12); }
+        .menu-btn.menu-primary .menu-pill { background: rgba(16,185,129,0.08); color: #059669; }
+        .menu-btn.menu-danger .menu-icon { background: linear-gradient(135deg, #ef4444, #dc2626); color: white; }
+        .menu-btn.menu-danger .menu-pill { background: rgba(239,68,68,0.08); color: #dc2626; }
+        .menu-btn.menu-secondary .menu-icon { background: #EDEEF2; }
+        .menu-btn.menu-secondary .menu-pill { background: #EDEEF2; color: #888; }
+        .menu-btn.menu-share .menu-icon { background: rgba(59,130,246,0.12); }
+        .menu-btn.menu-share .menu-pill { background: rgba(59,130,246,0.06); color: #3b82f6; }
 
         .ws-reservoir.tut-alert {
             animation: reservoirBlink 0.6s step-end infinite;
@@ -855,80 +991,76 @@
             .game-header h1 {
                 font-size: 1.1em;
             }
+            /* ── Badge stats mobile layout ── */
             .stats-bar {
                 display: grid;
                 grid-template-columns: auto auto 1fr;
                 grid-template-rows: auto auto;
-                padding: 3px 6px;
-                gap: 2px;
+                padding: 4px;
+                gap: 4px;
                 align-items: stretch;
             }
+            /* Coverage spans both rows, stacks vertically */
             .stat-primary {
                 grid-row: 1 / 3;
-                display: flex;
                 flex-direction: column;
                 align-items: center;
                 justify-content: center;
-                padding: 4px 10px;
             }
-            .stat-primary .stat-label {
-                display: block !important;
-                font-size: 0.55em;
-                color: rgba(255,255,255,0.85);
+            .stat-primary .stat-icon {
+                width: 32px; height: 32px;
             }
-            .stat-primary .stat-value {
-                font-size: 1.3em;
-                color: white;
+            .stat-primary .stat-pill {
+                border-radius: 10px;
+                margin-left: 0;
+                margin-top: -6px;
+                padding: 4px 10px 3px;
+                text-align: center;
+                font-size: 0.68em;
             }
+            .stat-primary .stat-desc { font-size: 0.5em; }
+            /* Delay spans both rows, stacks vertically */
             .stat-tall {
                 grid-row: 1 / 3;
-                display: flex;
                 flex-direction: column;
                 align-items: center;
                 justify-content: center;
-                padding: 4px 8px;
             }
-            .stat-delay.stat-tall .stat-label {
-                display: block !important;
-                font-size: 0.55em;
+            .stat-tall .stat-icon { width: 26px; height: 26px; font-size: 0.75em; }
+            .stat-tall .stat-pill {
+                border-radius: 8px;
+                margin-left: 0; margin-top: 2px;
+                padding: 3px 8px 4px;
+                font-size: 0.68em;
             }
-            .stat-delay.stat-tall .stat-value {
-                font-size: 0.72em;
-            }
+            /* Flow stats — 4 per row, wraps into 2 rows */
             .stats-bar .stat-flow-row {
+                grid-row: 1 / 3;
                 display: flex;
-                gap: 2px;
-                flex-wrap: nowrap;
+                flex-wrap: wrap;
+                gap: 4px;
+                align-content: center;
             }
             .stat-flow-row .stat {
-                flex: 1 1 0;
+                flex: 1 1 calc(25% - 3px);
                 min-width: 0;
+                max-width: calc(50% - 2px);
             }
-            .stat {
-                padding: 2px 4px;
-                min-width: 0;
-                border-radius: 4px;
-                white-space: nowrap;
+            /* Compact badges on mobile */
+            .stat-flow-row .stat-icon {
+                width: 22px; height: 22px;
+                font-size: 0.65em;
+                border-width: 1.5px;
             }
-            .stat .stat-label {
-                display: none;
+            .stat-flow-row .stat-pill {
+                font-size: 0.68em;
+                padding: 2px 6px 2px 10px;
+                margin-left: -6px;
             }
-            .stat .stat-value {
-                font-size: 0.72em;
-            }
-            /* Emoji prefixes for label-less stats on mobile */
-            #reservoirStat::before { content: "🔤 "; }
-            #catHP::before { content: "❤️ "; }
-            #treats::before { content: "🍬 "; }
-            #floodLevel::before { content: "🌊 "; }
-            #shelterHP::before { content: "🏠 "; }
-            #lifeDays::before { content: "📅 "; }
-            #xpDisplay::before { content: "⭐ "; }
-            #seasonInfo::before { content: ""; }
-            /* Hide coverage sub-detail on mobile */
-            #coverageDetail { display: none; }
+            /* Hide descriptions on mobile (use tappable hint instead) */
+            .stat-desc { display: none !important; }
             /* Tap-to-reveal stat label hint */
-            .stat-flow-row .stat { position: relative; }
+            .stat-flow-row .stat, .stat-primary, .stat-tall { position: relative; }
             .stat-hint {
                 position: absolute;
                 bottom: 100%;
@@ -1253,16 +1385,17 @@
         .ach-grid { display: grid; grid-template-columns: 24px repeat(2, 1fr); gap: 2px; flex: 1; }
         .ach-grid .ach-col-header { font-size: 0.6em; font-weight: 700; text-align: center; padding: 2px 1px; color: #555; letter-spacing: 0.5px; }
         .ach-grid .ach-row-label { font-size: 0.6em; font-weight: 600; color: #888; display: flex; align-items: center; justify-content: center; padding: 1px; }
-        .ach-cell { border-radius: 4px; text-align: center; font-size: 0.7em; font-weight: 700; padding: 3px 2px; transition: all 0.3s ease; min-height: 22px; display: flex; align-items: center; justify-content: center; }
-        .ach-cell.ach-empty { background: #e8eaf0; color: #bbb; }
+        .ach-cell { border-radius: 10px; text-align: center; font-size: 0.7em; font-weight: 700; padding: 3px 6px; transition: all 0.3s ease; min-height: 22px; min-width: 5ch; display: flex; align-items: center; justify-content: center; }
+        .ach-cell.ach-empty { background: #EDEEF2; color: #bbb; }
         .ach-cell.ach-filled { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; text-shadow: 1px 1px 2px rgba(0,0,0,0.2); box-shadow: 0 1px 3px rgba(102, 126, 234, 0.25); }
-        .ach-stats-row { display: flex; justify-content: center; gap: 6px; margin-top: 8px; }
-        .ach-stat-box { text-align: center; padding: 4px 8px; background: white; border-radius: 8px; min-width: 60px; box-shadow: 0 1px 3px rgba(0,0,0,0.08); }
-        .ach-stat-box .ach-val { font-size: 1em; font-weight: 700; color: #333; }
-        .ach-stat-box .ach-lbl { font-size: 0.55em; color: #888; margin-top: 1px; }
-        .ach-stat-box.ach-highlight { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
-        .ach-stat-box.ach-highlight .ach-val { color: white; }
-        .ach-stat-box.ach-highlight .ach-lbl { color: rgba(255,255,255,0.8); }
+        .ach-stats-row { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px; margin-top: 8px; }
+        .ach-stat { display: flex; align-items: center; gap: 0; flex: 1 1 calc(33.3% - 4px); max-width: calc(33.3% - 4px); min-width: 0; }
+        .ach-stat .ach-icon { width: 32px; height: 32px; background: #EDEEF2; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.85em; flex-shrink: 0; z-index: 1; border: 2px solid #fff; }
+        .ach-stat .ach-pill { background: #EDEEF2; border-radius: 0 8px 8px 0; padding: 2px 8px 2px 10px; margin-left: -6px; font-weight: 700; font-size: 0.75em; color: #667eea; line-height: 1.3; flex: 1; text-align: center; }
+        .ach-stat .ach-desc { font-size: 0.8em; font-weight: 400; color: #888; display: block; }
+        .ach-stat.ach-highlight .ach-icon { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border: 2px solid rgba(102,126,234,0.3); }
+        .ach-stat.ach-highlight .ach-icon span { filter: grayscale(1) invert(1) brightness(2); }
+        .ach-stat.ach-highlight .ach-pill { background: rgba(102,126,234,0.08); }
         .ach-progress-wrap { margin: 8px 0 4px; }
         .ach-progress-bar { height: 6px; background: #e0e0e0; border-radius: 3px; overflow: hidden; }
         .ach-progress-fill { height: 100%; background: linear-gradient(90deg, #10b981 0%, #059669 50%, #7c3aed 100%); border-radius: 3px; transition: width 0.5s ease; }
@@ -1278,6 +1411,35 @@
         .cat-look-btn.active { border-color: #667eea; box-shadow: 0 0 6px rgba(102,126,234,0.4); }
         .cat-look-btn.cat-locked { opacity: 0.2; cursor: default; filter: grayscale(1); }
         .cat-look-btn.cat-locked:hover { border-color: transparent; background: rgba(255,255,255,0.05); }
+
+        /* ── Desktop: show stat descriptions, center-align pills ── */
+        @media (min-width: 501px) {
+            .stat-pill {
+                text-align: center;
+            }
+            .stat-desc {
+                display: block;
+                font-size: 0.65em;
+                font-weight: 600;
+                color: #999;
+                text-align: center;
+            }
+            .stat-primary .stat-desc {
+                color: #999;
+            }
+            /* Coverage & Delay stack vertically on desktop too */
+            .stat-primary {
+                flex-direction: column;
+                align-items: center;
+            }
+            .stat-primary .stat-pill {
+                border-radius: 10px;
+                margin-left: 0;
+                margin-top: -6px;
+                padding: 3px 14px 2px;
+                text-align: center;
+            }
+        }
     </style>
 </head>
 <body>
@@ -1291,49 +1453,79 @@
         </div>
 
         <div class="stats-bar">
+            <!-- Coverage (hero badge): percentage in icon, words in pill -->
             <div class="stat stat-primary">
-                <div class="stat-label" data-i18n="statCoverage">Coverage</div>
-                <div class="stat-value" id="coverageStat">0%</div>
-                <div style="font-size:0.65em; color:rgba(255,255,255,0.7); text-align:center;" id="coverageDetail">0/256</div>
+                <div class="stat-icon" id="coverageStat">0%</div>
+                <div class="stat-pill" id="coverageDetail">
+                    <span class="stat-val">0</span>
+                    <span class="stat-desc" data-i18n="statCoverage">Coverage</span>
+                </div>
             </div>
+            <!-- Delay -->
             <div class="stat stat-delay stat-tall" id="delayBtn" title="Pause falling letters for 15s">
-                <div class="stat-label" data-i18n="statDelay">⏳ Delay</div>
-                <div class="stat-value" id="delayStat">0×</div>
+                <div class="stat-icon">⏳</div>
+                <div class="stat-pill">
+                    <span class="stat-val" id="delayStat">0×</span>
+                    <span class="stat-desc" data-i18n="statDelay">Delay</span>
+                </div>
             </div>
+            <!-- Flow stats (free-flowing across available space) -->
             <div class="stat-flow-row">
                 <div class="stat stat-mobile-hide-reservoir" id="statReservoirBox">
-                    <div class="stat-label" data-i18n="statReservoir">🔤 Reservoir</div>
-                    <div class="stat-value" id="reservoirStat">0/18</div>
+                    <div class="stat-icon">🔤</div>
+                    <div class="stat-pill">
+                        <span class="stat-val" id="reservoirStat">0/18</span>
+                        <span class="stat-desc" data-i18n="statReservoir">Reservoir</span>
+                    </div>
                 </div>
                 <div class="stat">
-                    <div class="stat-label" data-i18n="statCatHP">❤️ Lives</div>
-                    <div class="stat-value" id="catHP">100</div>
+                    <div class="stat-icon">❤️</div>
+                    <div class="stat-pill">
+                        <span class="stat-val" id="catHP">100</span>
+                        <span class="stat-desc" data-i18n="statCatHP">Lives</span>
+                    </div>
                 </div>
                 <div class="stat">
-                    <div class="stat-label" data-i18n="statTreats">🍬 Treats</div>
-                    <div class="stat-value" id="treats">0</div>
+                    <div class="stat-icon">🍬</div>
+                    <div class="stat-pill">
+                        <span class="stat-val" id="treats">0</span>
+                        <span class="stat-desc" data-i18n="statTreats">Treats</span>
+                    </div>
                 </div>
                 <div class="stat">
-                    <div class="stat-label" data-i18n="statFloodLevel">🌊 Flood</div>
-                    <div class="stat-value" id="floodLevel">0</div>
-                </div>
-            </div>
-            <div class="stat-flow-row">
-                <div class="stat">
-                    <div class="stat-label" data-i18n="statShelterHP">🏠 Shelter</div>
-                    <div class="stat-value" id="shelterHP">0</div>
+                    <div class="stat-icon">🌊</div>
+                    <div class="stat-pill">
+                        <span class="stat-val" id="floodLevel">0</span>
+                        <span class="stat-desc" data-i18n="statFloodLevel">Flood</span>
+                    </div>
                 </div>
                 <div class="stat">
-                    <div class="stat-label" data-i18n="statDaysAlive">📅 Age</div>
-                    <div class="stat-value" id="lifeDays">0</div>
+                    <div class="stat-icon">🏠</div>
+                    <div class="stat-pill">
+                        <span class="stat-val" id="shelterHP">0</span>
+                        <span class="stat-desc" data-i18n="statShelterHP">Shelter</span>
+                    </div>
                 </div>
                 <div class="stat">
-                    <div class="stat-label" data-i18n="statXP">⭐ XP</div>
-                    <div class="stat-value" id="xpDisplay">0</div>
+                    <div class="stat-icon">📅</div>
+                    <div class="stat-pill">
+                        <span class="stat-val" id="lifeDays">0</span>
+                        <span class="stat-desc" data-i18n="statDaysAlive">Age</span>
+                    </div>
+                </div>
+                <div class="stat">
+                    <div class="stat-icon">⭐</div>
+                    <div class="stat-pill">
+                        <span class="stat-val" id="xpDisplay">0</span>
+                        <span class="stat-desc" data-i18n="statXP">XP</span>
+                    </div>
                 </div>
                 <div class="stat stat-mobile-hide-season">
-                    <div class="stat-label" data-i18n="statSeason">Season</div>
-                    <div class="stat-value" id="seasonInfo">🌸 1/30</div>
+                    <div class="stat-icon" id="seasonIcon">🌸</div>
+                    <div class="stat-pill">
+                        <span class="stat-val" id="seasonInfo">1/30</span>
+                        <span class="stat-desc" data-i18n="statSeason">Season</span>
+                    </div>
                 </div>
             </div>
         </div>
@@ -1351,10 +1543,10 @@
                 <div class="panel" id="panelWorkshop">
                     <!-- Header -->
                     <div class="ws-header">
-                        <div class="ws-title">
+                        <h3 style="margin-bottom: 0; flex: 1;">
                             <span data-i18n="panelReservoir">🔤 Letter Reservoir</span>
                             <span class="ws-count" id="reservoirCount">0/18</span>
-                        </div>
+                        </h3>
                         <button class="ws-shuffle" id="shuffleBtn" data-i18n-title="tipShuffle" title="Shuffle tiles">🔀</button>
                     </div>
 
@@ -1372,9 +1564,27 @@
 
                     <!-- Hint | Clue | Cheat -->
                     <div class="ws-btn-row">
-                        <button class="ws-tool-btn too-expensive" id="hintBtn"><span data-i18n="btnHint">💡 Hint</span> <span class="tool-cost">0×</span></button>
-                        <button class="ws-tool-btn too-expensive" id="clueBtn"><span data-i18n="btnClue">🔍 Clue</span> <span class="tool-cost">0×</span></button>
-                        <button class="ws-tool-btn too-expensive" id="cheatBtn"><span data-i18n="btnCheat">🔨 Cheat</span> <span class="tool-cost">0×</span></button>
+                        <button class="ws-tool-btn too-expensive" id="hintBtn">
+                            <span class="tool-icon">💡</span>
+                            <span class="tool-pill">
+                                <span class="tool-cost">0×</span>
+                                <span class="tool-label" data-i18n="btnHintShort">Hint</span>
+                            </span>
+                        </button>
+                        <button class="ws-tool-btn too-expensive" id="clueBtn">
+                            <span class="tool-icon">🔍</span>
+                            <span class="tool-pill">
+                                <span class="tool-cost">0×</span>
+                                <span class="tool-label" data-i18n="btnClueShort">Clue</span>
+                            </span>
+                        </button>
+                        <button class="ws-tool-btn too-expensive" id="cheatBtn">
+                            <span class="tool-icon">👀</span>
+                            <span class="tool-pill">
+                                <span class="tool-cost">0×</span>
+                                <span class="tool-label" data-i18n="btnCheatShort">Show</span>
+                            </span>
+                        </button>
                     </div>
 
                     <!-- Old Submit/Undo/Trash row removed — replaced by inline ↵ and × -->
@@ -1383,6 +1593,7 @@
                 <div class="panel" id="panelAchievements">
                     <h3 data-i18n="panelAchievements">🏆 Achievements</h3>
                     <div id="achievementBoard">
+                        <div style="font-size: 0.7em; font-weight: 600; color: #888; text-align: center; margin-bottom: 4px;" data-i18n="achWordLengths">Words Lengths</div>
                         <div class="ach-grids-wrap">
                             <div class="ach-grid" id="achGridLeft"></div>
                             <div class="ach-grid" id="achGridRight"></div>
@@ -1392,37 +1603,54 @@
                             <div class="ach-progress-label" id="achProgressLabel"></div>
                         </div>
                         <div class="ach-stats-row">
-                            <div class="ach-stat-box ach-highlight">
-                                <div class="ach-val" id="achTotalWords">0</div>
-                                <div class="ach-lbl" data-i18n="achLblTotalWords">Total Words</div>
+                            <div class="ach-stat">
+                                <div class="ach-icon">📖</div>
+                                <div class="ach-pill">
+                                    <span class="ach-val" id="achTotalWords">0</span>
+                                    <span class="ach-desc" data-i18n="achLblTotalWords">Total Words</span>
+                                </div>
                             </div>
-                            <div class="ach-stat-box">
-                                <div class="ach-val" id="achFilledCells">0 / 28</div>
-                                <div class="ach-lbl" data-i18n="achLblUnlocked">Unlocked</div>
+                            <div class="ach-stat">
+                                <div class="ach-icon">🔓</div>
+                                <div class="ach-pill">
+                                    <span class="ach-val" id="achFilledCells">0 / 28</span>
+                                    <span class="ach-desc" data-i18n="achLblUnlocked">Lengths</span>
+                                </div>
                             </div>
-                        </div>
-                        <div class="ach-stats-row">
-                            <div class="ach-stat-box">
-                                <div class="ach-val" id="achLongestLife">0</div>
-                                <div class="ach-lbl" data-i18n="achLblLongestLife">📅 Longest Life</div>
+                            <div class="ach-stat">
+                                <div class="ach-icon">📅</div>
+                                <div class="ach-pill">
+                                    <span class="ach-val" id="achLongestLife">0</span>
+                                    <span class="ach-desc" data-i18n="achLblLongestLife">Longest Life</span>
+                                </div>
                             </div>
-                            <div class="ach-stat-box">
-                                <div class="ach-val" id="achCurrentXP">0</div>
-                                <div class="ach-lbl" data-i18n="achLblXP">⭐ XP</div>
+                            <div class="ach-stat">
+                                <div class="ach-icon">⭐</div>
+                                <div class="ach-pill">
+                                    <span class="ach-val" id="achCurrentXP">0</span>
+                                    <span class="ach-desc" data-i18n="achLblXP">XP Points</span>
+                                </div>
                             </div>
-                            <div class="ach-stat-box">
-                                <div class="ach-val" id="achHighestStack">0</div>
-                                <div class="ach-lbl" data-i18n="achLblHighestStack">📐 Highest Stack</div>
+                            <div class="ach-stat">
+                                <div class="ach-icon">🏗️</div>
+                                <div class="ach-pill">
+                                    <span class="ach-val" id="achHighestStack">0</span>
+                                    <span class="ach-desc" data-i18n="achLblHighestStack">Highest Stack</span>
+                                </div>
                             </div>
-                            <div class="ach-stat-box">
-                                <div class="ach-val" id="achPeakCoverage">0%</div>
-                                <div class="ach-lbl" data-i18n="achLblPeakCoverage">🏗️ Peak Coverage</div>
+                            <div class="ach-stat">
+                                <div class="ach-icon">🧱</div>
+                                <div class="ach-pill">
+                                    <span class="ach-val" id="achPeakCoverage">0%</span>
+                                    <span class="ach-desc" data-i18n="achLblPeakCoverage">Peak Coverage</span>
+                                </div>
                             </div>
                         </div>
                     </div>
                 </div>
 
                 <div class="panel" id="panelCatLooks">
+                    <h3 data-i18n="panelUnlockables">🎁 Unlockables</h3>
                     <div class="ach-cat-section">
                         <div class="ach-cat-teaser" id="achCatTeaser"></div>
                         <div class="cat-look-gallery" id="achCatGallery"></div>
@@ -1431,43 +1659,73 @@
                 </div>
 
                 <div class="panel" id="panelWeather">
-                    <h3 data-i18n="panelWeather">🌩️</h3>
+                    <h3 data-i18n="panelWeather">🌩️ Weather Forecast</h3>
                     <div class="weather-forecast" id="weatherForecast">
                         <p style="color: #666;" data-i18n="lblLoadingForecast">Loading forecast...</p>
                     </div>
                 </div>
 
                 <div class="panel" id="panelGameMenu">
-                    <h3 data-i18n="panelGameMenu">⚙️ Game Menu</h3>
-                    <div class="controls">
-                        <button class="btn btn-primary" id="newGameBtn" data-i18n="btnNewGame">🔄 New Game</button>
-                        <button class="btn btn-danger" id="nukeBtn" data-i18n="btnNuke">💥 Nuke</button>
-
-                    </div>
-                    <div class="controls" style="margin-top: 8px;">
-                        <button class="btn btn-secondary" id="exportBtn" style="font-size: 0.85em;" data-i18n="btnExport">💾 Export</button>
-                        <button class="btn btn-secondary" id="importBtn" style="font-size: 0.85em;" data-i18n="btnImport">📂 Import</button>
+                    <h3 data-i18n="panelGameMenu">⚙️ Menu</h3>
+                    <div class="menu-btn-grid">
+                        <button class="menu-btn menu-primary" id="newGameBtn">
+                            <span class="menu-icon">🐾</span>
+                            <span class="menu-pill"><span class="menu-label" data-i18n="btnNewGameShort">New Game</span></span>
+                        </button>
+                        <button class="menu-btn menu-secondary" id="importBtn">
+                            <span class="menu-icon">📂</span>
+                            <span class="menu-pill"><span class="menu-label" data-i18n="btnImportShort">Open</span></span>
+                        </button>
+                        <button class="menu-btn menu-danger" id="nukeBtn">
+                            <span class="menu-icon">💥</span>
+                            <span class="menu-pill"><span class="menu-label" data-i18n="btnResetShort">Reset</span></span>
+                        </button>
+                        <button class="menu-btn menu-secondary" id="exportBtn">
+                            <span class="menu-icon">💾</span>
+                            <span class="menu-pill"><span class="menu-label" data-i18n="btnExportShort">Save</span></span>
+                        </button>
                         <input type="file" id="importFile" accept=".json" style="display: none;">
                     </div>
-                    <div style="margin-top: 10px;">
-                        <label style="font-size: 0.85em; color: #666;" data-i18n="lblPassword">🔑 Password:</label>
-                        <div style="display: flex; gap: 4px; margin-top: 4px;">
+                    <hr style="border: none; border-top: 1px solid #e0e0e0; margin: 14px 20px;">
+                    <div style="font-size: 0.85em; color: #666; line-height: 1.6;">
+                        <div style="font-weight: 600; color: #555; margin-bottom: 4px;" data-i18n="lblGameCode">Game Code</div>
+                        <div style="display: flex; gap: 6px; align-items: center; margin-bottom: 6px;">
                             <input type="text" id="seedInput" placeholder="any word or number" data-i18n-placeholder="phPassword"
-                                style="flex: 1; padding: 4px 8px; border: 1px solid #ddd; border-radius: 6px; font-size: 0.9em;">
-                            <button class="btn btn-primary" id="seedStartBtn" style="padding: 4px 10px; font-size: 0.85em;" data-i18n="btnPlay">Play</button>
+                                style="flex: 1; padding: 5px 10px; border: 1px solid #ddd; border-radius: 8px; font-size: 0.95em;">
+                            <button class="menu-btn menu-primary" id="seedStartBtn" style="flex-shrink: 0;">
+                                <span class="menu-icon">🔑</span>
+                                <span class="menu-pill" style="min-width: auto;"><span class="menu-label" data-i18n="btnPlayCode">Play Game Code</span></span>
+                            </button>
                         </div>
-                        <div id="shareBtn" class="stat stat-primary" style="margin-top: 6px; cursor: pointer; display: none; text-align: center; padding: 8px 10px;">
-                            <div class="stat-label" data-i18n="btnShare">📋 Share this link to play the same sequence of letters</div>
-                        </div>
+                        <p style="margin: 0 0 4px 0; font-style: italic; color: #999;" data-i18n="lblGameCodeSame">Same code = same game</p>
+                        <button class="menu-btn menu-share" id="shareBtn" style="margin-top: 8px; cursor: pointer; justify-content: flex-start;">
+                            <span class="menu-icon">🔗</span>
+                            <span class="menu-pill" style="min-width: auto; white-space: normal; text-align: left; font-weight: 400; font-size: 0.9em;"><span class="menu-label" data-i18n="btnShare">Share to challenge your friends on the same game</span></span>
+                        </button>
                     </div>
                 </div>
 
                 <div class="panel">
                     <h3 data-i18n="panelRainSpeed">⏱️ Speed</h3>
-                    <div class="controls">
-                        <button class="btn btn-secondary" id="speedSlowBtn" data-i18n="btnSlow">🐌 Slow</button>
-                        <button class="btn btn-primary" id="speedNormalBtn" data-i18n="btnNormal">🌧️ Normal</button>
-                        <button class="btn btn-secondary" id="speedFastBtn" data-i18n="btnFast">⚡ Fast</button>
+                    <div class="speed-btn-row">
+                        <button class="speed-btn" id="speedSlowBtn">
+                            <span class="speed-icon">🐌</span>
+                            <span class="speed-pill">
+                                <span class="speed-label" data-i18n="btnSlowShort">Slow</span>
+                            </span>
+                        </button>
+                        <button class="speed-btn speed-active" id="speedNormalBtn">
+                            <span class="speed-icon">🐈</span>
+                            <span class="speed-pill">
+                                <span class="speed-label" data-i18n="btnNormalShort">Normal</span>
+                            </span>
+                        </button>
+                        <button class="speed-btn" id="speedFastBtn">
+                            <span class="speed-icon">💨</span>
+                            <span class="speed-pill">
+                                <span class="speed-label" data-i18n="btnFastShort">Fast</span>
+                            </span>
+                        </button>
                     </div>
                 </div>
             <div class="game-footer">A creation of <a href="https://morano.it" target="_blank" style="color:inherit;text-decoration:underline">Gabriele Morano</a></div>
@@ -1580,44 +1838,57 @@
             pageTitle: "Raining Words - Protect the Cat!",
             gameTitle: "🌧️ Raining Words 🐱",
             gameSubtitle: "Build a shelter from words to protect your precious cat from falling letters!",
-            statDaysAlive: "📅 Age",
-            statXP: "⭐ XP",
-            statTreats: "🍬 Treats",
-            statCatHP: "❤️ Lives",
-            statShelterHP: "🏠 Shelter",
-            statFloodLevel: "🌊 Flood",
+            statDaysAlive: "Age",
+            statXP: "XP",
+            statTreats: "Treats",
+            statCatHP: "Lives",
+            statShelterHP: "Shelter",
+            statFloodLevel: "Flood",
             statSeason: "Season",
-            statReservoir: "🔤 Reservoir",
+            statReservoir: "Reservoir",
             statCoverage: "Coverage",
-            statDelay: "⏳ Delay",
+            statDelay: "Delay",
             panelWordBuilder: "📝 Word Builder",
             panelReservoir: "🔤 Letter Reservoir",
             panelWordRadar: "📊 Word Radar",
             panelAchievements: "🏆 Achievements",
-            panelWeather: "🌩️",
-            panelGameMenu: "⚙️ Game Menu",
+            panelUnlockables: "🎁 Unlockables",
+            panelWeather: "🌩️ Weather Forecast",
+            panelGameMenu: "⚙️ Menu",
             panelRainSpeed: "⏱️ Speed",
             btnClear: "⌫",
             btnHint: "💡 Hint",
             btnClue: "🔍 Clue",
-            btnCheat: "🔨 Cheat",
-            btnNewGame: "🔄 New Game",
+            btnCheat: "👀 Show",
+            btnHintShort: "Hint",
+            btnClueShort: "Clue",
+            btnCheatShort: "Show",
+            btnNewGame: "🐾 New Game",
+            btnNewGameShort: "New Game",
             confirmNewGame: "Start a new game? Your career stats will be preserved.",
-            btnNuke: "💥 Nuke",
-            btnExport: "💾 Export",
-            btnImport: "📂 Import",
+            btnNuke: "💥 Reset",
+            btnResetShort: "Reset",
+            btnExport: "💾 Save",
+            btnExportShort: "Save",
+            btnImport: "📂 Open",
+            btnImportShort: "Open",
             btnPlay: "Play",
+            btnPlayCode: "Play Game Code",
             btnSlow: "🐌 Slow",
-            btnNormal: "🌧️ Normal",
-            btnFast: "⚡ Fast",
+            btnNormal: "🐈 Normal",
+            btnFast: "💨 Fast",
+            btnSlowShort: "Slow",
+            btnNormalShort: "Normal",
+            btnFastShort: "Fast",
             btnRestart: "🔄 Start New Game",
-            btnNextSeason: "Next Season ▶",
+            btnNextSeason: "Next Season",
             tipShuffle: "Shuffle tiles",
             tipResetHint: "Reset hint",
             phPassword: "any word or number",
             phWordRadar: "Waiting for letters...",
-            lblPassword: "🔑 Password:",
-            btnShare: "📋 Share this link to play the same sequence of letters",
+            lblGameCode: "Game Code",
+            lblGameCodeSame: "Same code = same game",
+            btnShare: "Share to challenge your friends on the same game",
             msgLinkCopied: "Link copied to clipboard!",
             lblLongestWords: "Longest words available:",
             lblRadarLongest: "Longest",
@@ -1636,7 +1907,7 @@
             msgNoLetters: "No letters in reservoir!",
             msgSelectLetters: "Select some letters first!",
             msgInvalidWord: "\"{0}\" is not a valid word!",
-            msgNoPlacement: "No valid placement found!",
+            msgNoPlacement: "No room! Try a shorter word",
             msgInvalidSave: "Invalid save file",
             msgSaveReadFail: "Failed to read save file",
             msgSaveExported: "Save exported!",
@@ -1665,7 +1936,7 @@
             victoryTitle: "🏆 Victory!",
             victoryMsg: "You've built the shelter to the top! No more room for words — your cat is fully protected!",
             victoryStatDays: "🗓️ Days survived",
-            victoryStatCoverage: "🏗️ Peak coverage",
+            victoryStatCoverage: "🧱 Peak coverage",
             victoryStatWords: "📝 Words placed",
             victoryStatLongestH: "↔️ Longest word",
             victoryStatLongestV: "↕️ Longest vertical",
@@ -1677,12 +1948,15 @@
             achBestDays: "📅 {0} days best",
             achFullShelter: "{0} × full shelter",
             achStacksMax: "{0} stacks max",
+            achWordLengths: "Words Lengths",
+            achColHor: "Hor.",
+            achColVer: "Vert.",
             achLblTotalWords: "Total Words",
-            achLblUnlocked: "Unlocked",
-            achLblLongestLife: "📅 Longest Life",
-            achLblXP: "⭐ XP",
-            achLblHighestStack: "📐 Highest Stack",
-            achLblPeakCoverage: "🏗️ Peak Coverage",
+            achLblUnlocked: "Lengths",
+            achLblLongestLife: "Longest Life",
+            achLblXP: "XP Points",
+            achLblHighestStack: "Highest Stack",
+            achLblPeakCoverage: "Peak Coverage",
             achLblCatLooks: "Cat Looks",
             achCatCounter: "{0} / {1} unlocked",
             catNextLook: "in {0} XP",
@@ -2270,9 +2544,7 @@
             if (existingOverlay) existingOverlay.remove();
             // pauseBtn removed — newGameBtn is static
 
-            // Show share button and populate seed input
-            var shareBtn = document.getElementById('shareBtn');
-            if (shareBtn) shareBtn.style.display = gameState.gameSeed ? 'block' : 'none';
+            // Populate seed input
             document.getElementById('seedInput').value = gameState.gameSeed || '';
 
             // Tutorial: launch for first-time players with no save
@@ -2864,25 +3136,7 @@
             if (rStatEl) {
                 rStatEl.textContent = rCount + '/' + RESERVOIR_CAPACITY;
             }
-            if (rStatBox) {
-                var rLabel = rStatBox.querySelector('.stat-label');
-                if (rCount >= RESERVOIR_CAPACITY) {
-                    rStatBox.style.background = 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)';
-                    rStatBox.style.boxShadow = '0 2px 8px rgba(239,68,68,0.4)';
-                    if (rStatEl) rStatEl.style.color = 'white';
-                    if (rLabel) rLabel.style.color = 'white';
-                } else if (rCount >= 14) {
-                    rStatBox.style.background = 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)';
-                    rStatBox.style.boxShadow = '0 2px 8px rgba(245,158,11,0.4)';
-                    if (rStatEl) rStatEl.style.color = 'white';
-                    if (rLabel) rLabel.style.color = 'white';
-                } else {
-                    rStatBox.style.background = '';
-                    rStatBox.style.boxShadow = '';
-                    if (rStatEl) rStatEl.style.color = '';
-                    if (rLabel) rLabel.style.color = '';
-                }
-            }
+            // Reservoir color states handled by CSS classes in updateStats()
 
             updateTutorialBlinks();
             renderWordInput();
@@ -3069,11 +3323,11 @@
                 container.appendChild(corner);
                 var hH = document.createElement('div');
                 hH.className = 'ach-col-header';
-                hH.textContent = 'H';
+                hH.textContent = t('achColHor');
                 container.appendChild(hH);
                 var vH = document.createElement('div');
                 vH.className = 'ach-col-header';
-                vH.textContent = 'V';
+                vH.textContent = t('achColVer');
                 container.appendChild(vH);
 
                 for (var len = from; len <= to; len++) {
@@ -3769,22 +4023,22 @@
                 checkTutorialTrigger();
             }
 
-            // Victory trigger: dry-run a 3-letter placement (smallest possible word).
-            // If it would land on row 18+ or has no placement at all, rows 2-17 are full.
+            // Victory trigger: no 3-letter word (smallest possible) can fit in rows 2-17.
             if (!gameState.tutorial.enabled && !gameState.victoryPhase) {
                 var probe = findPlacement('AAA');
-                if (!probe || probe.y >= 18) {
+                if (!probe) {
                     startVictorySequence();
                 }
             }
         }
 
-        // Find valid placement for word
+        // Find valid placement for word (rows 2–17 only; 18+ are shield/spawn)
+        const PLACEMENT_MAX_ROW = 18; // exclusive — valid rows are 2 to 17
         function findPlacement(word) {
             const wordLen = word.length;
 
             // Try to find lowest placement that works
-            for (let y = 2; y < GRID_HEIGHT; y++) {
+            for (let y = 2; y < PLACEMENT_MAX_ROW; y++) {
                 // Search from right to left
                 for (let x = GRID_WIDTH - wordLen; x >= 0; x--) {
                     // Check if row is empty for this word
@@ -4372,7 +4626,7 @@
             }
 
             var catHPVal = Math.max(0, gameState.catHP);
-            var catHPCls = gameState.catHP <= 0 ? 'stat-value critical' : gameState.catHP <= 9 ? 'stat-value warning' : 'stat-value healthy';
+            var catHPCls = gameState.catHP <= 0 ? 'stat-val critical' : gameState.catHP <= 9 ? 'stat-val warning' : 'stat-val healthy';
             if (_prevStats.catHP !== catHPVal || _prevStats.catHPCls !== catHPCls) {
                 els.catHP.textContent = catHPVal;
                 els.catHP.className = catHPCls;
@@ -4381,10 +4635,13 @@
             }
 
             var seasonInfo = getSeasonInfo();
-            var seasonText = seasonInfo.emoji + ' ' + gameState.seasonDay + '/' + SEASON_LENGTH;
-            if (_prevStats.season !== seasonText) {
+            var seasonText = gameState.seasonDay + '/' + SEASON_LENGTH;
+            if (_prevStats.season !== seasonText || _prevStats.seasonEmoji !== seasonInfo.emoji) {
                 els.seasonInfo.textContent = seasonText;
+                var seasonIconEl = document.getElementById('seasonIcon');
+                if (seasonIconEl) seasonIconEl.textContent = seasonInfo.emoji;
                 _prevStats.season = seasonText;
+                _prevStats.seasonEmoji = seasonInfo.emoji;
             }
 
             gameState.floodLevel = gameState.floorLetters.size;
@@ -4451,7 +4708,10 @@
                 _prevStats.covPct = coveragePct;
             }
             if (_prevStats.covCount !== coverageCount) {
-                if (els.coverageDetail) els.coverageDetail.textContent = coverageCount + '/' + COVERAGE_TOTAL;
+                if (els.coverageDetail) {
+                    var covVal = els.coverageDetail.querySelector('.stat-val');
+                    if (covVal) covVal.textContent = coverageCount;
+                }
                 _prevStats.covCount = coverageCount;
             }
 
@@ -4668,9 +4928,11 @@
             };
             for (const [speed, id] of Object.entries(map)) {
                 const btn = document.getElementById(id);
-                btn.className = Number(speed) === active
-                    ? 'btn btn-primary'
-                    : 'btn btn-secondary';
+                if (Number(speed) === active) {
+                    btn.classList.add('speed-active');
+                } else {
+                    btn.classList.remove('speed-active');
+                }
             }
         }
 
@@ -4722,8 +4984,15 @@
                 pointer-events: auto;
             `;
             overlay.innerHTML = `
-                <div style="font-weight:bold; font-size:1.1em; margin-bottom:8px;">${nextSeason.emoji} ${nextSeason.name}</div>
-                <button id="nextSeasonBtn" class="btn btn-primary" style="min-width:140px;">${t('btnNextSeason')}</button>
+                <div style="font-weight:700;font-size:1.1em;margin-bottom:10px;">${t('btnNextSeason')}</div>
+                <button id="nextSeasonBtn" style="position:relative;width:52px;height:52px;border-radius:50%;border:3px solid #10b981;background:white;font-size:1.6em;cursor:pointer;display:flex;align-items:center;justify-content:center;margin:0 auto;box-shadow:0 2px 12px rgba(16,185,129,0.35);-webkit-tap-highlight-color:transparent;overflow:visible;">
+                    ${nextSeason.emoji}
+                    <span style="position:absolute;inset:-5px;border-radius:50%;border:3px solid #10b981;animation:nsBtnPing 1.2s ease-out infinite;pointer-events:none;"></span>
+                </button>
+                <style>
+                    @keyframes nsBtnPing { 0%{transform:scale(1);opacity:1} 100%{transform:scale(1.6);opacity:0} }
+                    @-webkit-keyframes nsBtnPing { 0%{-webkit-transform:scale(1);opacity:1} 100%{-webkit-transform:scale(1.6);opacity:0} }
+                </style>
             `;
             wrapper.appendChild(overlay);
             document.getElementById('nextSeasonBtn').addEventListener('click', advanceToNextSeason);
@@ -5375,9 +5644,7 @@
             // Speed buttons
             updateSpeedButtons(gameState.letterSpawnInterval);
 
-            // Show share button and populate seed input
-            var shareBtn = document.getElementById('shareBtn');
-            if (shareBtn) shareBtn.style.display = gameState.gameSeed ? 'block' : 'none';
+            // Populate seed input
             document.getElementById('seedInput').value = gameState.gameSeed || '';
 
             // Season transition prompt — defer to allow layout before positioning
@@ -5687,7 +5954,7 @@
 
         // Share button: copy link with password parameter to clipboard
         document.getElementById('shareBtn').addEventListener('click', function() {
-            var password = gameState.gameSeed || document.getElementById('seedInput').value.trim();
+            var password = document.getElementById('seedInput').value.trim() || gameState.gameSeed;
             if (!password) return;
             var url = new URL(window.location.href);
             url.search = '';  // clear existing params
@@ -5950,12 +6217,14 @@
         // Mobile: tap stat in flow-row to show label hint
         (function() {
             var isMobile = function() { return window.innerWidth <= 500; };
-            document.querySelectorAll('.stat-flow-row .stat').forEach(function(stat) {
-                stat.addEventListener('click', function() {
+            document.querySelectorAll('.stat-flow-row .stat, .stat-primary, .stat-tall').forEach(function(stat) {
+                stat.addEventListener('click', function(e) {
                     if (!isMobile()) return;
+                    // Don't interfere with delay button action
+                    if (stat.classList.contains('stat-delay')) return;
                     var existing = stat.querySelector('.stat-hint');
                     if (existing) existing.remove();
-                    var label = stat.querySelector('.stat-label');
+                    var label = stat.querySelector('.stat-desc');
                     if (!label) return;
                     var hint = document.createElement('span');
                     hint.className = 'stat-hint';
