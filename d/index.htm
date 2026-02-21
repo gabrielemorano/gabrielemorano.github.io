@@ -1907,7 +1907,7 @@
             msgNoLetters: "No letters in reservoir!",
             msgSelectLetters: "Select some letters first!",
             msgInvalidWord: "\"{0}\" is not a valid word!",
-            msgNoPlacement: "No valid placement found!",
+            msgNoPlacement: "No room! Try a shorter word",
             msgInvalidSave: "Invalid save file",
             msgSaveReadFail: "Failed to read save file",
             msgSaveExported: "Save exported!",
@@ -4023,22 +4023,22 @@
                 checkTutorialTrigger();
             }
 
-            // Victory trigger: dry-run a 3-letter placement (smallest possible word).
-            // If it would land on row 18+ or has no placement at all, rows 2-17 are full.
+            // Victory trigger: no 3-letter word (smallest possible) can fit in rows 2-17.
             if (!gameState.tutorial.enabled && !gameState.victoryPhase) {
                 var probe = findPlacement('AAA');
-                if (!probe || probe.y >= 18) {
+                if (!probe) {
                     startVictorySequence();
                 }
             }
         }
 
-        // Find valid placement for word
+        // Find valid placement for word (rows 2–17 only; 18+ are shield/spawn)
+        const PLACEMENT_MAX_ROW = 18; // exclusive — valid rows are 2 to 17
         function findPlacement(word) {
             const wordLen = word.length;
 
             // Try to find lowest placement that works
-            for (let y = 2; y < GRID_HEIGHT; y++) {
+            for (let y = 2; y < PLACEMENT_MAX_ROW; y++) {
                 // Search from right to left
                 for (let x = GRID_WIDTH - wordLen; x >= 0; x--) {
                     // Check if row is empty for this word
