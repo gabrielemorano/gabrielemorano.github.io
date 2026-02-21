@@ -1286,6 +1286,7 @@
         <div class="game-header" style="position:relative;">
             <h1 data-i18n="gameTitle">🌧️ Raining Words 🐱</h1>
             <p data-i18n="gameSubtitle">Build a shelter from words to protect your precious cat from falling letters!</p>
+            <button id="tutorialBtn" title="Replay tutorial" style="position:absolute;left:10px;top:50%;transform:translateY(-50%);font-size:1.1em;background:rgba(255,255,255,0.15);border:none;color:rgba(255,255,255,0.85);width:28px;height:28px;border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;-webkit-tap-highlight-color:transparent;">?</button>
             <a id="langSwitch" href="index-it.htm" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);font-size:1.4em;text-decoration:none;">🇮🇹</a>
         </div>
 
@@ -1654,6 +1655,7 @@
             confirmResetHint: "Reset current hint? You can then pick a different word length.",
             confirmRestart: "Restart game? Progress will be lost.",
             confirmNuke: "Delete ALL local storage (save + career)? This cannot be undone.",
+            confirmTutorial: "Replay the tutorial? Your current game will restart.",
             bannerNewTitle: "🎉 Update!",
             bannerNewVersion: "A new version has been loaded. Your career stats have been preserved!",
             bannerFreshTitle: "🌱 Fresh Start!",
@@ -2201,6 +2203,8 @@
                 gameState.catLevel = career.catLevel || 0;
                 gameState.activeCatLook = career.activeCatLook != null ? career.activeCatLook : -1;
                 gameState.weatherIntroShown = career.weatherIntroShown || { hail: 0, lightning: 0 };
+                // Restore tutorial-done flag from career (survives version updates)
+                if (career.tutorialDone) localStorage.setItem(TUTORIAL_KEY, '1');
             } else {
                 gameState.wordsPlacedByLength = {};
                 gameState.verticalWordsByLength = {};
@@ -4387,6 +4391,15 @@
             if (_prevStats.flood !== gameState.floodLevel) {
                 els.floodLevel.textContent = gameState.floodLevel;
                 _prevStats.flood = gameState.floodLevel;
+                var floodStat = els.floodLevel.closest('.stat');
+                if (floodStat) {
+                    floodStat.classList.remove('stat-warn', 'stat-danger');
+                    if (gameState.floodLevel > 7) {
+                        floodStat.classList.add('stat-danger');
+                    } else if (gameState.floodLevel > 3) {
+                        floodStat.classList.add('stat-warn');
+                    }
+                }
             }
 
             var totalHP = 0;
@@ -4905,6 +4918,7 @@
             gameState.letterDescentInterval = SPEED_NORMAL;
             updateSpeedButtons(SPEED_NORMAL);
             localStorage.setItem(TUTORIAL_KEY, '1');
+            saveCareer();
             showConfetti('mega');
             showMessage(t('tutComplete'), 'success');
             setTimeout(function() {
@@ -4916,7 +4930,7 @@
         // Debounced resize handler for tooltip repositioning
         let _tutResizeTimer = null;
         window.addEventListener('resize', () => {
-            if (!gameState.tutorial.enabled) return;
+            if (!gameState.tutorial || !gameState.tutorial.enabled) return;
             clearTimeout(_tutResizeTimer);
             _tutResizeTimer = setTimeout(() => renderTutorialTooltip(), 120);
         });
@@ -5089,7 +5103,8 @@
                 weatherIntroShown: {
                     hail: Math.max((prev.weatherIntroShown || {}).hail || 0, (gameState.weatherIntroShown || {}).hail || 0),
                     lightning: Math.max((prev.weatherIntroShown || {}).lightning || 0, (gameState.weatherIntroShown || {}).lightning || 0)
-                }
+                },
+                tutorialDone: !!(prev.tutorialDone || localStorage.getItem(TUTORIAL_KEY))
             };
             // Merge word counts: take max per length
             const prevWords = prev.wordsPlacedByLength || {};
@@ -5168,6 +5183,7 @@
                 catXP: gameState.catXP || 0,
                 catLevel: gameState.catLevel || 0,
                 activeCatLook: gameState.activeCatLook != null ? gameState.activeCatLook : -1,
+                victoryPhase: gameState.victoryPhase,
                 weatherIntroShown: gameState.weatherIntroShown,
                 sessionPeakCoverage: gameState.sessionPeakCoverage || 0,
                 sessionWordsPlaced: gameState.sessionWordsPlaced || 0,
@@ -5298,7 +5314,12 @@
                     catLevel: Math.max(local.catLevel || 0, imported.catLevel || 0, gameState.catLevel || 0),
                     activeCatLook: gameState.activeCatLook != null ? gameState.activeCatLook : -1,
                     wordsPlacedByLength: {},
-                    verticalWordsByLength: {}
+                    verticalWordsByLength: {},
+                    weatherIntroShown: {
+                        hail: Math.max((local.weatherIntroShown || {}).hail || 0, (imported.weatherIntroShown || {}).hail || 0, (gameState.weatherIntroShown || {}).hail || 0),
+                        lightning: Math.max((local.weatherIntroShown || {}).lightning || 0, (imported.weatherIntroShown || {}).lightning || 0, (gameState.weatherIntroShown || {}).lightning || 0)
+                    },
+                    tutorialDone: !!(local.tutorialDone || imported.tutorialDone || localStorage.getItem(TUTORIAL_KEY))
                 };
                 const lw = local.wordsPlacedByLength || {};
                 const iw = imported.wordsPlacedByLength || {};
@@ -5330,6 +5351,14 @@
                 gameState.catXP = merged.catXP || gameState.catXP || 0;
                 gameState.catLevel = merged.catLevel;
                 gameState.activeCatLook = merged.activeCatLook != null ? merged.activeCatLook : gameState.activeCatLook;
+                gameState.weatherIntroShown = merged.weatherIntroShown || { hail: 0, lightning: 0 };
+                if (merged.tutorialDone) localStorage.setItem(TUTORIAL_KEY, '1');
+                // Recalculate snapshots from merged career (for NEW BEST detection)
+                gameState._startCareerDays = gameState.maxLifeDays || 0;
+                gameState._startCareerCov = gameState.peakCoverage || 0;
+                gameState._startCareerWords = gameState.careerMaxSessionWords || 0;
+                gameState._startCareerLH = gameState.careerLongestH || 0;
+                gameState._startCareerLV = gameState.careerLongestV || 0;
             }
 
             // Restore as paused
@@ -5613,6 +5642,27 @@
                 }
                 location.reload(true);
             }
+        });
+        document.getElementById('tutorialBtn').addEventListener('click', function() {
+            if (!confirm(t('confirmTutorial'))) return;
+            // Stop current game
+            if (gameState.gameLoopId) {
+                clearInterval(gameState.gameLoopId);
+                gameState.gameLoopId = null;
+            }
+            // Reset tutorial + weather intro flags
+            localStorage.removeItem(TUTORIAL_KEY);
+            gameState.weatherIntroShown = { hail: 0, lightning: 0 };
+            // Clear tutorialDone from career so initGame won't restore the flag
+            try {
+                var c = JSON.parse(localStorage.getItem(CAREER_KEY) || '{}');
+                delete c.tutorialDone;
+                c.weatherIntroShown = { hail: 0, lightning: 0 };
+                localStorage.setItem(CAREER_KEY, JSON.stringify(c));
+            } catch(e) {}
+            clearAutoSave();
+            gameState.gameSeed = '';
+            initGame();
         });
         // Seed play button: start new game with entered seed
         document.getElementById('seedStartBtn').addEventListener('click', () => {
