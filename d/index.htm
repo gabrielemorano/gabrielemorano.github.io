@@ -446,7 +446,7 @@
 
         /* ── Word Workshop ── */
         .ws-header { display: flex; align-items: center; justify-content: space-between; padding: 0 2px; }
-        .ws-title { display: flex; align-items: center; gap: 5px; font-size: 0.95em; font-weight: 700; color: #444; }
+        .ws-header h3 { display: flex; align-items: center; gap: 5px; }
         .ws-count { font-weight: 600; color: #667eea; margin-left: 2px; }
         .ws-shuffle { background: none; border: none; font-size: 1.15em; cursor: pointer; padding: 4px 6px; border-radius: 6px; -webkit-tap-highlight-color: transparent; }
 
@@ -1543,10 +1543,10 @@
                 <div class="panel" id="panelWorkshop">
                     <!-- Header -->
                     <div class="ws-header">
-                        <div class="ws-title">
+                        <h3 style="margin-bottom: 0; flex: 1;">
                             <span data-i18n="panelReservoir">🔤 Letter Reservoir</span>
                             <span class="ws-count" id="reservoirCount">0/18</span>
-                        </div>
+                        </h3>
                         <button class="ws-shuffle" id="shuffleBtn" data-i18n-title="tipShuffle" title="Shuffle tiles">🔀</button>
                     </div>
 
