@@ -58,9 +58,11 @@
             font-size: 0.7em;
             font-weight: 500;
             letter-spacing: 0.3px;
-            padding: 5px 10px;
+            padding: 8px 10px;
             grid-column: 1 / -1;
-            border-radius: 6px;
+            margin: 0 -10px -10px -10px;
+            width: calc(100% + 20px);
+            border-radius: 0;
         }
 
         .fab { display: none !important; } /* FAB hidden for now — remove !important to re-enable */
@@ -656,6 +658,8 @@
         .menu-btn.menu-danger .menu-pill { background: rgba(239,68,68,0.08); color: #dc2626; }
         .menu-btn.menu-secondary .menu-icon { background: #EDEEF2; }
         .menu-btn.menu-secondary .menu-pill { background: #EDEEF2; color: #888; }
+        .menu-btn.menu-share .menu-icon { background: rgba(59,130,246,0.12); }
+        .menu-btn.menu-share .menu-pill { background: rgba(59,130,246,0.06); color: #3b82f6; }
 
         .ws-reservoir.tut-alert {
             animation: reservoirBlink 0.6s step-end infinite;
@@ -1384,13 +1388,14 @@
         .ach-cell { border-radius: 10px; text-align: center; font-size: 0.7em; font-weight: 700; padding: 3px 6px; transition: all 0.3s ease; min-height: 22px; min-width: 5ch; display: flex; align-items: center; justify-content: center; }
         .ach-cell.ach-empty { background: #EDEEF2; color: #bbb; }
         .ach-cell.ach-filled { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; text-shadow: 1px 1px 2px rgba(0,0,0,0.2); box-shadow: 0 1px 3px rgba(102, 126, 234, 0.25); }
-        .ach-stats-row { display: flex; justify-content: center; gap: 6px; margin-top: 8px; }
-        .ach-stat-box { text-align: center; padding: 4px 8px; background: white; border-radius: 8px; min-width: 60px; box-shadow: 0 1px 3px rgba(0,0,0,0.08); }
-        .ach-stat-box .ach-val { font-size: 1em; font-weight: 700; color: #333; }
-        .ach-stat-box .ach-lbl { font-size: 0.55em; color: #888; margin-top: 1px; }
-        .ach-stat-box.ach-highlight { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
-        .ach-stat-box.ach-highlight .ach-val { color: white; }
-        .ach-stat-box.ach-highlight .ach-lbl { color: rgba(255,255,255,0.8); }
+        .ach-stats-row { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px; margin-top: 8px; }
+        .ach-stat { display: flex; align-items: center; gap: 0; flex: 1 1 calc(33.3% - 4px); max-width: calc(33.3% - 4px); min-width: 0; }
+        .ach-stat .ach-icon { width: 32px; height: 32px; background: #EDEEF2; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.85em; flex-shrink: 0; z-index: 1; border: 2px solid #fff; }
+        .ach-stat .ach-pill { background: #EDEEF2; border-radius: 0 8px 8px 0; padding: 2px 8px 2px 10px; margin-left: -6px; font-weight: 700; font-size: 0.75em; color: #667eea; line-height: 1.3; flex: 1; text-align: center; }
+        .ach-stat .ach-desc { font-size: 0.8em; font-weight: 400; color: #888; display: block; }
+        .ach-stat.ach-highlight .ach-icon { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border: 2px solid rgba(102,126,234,0.3); }
+        .ach-stat.ach-highlight .ach-icon span { filter: grayscale(1) invert(1) brightness(2); }
+        .ach-stat.ach-highlight .ach-pill { background: rgba(102,126,234,0.08); }
         .ach-progress-wrap { margin: 8px 0 4px; }
         .ach-progress-bar { height: 6px; background: #e0e0e0; border-radius: 3px; overflow: hidden; }
         .ach-progress-fill { height: 100%; background: linear-gradient(90deg, #10b981 0%, #059669 50%, #7c3aed 100%); border-radius: 3px; transition: width 0.5s ease; }
@@ -1588,6 +1593,7 @@
                 <div class="panel" id="panelAchievements">
                     <h3 data-i18n="panelAchievements">🏆 Achievements</h3>
                     <div id="achievementBoard">
+                        <div style="font-size: 0.7em; font-weight: 600; color: #888; text-align: center; margin-bottom: 4px;" data-i18n="achWordLengths">Words Lengths</div>
                         <div class="ach-grids-wrap">
                             <div class="ach-grid" id="achGridLeft"></div>
                             <div class="ach-grid" id="achGridRight"></div>
@@ -1597,31 +1603,47 @@
                             <div class="ach-progress-label" id="achProgressLabel"></div>
                         </div>
                         <div class="ach-stats-row">
-                            <div class="ach-stat-box ach-highlight">
-                                <div class="ach-val" id="achTotalWords">0</div>
-                                <div class="ach-lbl" data-i18n="achLblTotalWords">Total Words</div>
+                            <div class="ach-stat">
+                                <div class="ach-icon">📖</div>
+                                <div class="ach-pill">
+                                    <span class="ach-val" id="achTotalWords">0</span>
+                                    <span class="ach-desc" data-i18n="achLblTotalWords">Total Words</span>
+                                </div>
                             </div>
-                            <div class="ach-stat-box">
-                                <div class="ach-val" id="achFilledCells">0 / 28</div>
-                                <div class="ach-lbl" data-i18n="achLblUnlocked">Unlocked</div>
+                            <div class="ach-stat">
+                                <div class="ach-icon">🔓</div>
+                                <div class="ach-pill">
+                                    <span class="ach-val" id="achFilledCells">0 / 28</span>
+                                    <span class="ach-desc" data-i18n="achLblUnlocked">Lengths</span>
+                                </div>
                             </div>
-                        </div>
-                        <div class="ach-stats-row">
-                            <div class="ach-stat-box">
-                                <div class="ach-val" id="achLongestLife">0</div>
-                                <div class="ach-lbl" data-i18n="achLblLongestLife">📅 Longest Life</div>
+                            <div class="ach-stat">
+                                <div class="ach-icon">📅</div>
+                                <div class="ach-pill">
+                                    <span class="ach-val" id="achLongestLife">0</span>
+                                    <span class="ach-desc" data-i18n="achLblLongestLife">Longest Life</span>
+                                </div>
                             </div>
-                            <div class="ach-stat-box">
-                                <div class="ach-val" id="achCurrentXP">0</div>
-                                <div class="ach-lbl" data-i18n="achLblXP">⭐ XP</div>
+                            <div class="ach-stat">
+                                <div class="ach-icon">⭐</div>
+                                <div class="ach-pill">
+                                    <span class="ach-val" id="achCurrentXP">0</span>
+                                    <span class="ach-desc" data-i18n="achLblXP">XP Points</span>
+                                </div>
                             </div>
-                            <div class="ach-stat-box">
-                                <div class="ach-val" id="achHighestStack">0</div>
-                                <div class="ach-lbl" data-i18n="achLblHighestStack">📐 Highest Stack</div>
+                            <div class="ach-stat">
+                                <div class="ach-icon">🏗️</div>
+                                <div class="ach-pill">
+                                    <span class="ach-val" id="achHighestStack">0</span>
+                                    <span class="ach-desc" data-i18n="achLblHighestStack">Highest Stack</span>
+                                </div>
                             </div>
-                            <div class="ach-stat-box">
-                                <div class="ach-val" id="achPeakCoverage">0%</div>
-                                <div class="ach-lbl" data-i18n="achLblPeakCoverage">🏗️ Peak Coverage</div>
+                            <div class="ach-stat">
+                                <div class="ach-icon">🧱</div>
+                                <div class="ach-pill">
+                                    <span class="ach-val" id="achPeakCoverage">0%</span>
+                                    <span class="ach-desc" data-i18n="achLblPeakCoverage">Peak Coverage</span>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -1664,16 +1686,22 @@
                         </button>
                         <input type="file" id="importFile" accept=".json" style="display: none;">
                     </div>
-                    <div style="margin-top: 10px;">
-                        <label style="font-size: 0.85em; color: #666;" data-i18n="lblPassword">🔑 Password:</label>
-                        <div style="display: flex; gap: 4px; margin-top: 4px;">
+                    <hr style="border: none; border-top: 1px solid #e0e0e0; margin: 14px 20px;">
+                    <div style="font-size: 0.85em; color: #666; line-height: 1.6;">
+                        <div style="font-weight: 600; color: #555; margin-bottom: 4px;" data-i18n="lblGameCode">Game Code</div>
+                        <div style="display: flex; gap: 6px; align-items: center; margin-bottom: 6px;">
                             <input type="text" id="seedInput" placeholder="any word or number" data-i18n-placeholder="phPassword"
-                                style="flex: 1; padding: 4px 8px; border: 1px solid #ddd; border-radius: 6px; font-size: 0.9em;">
-                            <button class="btn btn-primary" id="seedStartBtn" style="padding: 4px 10px; font-size: 0.85em;" data-i18n="btnPlay">Play</button>
+                                style="flex: 1; padding: 5px 10px; border: 1px solid #ddd; border-radius: 8px; font-size: 0.95em;">
+                            <button class="menu-btn menu-primary" id="seedStartBtn" style="flex-shrink: 0;">
+                                <span class="menu-icon">🔑</span>
+                                <span class="menu-pill" style="min-width: auto;"><span class="menu-label" data-i18n="btnPlayCode">Play Game Code</span></span>
+                            </button>
                         </div>
-                        <div id="shareBtn" style="margin-top: 6px; cursor: pointer; display: none; text-align: center; padding: 8px 10px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 8px; box-shadow: 0 2px 8px rgba(102,126,234,0.4);">
-                            <div style="font-size: 0.75em; color: rgba(255,255,255,0.95);" data-i18n="btnShare">📋 Share this link to play the same sequence of letters</div>
-                        </div>
+                        <p style="margin: 0 0 4px 0; font-style: italic; color: #999;" data-i18n="lblGameCodeSame">Same code = same game</p>
+                        <button class="menu-btn menu-share" id="shareBtn" style="margin-top: 8px; cursor: pointer; justify-content: flex-start;">
+                            <span class="menu-icon">🔗</span>
+                            <span class="menu-pill" style="min-width: auto; white-space: normal; text-align: left; font-weight: 400; font-size: 0.9em;"><span class="menu-label" data-i18n="btnShare">Share to challenge your friends on the same game</span></span>
+                        </button>
                     </div>
                 </div>
 
@@ -1845,6 +1873,7 @@
             btnImport: "📂 Open",
             btnImportShort: "Open",
             btnPlay: "Play",
+            btnPlayCode: "Play Game Code",
             btnSlow: "🐌 Slow",
             btnNormal: "🐈 Normal",
             btnFast: "💨 Fast",
@@ -1857,8 +1886,9 @@
             tipResetHint: "Reset hint",
             phPassword: "any word or number",
             phWordRadar: "Waiting for letters...",
-            lblPassword: "🔑 Password:",
-            btnShare: "📋 Share this link to play the same sequence of letters",
+            lblGameCode: "Game Code",
+            lblGameCodeSame: "Same code = same game",
+            btnShare: "Share to challenge your friends on the same game",
             msgLinkCopied: "Link copied to clipboard!",
             lblLongestWords: "Longest words available:",
             lblRadarLongest: "Longest",
@@ -1906,7 +1936,7 @@
             victoryTitle: "🏆 Victory!",
             victoryMsg: "You've built the shelter to the top! No more room for words — your cat is fully protected!",
             victoryStatDays: "🗓️ Days survived",
-            victoryStatCoverage: "🏗️ Peak coverage",
+            victoryStatCoverage: "🧱 Peak coverage",
             victoryStatWords: "📝 Words placed",
             victoryStatLongestH: "↔️ Longest word",
             victoryStatLongestV: "↕️ Longest vertical",
@@ -1918,12 +1948,15 @@
             achBestDays: "📅 {0} days best",
             achFullShelter: "{0} × full shelter",
             achStacksMax: "{0} stacks max",
+            achWordLengths: "Words Lengths",
+            achColHor: "Hor.",
+            achColVer: "Vert.",
             achLblTotalWords: "Total Words",
-            achLblUnlocked: "Unlocked",
-            achLblLongestLife: "📅 Longest Life",
-            achLblXP: "⭐ XP",
-            achLblHighestStack: "📐 Highest Stack",
-            achLblPeakCoverage: "🏗️ Peak Coverage",
+            achLblUnlocked: "Lengths",
+            achLblLongestLife: "Longest Life",
+            achLblXP: "XP Points",
+            achLblHighestStack: "Highest Stack",
+            achLblPeakCoverage: "Peak Coverage",
             achLblCatLooks: "Cat Looks",
             achCatCounter: "{0} / {1} unlocked",
             catNextLook: "in {0} XP",
@@ -2511,9 +2544,7 @@
             if (existingOverlay) existingOverlay.remove();
             // pauseBtn removed — newGameBtn is static
 
-            // Show share button and populate seed input
-            var shareBtn = document.getElementById('shareBtn');
-            if (shareBtn) shareBtn.style.display = gameState.gameSeed ? 'block' : 'none';
+            // Populate seed input
             document.getElementById('seedInput').value = gameState.gameSeed || '';
 
             // Tutorial: launch for first-time players with no save
@@ -3292,11 +3323,11 @@
                 container.appendChild(corner);
                 var hH = document.createElement('div');
                 hH.className = 'ach-col-header';
-                hH.textContent = 'H';
+                hH.textContent = t('achColHor');
                 container.appendChild(hH);
                 var vH = document.createElement('div');
                 vH.className = 'ach-col-header';
-                vH.textContent = 'V';
+                vH.textContent = t('achColVer');
                 container.appendChild(vH);
 
                 for (var len = from; len <= to; len++) {
@@ -5613,9 +5644,7 @@
             // Speed buttons
             updateSpeedButtons(gameState.letterSpawnInterval);
 
-            // Show share button and populate seed input
-            var shareBtn = document.getElementById('shareBtn');
-            if (shareBtn) shareBtn.style.display = gameState.gameSeed ? 'block' : 'none';
+            // Populate seed input
             document.getElementById('seedInput').value = gameState.gameSeed || '';
 
             // Season transition prompt — defer to allow layout before positioning
@@ -5925,7 +5954,7 @@
 
         // Share button: copy link with password parameter to clipboard
         document.getElementById('shareBtn').addEventListener('click', function() {
-            var password = gameState.gameSeed || document.getElementById('seedInput').value.trim();
+            var password = document.getElementById('seedInput').value.trim() || gameState.gameSeed;
             if (!password) return;
             var url = new URL(window.location.href);
             url.search = '';  // clear existing params
