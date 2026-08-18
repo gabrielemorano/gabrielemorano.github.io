@@ -2252,12 +2252,30 @@ select:focus-visible, input:focus-visible { outline: 2px solid var(--accent); ou
   };
   const Cap = (s) => s.charAt(0).toUpperCase() + s.slice(1);
 
-  function comparingText(record, axis) {
-    const d = scoring.dials(record.answers);
+  // The source remarks on an imbalance only when the two quadrants are far
+  // enough apart to be worth remarking on: at least a 20% gap measured against
+  // the smaller of the pair (helpers_functions.php, get_compare_text). Merely
+  // being unequal is not enough — 31 against 32 is a 3% gap and stays silent.
+  const MIN_IMBALANCE = 20;
+
+  // Which of an axis's two quadrants dominates, or '' when the gap is too small
+  // to be worth remarking on. Kept pure and exported so the threshold can be
+  // tested without a DOM — it is the reason an axis shows no closing paragraph.
+  function imbalanceKey(dials, axis) {
     const [a, b] = AXIS_PAIR[axis];
-    if (d[a] === d[b]) return '';
-    const [hi, lo] = d[a] > d[b] ? [a, b] : [b, a];
-    return (t().comparing[axis] || {})[`${Cap(hi)} > ${Cap(lo)}`] || '';
+    const gap = Math.abs(dials[a] - dials[b]);
+    if (!gap) return '';
+    // Against a floor of zero the relative gap is unbounded, so any difference
+    // qualifies; two zeros are already gone on the line above.
+    const floor = Math.min(dials[a], dials[b]);
+    if (floor > 0 && gap / floor * 100 < MIN_IMBALANCE) return '';
+    const [hi, lo] = dials[a] > dials[b] ? [a, b] : [b, a];
+    return `${Cap(hi)} > ${Cap(lo)}`;
+  }
+
+  function comparingText(record, axis) {
+    const key = imbalanceKey(scoring.dials(record.answers), axis);
+    return key ? (t().comparing[axis] || {})[key] || '' : '';
   }
 
   // Every axis carries its own band, so every axis gets its own medal.
@@ -2645,7 +2663,7 @@ select:focus-visible, input:focus-visible { outline: 2px solid var(--accent); ou
     show('start');
   }
 
-  const api = { VIEWS, SCALE, buildQuestion, headerFor, show, init };
+  const api = { VIEWS, SCALE, buildQuestion, headerFor, show, init, imbalanceKey, MIN_IMBALANCE };
   if (typeof module === 'object' && module.exports) module.exports = api;
   else (global.Q16 = global.Q16 || {}).screens = api;
 })(
