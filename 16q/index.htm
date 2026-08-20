@@ -303,7 +303,7 @@ select:focus-visible, input:focus-visible { outline: 2px solid var(--accent); ou
 
 .hrow__del {
   width: 30px; height: 30px; border-radius: 50%; color: var(--dim);
-  font-size: 19px; line-height: 1; display: grid; place-items: center;
+  display: grid; place-items: center;
 }
 .hrow__del:hover { background: #f2e3e2; color: #b23a2e; }
 .hrow__del:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
@@ -334,6 +334,9 @@ select:focus-visible, input:focus-visible { outline: 2px solid var(--accent); ou
 @media (max-width: 420px) {
   .hrow { grid-template-columns: 22px 1fr 30px; row-gap: 8px; }
   .hrow__score { grid-column: 2 / 4; justify-content: flex-start; }
+  /* Pinned beside the name and date. Auto-placement otherwise drops it into the
+     first free cell, which is the far left of a row of its own. */
+  .hrow__del { grid-column: 3; grid-row: 1; }
 }
 
 .note { font-size: 13px; line-height: 1.6; color: var(--muted); }
@@ -2162,6 +2165,14 @@ body.is-reading { overflow: hidden; }
     + '<g stroke="currentColor" stroke-width="1.6" stroke-linecap="round">'
     + '<path d="M1 1l12 12"/><path d="M13 1L1 13"/></g></svg>';
 
+  const TRASH = '<svg width="15" height="16" viewBox="0 0 15 16" fill="none" aria-hidden="true">'
+    + '<g stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">'
+    + '<path d="M1.7 3.9h11.6"/>'
+    + '<path d="M5.4 3.9V2.6a1.2 1.2 0 0 1 1.2-1.2h1.8a1.2 1.2 0 0 1 1.2 1.2v1.3"/>'
+    + '<path d="M3.2 3.9l.6 9.6a1.2 1.2 0 0 0 1.2 1.1h5a1.2 1.2 0 0 0 1.2-1.1l.6-9.6"/>'
+    + '<path d="M6.2 6.9v4.6M8.8 6.9v4.6"/>'
+    + '</g></svg>';
+
   // A mortarboard: the essays are the book's teaching material rather than
   // anything the assessment needs, so they sit behind an icon that says so.
   const CAP = '<svg width="17" height="14" viewBox="0 0 20 16" aria-hidden="true">'
@@ -2762,8 +2773,8 @@ body.is-reading { overflow: hidden; }
       score.appendChild(el('img', { class: 'hrow__medal', src: medals[band.medal],
                                     alt: t().ranks[band.key], width: '26' }));
 
-      const del = el('button', { class: 'hrow__del', type: 'button',
-                                 'aria-label': label('delete', 'Delete') }, '×');
+      const del = el('button', { class: 'hrow__del', type: 'button', html: TRASH,
+                                 'aria-label': label('delete', 'Delete') });
       del.addEventListener('click', () => renderHistory({ confirmId: r.id }));
 
       li.append(pick, main, score, del);
