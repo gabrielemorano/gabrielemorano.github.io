@@ -308,17 +308,26 @@ select:focus-visible, input:focus-visible { outline: 2px solid var(--accent); ou
 .hrow__del:hover { background: #f2e3e2; color: #b23a2e; }
 .hrow__del:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
 
+/* Deliberately not a grid. This row shares nothing with the columns of a normal
+   history row, and while it used to redefine them, the narrow-screen rule below
+   re-specifies .hrow at equal specificity and later in the file. On a phone the
+   question was therefore being laid into the 22px checkbox column, one word per
+   line, with the buttons pushed off the right edge. Flex owes that rule nothing. */
 .hrow--confirm {
-  grid-template-columns: 1fr auto auto; gap: 9px;
+  display: flex; flex-wrap: wrap; align-items: center; gap: 9px;
   background: #fbf3f2; box-shadow: inset 3px 0 0 #b23a2e; padding-left: 10px;
 }
-.hrow__ask { font-size: 14px; }
+/* Wide enough to sit beside the buttons on a roomy row; on a phone it claims the
+   line and they wrap underneath. */
+.hrow__ask { font-size: 14px; flex: 1 1 240px; }
 .hbtn {
+  flex: 0 0 auto;
   min-height: 40px; padding: 0 14px; border: 1px solid var(--line);
   border-radius: 5px; font-size: 14px; background: var(--card); color: var(--muted);
 }
 .hbtn:hover { color: var(--accent); }
-.hbtn--danger { background: #b23a2e; border-color: #b23a2e; color: #fff; }
+/* the pair stays together at the end of whichever line it lands on */
+.hbtn--danger { margin-left: auto; background: #b23a2e; border-color: #b23a2e; color: #fff; }
 .hbtn--danger:hover { color: #fff; filter: brightness(1.08); }
 
 @media (max-width: 420px) {
