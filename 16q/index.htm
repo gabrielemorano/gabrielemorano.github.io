@@ -320,14 +320,15 @@ select:focus-visible, input:focus-visible { outline: 2px solid var(--accent); ou
 /* Wide enough to sit beside the buttons on a roomy row; on a phone it claims the
    line and they wrap underneath. */
 .hrow__ask { font-size: 14px; flex: 1 1 240px; }
+/* One flex item, so Delete and Cancel are never separated by a wrap. */
+.hrow__acts { display: flex; gap: 9px; flex: 0 0 auto; margin-left: auto; }
 .hbtn {
   flex: 0 0 auto;
   min-height: 40px; padding: 0 14px; border: 1px solid var(--line);
   border-radius: 5px; font-size: 14px; background: var(--card); color: var(--muted);
 }
 .hbtn:hover { color: var(--accent); }
-/* the pair stays together at the end of whichever line it lands on */
-.hbtn--danger { margin-left: auto; background: #b23a2e; border-color: #b23a2e; color: #fff; }
+.hbtn--danger { background: #b23a2e; border-color: #b23a2e; color: #fff; }
 .hbtn--danger:hover { color: #fff; filter: brightness(1.08); }
 
 @media (max-width: 420px) {
@@ -2723,7 +2724,12 @@ body.is-reading { overflow: hidden; }
         });
         const no = el('button', { class: 'hbtn', type: 'button' }, label('cancel', 'Cancel'));
         no.addEventListener('click', () => renderHistory());
-        li.append(yes, no);
+        // Grouped so the pair wraps as one unit. Left as siblings of the
+        // question, a middling width fits Delete beside it and pushes Cancel
+        // onto a line of its own.
+        const acts = el('div', { class: 'hrow__acts' });
+        acts.append(yes, no);
+        li.appendChild(acts);
         list.appendChild(li);
         continue;
       }
