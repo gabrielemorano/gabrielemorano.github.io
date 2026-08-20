@@ -11,6 +11,13 @@
    rank ring, so a selection ties forward to the result. The chart
    keeps Roboto for its own labels (faithful to samples/); the
    interface is set in a serif.
+
+   Two rules, asserted in test/styles.test.js:
+     - all text is one ink. Secondary matter is separated by size,
+       weight and letter-spacing, never by a lighter grey.
+     - blue means interaction. Hover, press and selection are the
+       only things that recolour, and they recolour to the accent.
+       The one exception is delete, which reads as danger.
    ============================================================ */
 
 /* Optional and non-blocking; its failure is invisible. Used only
@@ -27,8 +34,12 @@
   --paper:  #f7f7f5;
   --card:   #fff;
   --ink:    #1b1e22;
-  --muted:  #767c84;
-  --dim:    #8d949c;
+  /* Secondary text used to step down through two greys. It now reads at full
+     ink strength and is separated by size, weight and letter-spacing instead,
+     so nothing on the page is faint. The names still mark the roles, so the
+     step can be reintroduced by changing these two lines alone. */
+  --muted:  #1b1e22;
+  --dim:    #1b1e22;
   --hair:   #dcdfe3;
   --line:   #d3d8de;
   --accent: #3377c8;
@@ -61,7 +72,7 @@ section { flex: 1; display: flex; flex-direction: column; }
   text-transform: uppercase; color: var(--dim);
 }
 .icon { width: 26px; height: 26px; display: grid; place-items: center; color: var(--dim); }
-.icon:hover { color: var(--ink); }
+.icon:hover { color: var(--accent); }
 .icon:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 3px; }
 .icon[hidden] { visibility: hidden; display: grid; }
 .hair { height: 1px; background: var(--hair); margin-top: 14px; flex: none; }
@@ -105,16 +116,16 @@ select:focus-visible, input:focus-visible { outline: 2px solid var(--accent); ou
 .q-block { width: 100%; }
 .q-lab { font-size: 10px; letter-spacing: .18em; color: var(--accent); margin: 0 0 5px; }
 .q-lab--after { margin: 11px 0 5px; }
-.q-say { font-size: 12.5px; line-height: 1.45; color: #6d747c; margin: 0 0 9px; }
+.q-say { font-size: 12.5px; line-height: 1.45; color: var(--ink); margin: 0 0 9px; }
 .q-say--last { margin: 0; }
 .q-rows { display: flex; flex-direction: column; gap: 8px; }
 .q-row { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; }
 .q-row button {
   height: 54px; display: grid; place-items: center; border: 1px solid var(--line);
-  border-radius: 4px; background: var(--card); font-size: 17px; color: #5a616a;
+  border-radius: 4px; background: var(--card); font-size: 17px; color: var(--ink);
   transition: background .15s, border-color .15s, color .15s;
 }
-.q-row button:hover { border-color: #9dbde4; }
+.q-row button:hover { border-color: var(--accent); }
 .q-row button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 .q-row button[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: #fff; }
 @keyframes q-glow {
@@ -159,7 +170,7 @@ select:focus-visible, input:focus-visible { outline: 2px solid var(--accent); ou
 .drawer__langs { display: flex; gap: 8px; padding: 4px 0 2px; }
 .drawer__langs button {
   flex: 1; min-height: 46px; border: 1px solid var(--line); border-radius: 5px;
-  font-size: 14px; color: #5a616a;
+  font-size: 14px; color: var(--ink);
 }
 .drawer__langs button[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: #fff; }
 
@@ -206,14 +217,14 @@ select:focus-visible, input:focus-visible { outline: 2px solid var(--accent); ou
 .axis__medal { width: 30px; height: auto; flex: none; }
 .axis__name { font-size: 17px; letter-spacing: -.01em; }
 .axis__score { font-size: 12px; letter-spacing: .14em; text-transform: uppercase; color: var(--dim); margin-left: auto; }
-.axis p { font-size: 13.5px; line-height: 1.6; color: #5b626b; margin: 9px 0 0; }
+.axis p { font-size: 13.5px; line-height: 1.6; color: var(--ink); margin: 9px 0 0; }
 .axis__gloss { font-style: italic; color: var(--muted); font-size: 13px; }
 .axis__imbalance { border-left: 3px solid var(--accent); padding-left: 11px; }
 
 .actions { display: flex; gap: 9px; flex-wrap: wrap; margin-top: 4px; }
 .actions .btn { flex: 1; min-width: 130px; }
 .status { min-height: 1.4em; font-size: 13px; color: var(--muted); margin: 0; }
-.warn { border-left: 3px solid #cc2027; padding-left: 11px; font-size: 13.5px; color: #5b626b; }
+.warn { border-left: 3px solid #cc2027; padding-left: 11px; font-size: 13.5px; color: var(--ink); }
 
 /* ---------- data screen ---------- */
 .data-summary {
@@ -237,7 +248,7 @@ select:focus-visible, input:focus-visible { outline: 2px solid var(--accent); ou
   border: 1px solid var(--line); border-radius: 5px; padding: 12px 14px;
   background: var(--card); min-height: 52px;
 }
-.choice:hover { border-color: #9dbde4; }
+.choice:hover { border-color: var(--accent); }
 .choice:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 .choice[aria-pressed="true"] { border-color: var(--accent); box-shadow: inset 0 0 0 1px var(--accent); }
 .choice__name { font-size: 15px; }
@@ -266,7 +277,7 @@ select:focus-visible, input:focus-visible { outline: 2px solid var(--accent); ou
 /* ---------- history ---------- */
 .hnotice {
   margin: 18px 0 0; padding: 11px 13px; border-left: 3px solid var(--accent);
-  background: #eef2f7; font-size: 13.5px; color: #45505c;
+  background: #eef2f7; font-size: 13.5px; color: var(--ink);
 }
 .hhint { font-size: 13px; color: var(--muted); margin: 18px 0 4px; }
 .hnotice + .hhint { margin-top: 12px; }
@@ -306,7 +317,7 @@ select:focus-visible, input:focus-visible { outline: 2px solid var(--accent); ou
   min-height: 40px; padding: 0 14px; border: 1px solid var(--line);
   border-radius: 5px; font-size: 14px; background: var(--card); color: var(--muted);
 }
-.hbtn:hover { color: var(--ink); }
+.hbtn:hover { color: var(--accent); }
 .hbtn--danger { background: #b23a2e; border-color: #b23a2e; color: #fff; }
 .hbtn--danger:hover { color: #fff; filter: brightness(1.08); }
 
